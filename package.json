@@ -1,0 +1,13 @@
+{
+  "name": "scout-dashboard",
+  "version": "1.0.0",
+  "description": "Scout Group Dashboard",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server -p 3000 -c-1"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
