@@ -218,7 +218,7 @@
 <!-- Cache/service-worker killer — must run FIRST before anything else -->
 <script>
 (function(){
-  window.__BUILD_ID__ = 'register-2026-07-08-v11-flexible-dates-and-flow';
+  window.__BUILD_ID__ = 'register-2026-07-14-v12-leaders-support';
   console.log('[Register] build =', window.__BUILD_ID__);
   try {
     if ('serviceWorker' in navigator) {
@@ -464,6 +464,10 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
     }
     // Recompute the ordered step list based on unit + milestone state.
     function computeSteps(){
+      if(chosenUnit === 'Leaders'){
+        // Leaders can see badges and basic info directly, skipping PIN and Milestones
+        return ['unit','name','badges','done'];
+      }
       var base = ['unit','name','pin'];
       if(isBoyscoutFamily()){
         // Badges always available; milestones after.
@@ -487,6 +491,7 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
     // First content step AFTER pin — differs per unit.
     // Boyscouts/Girlscouts land on 'badges' first, everyone else on 'milestones'.
     function firstContentStep(){
+      if(chosenUnit === 'Leaders') return 'badges';
       return isBoyscoutFamily() ? 'badges' : 'milestones';
     }
 
@@ -575,9 +580,13 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       var idx = STEPS.indexOf(current);
       var isLastContentStep = (idx === STEPS.length - 2);
       if(isLastContentStep){
-        // Whatever the last content step is (badges or milestones),
-        // treat "Finish" the same way: force save then go to 'done'.
-        saveMilestonesNow(true).then(function(){ goto('done'); });
+        if(chosenUnit === 'Leaders'){
+          goto('done');
+        } else {
+          // Whatever the last content step is (badges or milestones),
+          // treat "Finish" the same way: force save then go to 'done'.
+          saveMilestonesNow(true).then(function(){ goto('done'); });
+        }
       } else if(idx >= 0 && idx < STEPS.length - 1){
         goto(STEPS[idx+1]);
       }
@@ -591,7 +600,8 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       {key:'Girlscouts',ar:'Girlscouts',  color:'#86efac', ink:'#14532d'}, // اخضر فاتح
       {key:'Boyscouts', ar:'Boyscouts',   color:'#166534', ink:'#fff'},   // اخضر غامق
       {key:'Pioneers',  ar:'Pioneers',  color:'#fca5a5', ink:'#7f1d1d'}, // احمر فاتح
-      {key:'Rovers',    ar:'Rovers',   color:'#991b1b', ink:'#fff'}    // احمر غامق
+      {key:'Rovers',    ar:'Rovers',   color:'#991b1b', ink:'#fff'},    // احمر غامق
+      {key:'Leaders',   ar:'Leaders / القادة', color:'#4f46e5', ink:'#fff'} // بنفسجي / قادة
     ];
     function renderUnits(){
       var grid = document.getElementById('unitGrid');
@@ -612,19 +622,25 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
     // ─── STEP 2: People ───────────────────────────────────────────────
     function loadMembersInUnit(){
       if(!supabase){ toast('Database connection failed', 'error'); return; }
-      toast('Loading members...');
-      supabase.from('members').select('*').then(function(res){
+      var tableToQuery = chosenUnit === 'Leaders' ? 'leaders' : 'members';
+      toast(chosenUnit === 'Leaders' ? 'Loading leaders...' : 'Loading members...');
+      supabase.from(tableToQuery).select('*').then(function(res){
         if(res.error){ toast('خطأ: '+res.error.message, 'error'); return; }
-        var all = (res.data || []).filter(function(m){ return canonicalUnit(m.unit) === chosenUnit; });
+        var all;
+        if(chosenUnit === 'Leaders'){
+          all = res.data || [];
+        } else {
+          all = (res.data || []).filter(function(m){ return canonicalUnit(m.unit) === chosenUnit; });
+        }
         all.sort(function(a,b){
-          var na = ((a.first_name||'')+' '+(a.last_name||'')).trim();
-          var nb = ((b.first_name||'')+' '+(b.last_name||'')).trim();
+          var na = (a.full_name || ((a.first_name||'')+' '+(a.last_name||''))).trim();
+          var nb = (b.full_name || ((b.first_name||'')+' '+(b.last_name||''))).trim();
           return na.localeCompare(nb);
         });
         members = all;
         document.getElementById('unitNameSub').textContent =
           (UNITS.find(function(u){return u.key===chosenUnit;}) || {ar:''}).ar +
-          ' — ' + members.length + ' Member';
+          ' — ' + members.length + ' ' + (chosenUnit === 'Leaders' ? 'Leaders' : 'Members');
         renderPeople('');
         goto('name');
       });
@@ -642,8 +658,8 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
         return;
       }
       el.innerHTML = list.map(function(m){
-        var full = [m.first_name, m.middle_name, m.last_name].filter(Boolean).join(' ');
-        var meta = [m.gender || '', m.dob || ''].filter(Boolean).join(' · ');
+        var full = m.full_name || [m.first_name, m.middle_name, m.last_name].filter(Boolean).join(' ');
+        var meta = [m.role || m.gender || '', m.dob || ''].filter(Boolean).join(' · ');
         var av = m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" alt="" />' : esc(initials(full));
         return '<div class="person-row" data-id="'+esc(m.id)+'">'+
                  '<div class="person-avatar">'+av+'</div>'+
@@ -655,7 +671,11 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
           var id = r.getAttribute('data-id');
           chosenMember = members.find(function(m){ return m.id === id; });
           if(!chosenMember) return;
-          startPinFlow();
+          if(chosenUnit === 'Leaders'){
+            loadExistingProfile().then(function(){ refreshSteps(); goto(firstContentStep()); });
+          } else {
+            startPinFlow();
+          }
         });
       });
     }
@@ -730,30 +750,52 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       selectedBadges = new Set();
       existingBadges = new Set();
       milestones = {};
-      return Promise.all([
-        supabase.from('badge_definitions').select('*'),
-        supabase.from('badges').select('*').eq('member_id', chosenMember.id),
-        supabase.from('member_milestones').select('*').eq('member_id', chosenMember.id).maybeSingle()
-      ]).then(function(results){
-        var defsRes = results[0], badgesRes = results[1], msRes = results[2];
-        badgeDefs = (defsRes.data || []).slice().sort(function(a,b){
-          return String(a.category||'zz').localeCompare(String(b.category||'zz'))
-              || String(a.name||'').localeCompare(String(b.name||''));
+      
+      var badgeTable = chosenUnit === 'Leaders' ? 'leader_badges' : 'badges';
+      var idField = chosenUnit === 'Leaders' ? 'leader_id' : 'member_id';
+
+      if (chosenUnit === 'Leaders') {
+        return Promise.all([
+          supabase.from('badge_definitions').select('id, name, logo_url, category'),
+          supabase.from(badgeTable).select('id, badge_name, awarded_date').eq(idField, chosenMember.id)
+        ]).then(function(results){
+          var defsRes = results[0], badgesRes = results[1];
+          badgeDefs = (defsRes.data || []).slice().sort(function(a,b){
+            return String(a.category||'zz').localeCompare(String(b.category||'zz'))
+                || String(a.name||'').localeCompare(String(b.name||''));
+          });
+          (badgesRes.data || []).forEach(function(b){
+            selectedBadges.add(b.badge_name);
+            existingBadges.add(b.badge_name);
+          });
+          renderBadges();
         });
-        (badgesRes.data || []).forEach(function(b){
-          selectedBadges.add(b.badge_name);
-          existingBadges.add(b.badge_name);
+      } else {
+        return Promise.all([
+          supabase.from('badge_definitions').select('id, name, logo_url, category'),
+          supabase.from(badgeTable).select('id, badge_name, awarded_date').eq(idField, chosenMember.id),
+          supabase.from('member_milestones').select('member_id, join_year, yellow_passed, yellow_ranks, green_passed, green_ranks, green_consecration_year, red_passed, red_ranks, red_consecration_year, red_departure_year, updated_at, green_leadership, red_leadership, yellow_rank_dates, green_rank_dates, red_rank_dates').eq(idField, chosenMember.id).maybeSingle()
+        ]).then(function(results){
+          var defsRes = results[0], badgesRes = results[1], msRes = results[2];
+          badgeDefs = (defsRes.data || []).slice().sort(function(a,b){
+            return String(a.category||'zz').localeCompare(String(b.category||'zz'))
+                || String(a.name||'').localeCompare(String(b.name||''));
+          });
+          (badgesRes.data || []).forEach(function(b){
+            selectedBadges.add(b.badge_name);
+            existingBadges.add(b.badge_name);
+          });
+          if(msRes.data){
+            milestones = msRes.data;
+            // derived flags for the UI
+            milestones.green_consecrated = milestones.green_consecration_year != null;
+            milestones.red_consecrated   = milestones.red_consecration_year   != null;
+            milestones.red_departed      = milestones.red_departure_year      != null;
+          }
+          renderBadges();
+          hydrateMilestones();
         });
-        if(msRes.data){
-          milestones = msRes.data;
-          // derived flags for the UI
-          milestones.green_consecrated = milestones.green_consecration_year != null;
-          milestones.red_consecrated   = milestones.red_consecration_year   != null;
-          milestones.red_departed      = milestones.red_departure_year      != null;
-        }
-        renderBadges();
-        hydrateMilestones();
-      });
+      }
     }
 
     // ─── STEP 4: Badges ───────────────────────────────────────────────
@@ -802,13 +844,16 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       selectedBadges.forEach(function(n){ if(!existingBadges.has(n)) toAdd.push(n); });
       existingBadges.forEach(function(n){ if(!selectedBadges.has(n)) toRemove.push(n); });
       var ops = [];
+      var badgeTable = chosenUnit === 'Leaders' ? 'leader_badges' : 'badges';
+      var idField = chosenUnit === 'Leaders' ? 'leader_id' : 'member_id';
+
       if(toAdd.length){
-        ops.push(supabase.from('badges').insert(toAdd.map(function(n){
-          return { member_id: chosenMember.id, badge_name: n, awarded_date: new Date().toISOString().slice(0,10) };
+        ops.push(supabase.from(badgeTable).insert(toAdd.map(function(n){
+          return { [idField]: chosenMember.id, badge_name: n, awarded_date: new Date().toISOString().slice(0,10) };
         })));
       }
       if(toRemove.length){
-        ops.push(supabase.from('badges').delete().eq('member_id', chosenMember.id).in('badge_name', toRemove));
+        ops.push(supabase.from(badgeTable).delete().eq(idField, chosenMember.id).in('badge_name', toRemove));
       }
       if(!ops.length){ markHint('badgesSaveHint','saved'); return; }
       Promise.all(ops).then(function(reses){

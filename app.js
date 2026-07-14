@@ -753,6 +753,51 @@ function bindForms() {
    Data loading & mapping
    ====================================================================== */
 
+
+async function ensureMemberDetail(memberId) {
+  const m = state.members.find(x => x.id === memberId);
+  if (!m) return null;
+  if (m.isDetailed) return m;
+
+  const { data, error } = await supabaseClient
+    .from('members')
+    .select('phone, parent_type, parent_phone, blood_type, nationality')
+    .eq('id', memberId)
+    .single();
+
+  if (!error && data) {
+    m.phone = data.phone;
+    m.parentType = data.parent_type || '';
+    m.parentPhone = data.parent_phone;
+    m.bloodType = data.blood_type;
+    m.nationality = data.nationality;
+    m.isDetailed = true;
+  }
+  return m;
+}
+
+async function ensureLeaderDetail(leaderId) {
+  const l = state.leaders.find(x => x.id === leaderId);
+  if (!l) return null;
+  if (l.isDetailed) return l;
+
+  const { data, error } = await supabaseClient
+    .from('leaders')
+    .select('phone, parent_phone, blood_type, nationality, join_date')
+    .eq('id', leaderId)
+    .single();
+
+  if (!error && data) {
+    l.phone = data.phone;
+    l.parentPhone = data.parent_phone;
+    l.bloodType = data.blood_type;
+    l.nationality = data.nationality;
+    l.joinDate = data.join_date;
+    l.isDetailed = true;
+  }
+  return l;
+}
+
 async function loadAllData() {
   const [
     membersRes, leadersRes, paymentsRes, badgesRes, ranksRes,
@@ -760,20 +805,20 @@ async function loadAllData() {
     meetingsRes, meetingLeadersRes, meetingLeaderAttendanceRes,
     badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes
   ] = await Promise.all([
-    supabaseClient.from('members').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('leaders').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('payments').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('badges').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('ranks').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('member_attendance').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('leader_attendance').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('meetings').select('*').order('meeting_date', { ascending: false }),
-    supabaseClient.from('meeting_leaders').select('*').order('created_at', { ascending: true }),
-    supabaseClient.from('meeting_leader_attendance').select('*'),
-    supabaseClient.from('badge_definitions').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('leader_badges').select('*').then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_milestones').select('*').then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_ranks').select('*').then(r => r, e => ({ data: [], error: e }))
+    supabaseClient.from('members').select('id, first_name, middle_name, last_name, gender, dob, unit, email, created_at').order('created_at', { ascending: false }),
+    supabaseClient.from('leaders').select('id, first_name, middle_name, last_name, gender, role, dob, email, created_at').order('created_at', { ascending: false }),
+    supabaseClient.from('payments').select('id, member_id, year, amount, status, payment_date').order('created_at', { ascending: false }),
+    supabaseClient.from('badges').select('id, member_id, badge_name, awarded_date').order('created_at', { ascending: false }),
+    supabaseClient.from('ranks').select('id, member_id, rank_name, effective_date').order('created_at', { ascending: false }),
+    supabaseClient.from('member_attendance').select('id, member_id, date, status, activity').order('created_at', { ascending: false }),
+    supabaseClient.from('leader_attendance').select('id, leader_id, date, status, meeting').order('created_at', { ascending: false }),
+    supabaseClient.from('meetings').select('id, title, unit, meeting_date, start_time, end_time, location, created_by, description, minutes').order('meeting_date', { ascending: false }),
+    supabaseClient.from('meeting_leaders').select('id, meeting_id, leader_id, point, created_at').order('created_at', { ascending: true }),
+    supabaseClient.from('meeting_leader_attendance').select('id, meeting_id, leader_id, date, status'),
+    supabaseClient.from('badge_definitions').select('id, name, logo_url, category').order('created_at', { ascending: false }),
+    supabaseClient.from('leader_badges').select('id, leader_id, badge_name, awarded_date').then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('leader_milestones').select('id, leader_id, title, effective_date').then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('leader_ranks').select('id, leader_id, rank_name, effective_date').then(r => r, e => ({ data: [], error: e }))
   ]);
 
   state.members = (membersRes.data || []).map(mapMember);
@@ -1796,8 +1841,8 @@ function unitLeaderRow(l) {
   `;
 }
 
-function openMemberProfile(memberId) {
-  const m = state.members.find(x => x.id === memberId);
+async function openMemberProfile(memberId) {
+  const m = await ensureMemberDetail(memberId);
   if (!m) {
     showToast('Member not found', 'error');
     return;
@@ -2526,8 +2571,8 @@ async function handleApplyBadges() {
   }
 }
 
-function openLeaderProfile(leaderId) {
-  const l = state.leaders.find(x => x.id === leaderId);
+async function openLeaderProfile(leaderId) {
+  const l = await ensureLeaderDetail(leaderId);
   if (!l) {
     showToast('Leader not found', 'error');
     return;
