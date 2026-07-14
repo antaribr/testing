@@ -786,7 +786,7 @@ async function ensureMemberDetail(memberId) {
 
   const { data, error } = await supabaseClient
     .from('members')
-    .select('phone, parent_type, parent_phone, blood_type, nationality')
+    .select('phone, parent_type, parent_phone')
     .eq('id', memberId)
     .single();
 
@@ -794,8 +794,6 @@ async function ensureMemberDetail(memberId) {
     m.phone = data.phone;
     m.parentType = data.parent_type || '';
     m.parentPhone = data.parent_phone;
-    m.bloodType = data.blood_type;
-    m.nationality = data.nationality;
     m.isDetailed = true;
   }
   return m;
@@ -808,15 +806,13 @@ async function ensureLeaderDetail(leaderId) {
 
   const { data, error } = await supabaseClient
     .from('leaders')
-    .select('phone, parent_phone, blood_type, nationality, join_date')
+    .select('phone, parent_phone, join_date')
     .eq('id', leaderId)
     .single();
 
   if (!error && data) {
     l.phone = data.phone;
     l.parentPhone = data.parent_phone;
-    l.bloodType = data.blood_type;
-    l.nationality = data.nationality;
     l.joinDate = data.join_date;
     l.isDetailed = true;
   }
@@ -830,8 +826,8 @@ async function loadAllData() {
     meetingsRes, meetingLeadersRes, meetingLeaderAttendanceRes,
     badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes
   ] = await Promise.all([
-    supabaseClient.from('members').select('id, first_name, middle_name, last_name, gender, dob, unit, email, created_at').order('created_at', { ascending: false }),
-    supabaseClient.from('leaders').select('id, first_name, middle_name, last_name, gender, role, dob, email, created_at').order('created_at', { ascending: false }),
+    supabaseClient.from('members').select('id, first_name, middle_name, last_name, gender, dob, unit, email, created_at, blood_type, nationality').order('created_at', { ascending: false }),
+    supabaseClient.from('leaders').select('id, first_name, middle_name, last_name, gender, role, dob, email, created_at, blood_type, nationality').order('created_at', { ascending: false }),
     supabaseClient.from('payments').select('id, member_id, year, amount, status, payment_date').order('created_at', { ascending: false }),
     supabaseClient.from('badges').select('id, member_id, badge_name, awarded_date').order('created_at', { ascending: false }),
     supabaseClient.from('ranks').select('id, member_id, rank_name, effective_date').order('created_at', { ascending: false }),
