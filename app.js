@@ -455,6 +455,31 @@ function init() {
   bindAuth();
   bindMenu();
   bindForms();
+
+  // Bind Desktop Global Refresh Button (Bypasses cache and updates UI aggregates)
+  const desktopRefreshBtn = $('#desktopRefreshBtn');
+  if (desktopRefreshBtn) {
+    desktopRefreshBtn.addEventListener('click', async () => {
+      const svg = desktopRefreshBtn.querySelector('svg');
+      if (svg) svg.style.transform = 'rotate(360deg)';
+      desktopRefreshBtn.disabled = true;
+      desktopRefreshBtn.textContent = 'Refreshing...';
+      try {
+        await loadAllData();
+        renderAll();
+        showToast('Data successfully refreshed from Supabase', 'success');
+      } catch (err) {
+        showToast('Refresh failed: ' + err.message, 'error');
+      } finally {
+        desktopRefreshBtn.disabled = false;
+        desktopRefreshBtn.innerHTML = `
+          <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s ease;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          Refresh Data
+        `;
+      }
+    });
+  }
+
   bindMeetingBuilderButtons();
   bindConfigTabs();
   bindMemberImportExport();
