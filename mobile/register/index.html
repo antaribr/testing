@@ -547,11 +547,16 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
     }
     // Recompute the ordered step list based on unit + milestone state.
     function computeSteps(){
-      if(chosenUnit === 'Leaders'){
-        // Leaders register badges, then milestones (ranks, courses, and dates), skipping PIN
-        return ['unit','name','badges','milestones','done'];
-      }
       var base = ['unit','name','pin'];
+      if(chosenUnit === 'Leaders'){
+        // Leaders have: PIN, Journeys (milestones), and Badges (only if green_passed is true)
+        var arr = base.concat(['milestones']);
+        if(milestones && milestones.green_passed) {
+          arr.splice(3, 0, 'badges'); // Insert badges step
+        }
+        arr.push('done');
+        return arr;
+      }
       if(isBoyscoutFamily()){
         // Badges always available; milestones after.
         return base.concat(['badges','milestones','done']);
@@ -756,18 +761,7 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
           var id = r.getAttribute('data-id');
           chosenMember = members.find(function(m){ return m.id === id; });
           if(!chosenMember) return;
-          if(chosenUnit === 'Leaders'){
-            // Load their leader milestones first to check if they have a PIN
-            toast('Checking profile...');
-            supabase.from('leader_milestones').select('*').eq('leader_id', chosenMember.id).then(function(res){
-              var rows = res.data || [];
-              var pinRow = rows.find(function(r){ return r.title === 'security_pin'; });
-              chosenMember.pin = pinRow ? pinRow.notes : null;
-              startPinFlow();
-            });
-          } else {
-            startPinFlow();
-          }
+          startPinFlow();
         });
       });
     }
@@ -831,24 +825,11 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       }
     }
     function savePin(pin){
-      if(chosenUnit === 'Leaders'){
-        // Save the leader PIN to leader_milestones under title 'security_pin'
-        return supabase.from('leader_milestones').delete().eq('leader_id', chosenMember.id).eq('title', 'security_pin').then(function(){
-          return supabase.from('leader_milestones').insert({
-            leader_id: chosenMember.id,
-            title: 'security_pin',
-            notes: pin
-          });
-        }).then(function(res){
-          if(res.error){ toast('Error saving PIN: '+res.error.message, 'error'); return false; }
-          return true;
-        });
-      } else {
-        return supabase.from('members').update({ pin: pin }).eq('id', chosenMember.id).then(function(res){
-          if(res.error){ toast('Error saving PIN: '+res.error.message, 'error'); return false; }
-          return true;
-        });
-      }
+      var table = chosenUnit === 'Leaders' ? 'leaders' : 'members';
+      return supabase.from(table).update({ pin: pin }).eq('id', chosenMember.id).then(function(res){
+        if(res.error){ toast('Error saving PIN: '+res.error.message, 'error'); return false; }
+        return true;
+      });
     }
 
     // ─── Load existing badges + milestones for this member ────────────
@@ -1598,10 +1579,6 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
         { leader_id: chosenMember.id, title: 'leader_youth_journey', notes: JSON.stringify(milestones) }
       ];
 
-      // Keep security pin row if they have one!
-      if (chosenMember.pin) {
-        payload.push({ leader_id: chosenMember.id, title: 'security_pin', notes: chosenMember.pin });
-      }
 
       // First delete any previous entries for this leader in leader_milestones, then insert the new ones
       return supabase
@@ -1663,5 +1640,5 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
     applyAutoDir();
   })();
   </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b91d379cdde1f4',t:'MTc4NDEyMjE0Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b9c2161a7318a9',t:'MTc4NDEyODg5OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
