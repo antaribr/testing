@@ -298,10 +298,12 @@
 
       <!-- ═════════ STEP 5: milestones ═════════ -->
       <section class="step" data-step="milestones">
-        <h1 class="step-title">Your Scouting Journey</h1>
-        <p class="step-sub">Answer the following questions. Your responses are saved automatically.</p>
+        <h1 class="step-title" id="milestonesTitle">Your Scouting Journey</h1>
+        <p class="step-sub" id="milestonesSub">Answer the following questions. Your responses are saved automatically.</p>
 
-        <div class="panel">
+        <!-- YOUTH MEMBERS MILESTONES -->
+        <div id="youthMilestonesWrap">
+          <div class="panel">
           <div class="ms-field">
             <label class="ms-field-label" for="msJoinYear">Year Joined the Lebanese Scout Association</label>
             <input type="number" dir="ltr" id="msJoinYear" min="1950" max="2100" placeholder="Example: 2015" />
@@ -406,6 +408,49 @@
           </div>
         </div>
 
+        </div> <!-- END youthMilestonesWrap -->
+
+        <!-- LEADERS MILESTONES -->
+        <div id="leaderMilestonesWrap" style="display:none; padding: 12px 0;">
+          <!-- Assigned Unit & Role -->
+          <div class="panel" style="padding: 16px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); margin-bottom: 16px;">
+            <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--primary); font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--line); padding-bottom: 8px;">الوحدة والمركز القيادي الحالي</h3>
+            <div class="ms-field" style="margin-bottom: 12px;">
+              <label class="ms-field-label" style="font-weight: 700; font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px;">الوحدة القيادية (Assigned Unit)</label>
+              <select id="leaderAssignedUnit" class="form-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg); font-family: inherit; font-size: 14px;">
+                <option value="">اختر الوحدة...</option>
+                <option value="Beavers">Beavers</option>
+                <option value="Cubs">Cubs</option>
+                <option value="Girlscouts">Girlscouts</option>
+                <option value="Boyscouts">Boyscouts</option>
+                <option value="Pioneers">Pioneers</option>
+                <option value="Rovers">Rovers</option>
+                <option value="Group Council">قيادة الفوج (Group Council)</option>
+              </select>
+            </div>
+            <div class="ms-field" style="margin-bottom: 12px;">
+              <label class="ms-field-label" style="font-weight: 700; font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px;">المركز الحالي (Role / Position)</label>
+              <input type="text" id="leaderRole" placeholder="مثال: قائد وحدة، مساعد قائد فوج" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg); font-family: inherit; font-size: 14px;" />
+            </div>
+            <div class="ms-field">
+              <label class="ms-field-label" style="font-weight: 700; font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 4px;">تاريخ الانضمام للقيادة (Join Date)</label>
+              <input type="date" id="leaderJoinDate" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg); font-family: inherit; font-size: 14px;" />
+            </div>
+          </div>
+
+          <!-- Leader Ranks -->
+          <div class="panel" style="padding: 16px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); margin-bottom: 16px;">
+            <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--primary); font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--line); padding-bottom: 8px;">الرتب القيادية (Ranks)</h3>
+            <div id="leaderRanksList"></div>
+          </div>
+
+          <!-- Leader Training Courses -->
+          <div class="panel" style="padding: 16px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); margin-bottom: 16px;">
+            <h3 style="margin-top: 0; margin-bottom: 16px; color: var(--primary); font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--line); padding-bottom: 8px;">الدراسات والشهادات التدريبية (Courses)</h3>
+            <div id="leaderCoursesList"></div>
+          </div>
+        </div>
+
         <div class="save-hint" id="msSaveHint"><div class="dot"></div><span>Auto-saving</span></div>
       </section>
 
@@ -459,14 +504,34 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
     };
     var current = 'unit';
 
+    var LEADER_RANKS_OPTS = [
+      "مرشح للقيادة",
+      "مساعد قائد وحدة",
+      "قائد وحدة",
+      "مساعد قائد تدريب",
+      "قائد تدريب"
+    ];
+
+    var LEADER_COURSES_OPTS = [
+      "الدراسة التمهيدية للشارة الخشبية",
+      "دراسة الشارة الخشبية - الجزء الأول (نظري)",
+      "دراسة الشارة الخشبية - الجزء الثاني (عملي)",
+      "شهادة الشارة الخشبية (حامل الشارة الخشبية)",
+      "دراسة مساعد قائد تدريب",
+      "دراسة قائد تدريب"
+    ];
+
+    var leaderRanksData = [];
+    var leaderTrainingsData = [];
+
     function isBoyscoutFamily(){
       return chosenUnit === 'Boyscouts' || chosenUnit === 'Girlscouts';
     }
     // Recompute the ordered step list based on unit + milestone state.
     function computeSteps(){
       if(chosenUnit === 'Leaders'){
-        // Leaders can see badges and basic info directly, skipping PIN and Milestones
-        return ['unit','name','badges','done'];
+        // Leaders register badges, then milestones (ranks, courses, and dates), skipping PIN
+        return ['unit','name','badges','milestones','done'];
       }
       var base = ['unit','name','pin'];
       if(isBoyscoutFamily()){
@@ -581,7 +646,7 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       var isLastContentStep = (idx === STEPS.length - 2);
       if(isLastContentStep){
         if(chosenUnit === 'Leaders'){
-          goto('done');
+          saveLeaderProfileNow(true).then(function(){ goto('done'); });
         } else {
           // Whatever the last content step is (badges or milestones),
           // treat "Finish" the same way: force save then go to 'done'.
@@ -757,9 +822,11 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       if (chosenUnit === 'Leaders') {
         return Promise.all([
           supabase.from('badge_definitions').select('id, name, logo_url, category'),
-          supabase.from(badgeTable).select('id, badge_name, awarded_date').eq(idField, chosenMember.id)
+          supabase.from(badgeTable).select('id, badge_name, awarded_date').eq(idField, chosenMember.id),
+          supabase.from('leader_ranks').select('rank_name, effective_date').eq('leader_id', chosenMember.id),
+          supabase.from('leader_milestones').select('title, effective_date, notes').eq('leader_id', chosenMember.id)
         ]).then(function(results){
-          var defsRes = results[0], badgesRes = results[1];
+          var defsRes = results[0], badgesRes = results[1], ranksRes = results[2], msRes = results[3];
           badgeDefs = (defsRes.data || []).slice().sort(function(a,b){
             return String(a.category||'zz').localeCompare(String(b.category||'zz'))
                 || String(a.name||'').localeCompare(String(b.name||''));
@@ -768,7 +835,10 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
             selectedBadges.add(b.badge_name);
             existingBadges.add(b.badge_name);
           });
+          leaderRanksData = ranksRes.data || [];
+          leaderTrainingsData = msRes.data || [];
           renderBadges();
+          hydrateLeaderMilestones();
         });
       } else {
         return Promise.all([
@@ -1346,6 +1416,184 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
         }
         markHint('msSaveHint','saved');
         if(showToastOnDone) toast('All your data has been saved ✓','success');
+        return true;
+      });
+    }
+
+    // ─── LEADERS SCOUTING JOURNEY ─────────────────────────────────────
+    function hydrateLeaderMilestones() {
+      document.getElementById('milestonesTitle').textContent = "Leader's Scouting Journey / مسيرة القائد";
+      document.getElementById('milestonesSub').textContent = "Record your leader ranks, training courses, and assignment dates.";
+
+      document.getElementById('youthMilestonesWrap').style.display = 'none';
+      document.getElementById('leaderMilestonesWrap').style.display = 'block';
+
+      document.getElementById('leaderRole').value = chosenMember.role || '';
+      document.getElementById('leaderJoinDate').value = chosenMember.join_date || '';
+      document.getElementById('leaderAssignedUnit').value = chosenMember.unit || '';
+
+      // Hydrate Ranks
+      var ranksList = document.getElementById('leaderRanksList');
+      ranksList.innerHTML = LEADER_RANKS_OPTS.map(function(rankName) {
+        var dbRow = leaderRanksData.find(function(r) { return r.rank_name === rankName; });
+        var checked = !!dbRow;
+        var dateVal = dbRow ? (dbRow.effective_date || '') : '';
+        return '<div class="leader-rank-row" data-rank="'+esc(rankName)+'" style="border-bottom:1px solid var(--line); padding: 12px 0;">' +
+                 '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px;">' +
+                   '<span style="font-weight:700; font-size:14px;">'+esc(rankName)+'</span>' +
+                   '<label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary);">' +
+                     '<input type="checkbox" class="rank-toggle" '+(checked?'checked':'')+' style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;" />' +
+                     '<span>حاصل عليها</span>' +
+                   '</label>' +
+                 '</div>' +
+                 '<div class="rank-date-wrap" style="display: '+(checked?'block':'none')+';">' +
+                   '<label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">تاريخ التقليد (Effective Date)</label>' +
+                   '<input type="date" class="rank-date-input" value="'+esc(dateVal)+'" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--bg); font-family:inherit; font-size:14px;" />' +
+                 '</div>' +
+               '</div>';
+      }).join('');
+
+      ranksList.querySelectorAll('.leader-rank-row').forEach(function(row) {
+        var toggle = row.querySelector('.rank-toggle');
+        var dateWrap = row.querySelector('.rank-date-wrap');
+        var dateInput = row.querySelector('.rank-date-input');
+        
+        toggle.addEventListener('change', function() {
+          dateWrap.style.display = toggle.checked ? 'block' : 'none';
+          scheduleLeaderMilestonesSave();
+        });
+        dateInput.addEventListener('input', function() {
+          scheduleLeaderMilestonesSave();
+        });
+      });
+
+      // Hydrate Courses
+      var coursesList = document.getElementById('leaderCoursesList');
+      coursesList.innerHTML = LEADER_COURSES_OPTS.map(function(courseName) {
+        var dbRow = leaderTrainingsData.find(function(r) { return r.title === courseName; });
+        var checked = !!dbRow;
+        var dateVal = dbRow ? (dbRow.effective_date || '') : '';
+        var notesVal = dbRow ? (dbRow.notes || '') : '';
+        return '<div class="leader-course-row" data-course="'+esc(courseName)+'" style="border-bottom:1px solid var(--line); padding: 12px 0;">' +
+                 '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px;">' +
+                   '<span style="font-weight:700; font-size:14px;">'+esc(courseName)+'</span>' +
+                   '<label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary);">' +
+                     '<input type="checkbox" class="course-toggle" '+(checked?'checked':'')+' style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;" />' +
+                     '<span>حاصل عليها</span>' +
+                   '</label>' +
+                 '</div>' +
+                 '<div class="course-details-wrap" style="display: '+(checked?'block':'none')+';">' +
+                   '<div style="margin-bottom:8px;">' +
+                     '<label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">تاريخ الحصول عليها (Date Completed)</label>' +
+                     '<input type="date" class="course-date-input" value="'+esc(dateVal)+'" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--bg); font-family:inherit; font-size:14px;" />' +
+                   '</div>' +
+                   '<div>' +
+                     '<label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">مكان الدراسة / ملاحظات (Location / Notes)</label>' +
+                     '<input type="text" class="course-notes-input" value="'+esc(notesVal)+'" placeholder="مثال: مفوضية الجنوب، فوج صيدا الأول" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--bg); font-family:inherit; font-size:14px;" />' +
+                   '</div>' +
+                 '</div>' +
+               '</div>';
+      }).join('');
+
+      coursesList.querySelectorAll('.leader-course-row').forEach(function(row) {
+        var toggle = row.querySelector('.course-toggle');
+        var detailsWrap = row.querySelector('.course-details-wrap');
+        var dateInput = row.querySelector('.course-date-input');
+        var notesInput = row.querySelector('.course-notes-input');
+        
+        toggle.addEventListener('change', function() {
+          detailsWrap.style.display = toggle.checked ? 'block' : 'none';
+          scheduleLeaderMilestonesSave();
+        });
+        dateInput.addEventListener('input', function() {
+          scheduleLeaderMilestonesSave();
+        });
+        notesInput.addEventListener('input', function() {
+          scheduleLeaderMilestonesSave();
+        });
+      });
+
+      // Unit/Role bindings
+      document.getElementById('leaderAssignedUnit').addEventListener('change', scheduleLeaderMilestonesSave);
+      document.getElementById('leaderRole').addEventListener('input', scheduleLeaderMilestonesSave);
+      document.getElementById('leaderJoinDate').addEventListener('change', scheduleLeaderMilestonesSave);
+    }
+
+    var leaderSaveTimer = null;
+    function scheduleLeaderMilestonesSave() {
+      markHint('msSaveHint', 'saving');
+      clearTimeout(leaderSaveTimer);
+      leaderSaveTimer = setTimeout(function() {
+        saveLeaderProfileNow(false);
+      }, 700);
+    }
+
+    function saveLeaderProfileNow(showToastOnDone) {
+      if (!chosenMember || chosenUnit !== 'Leaders') return Promise.resolve(true);
+      markHint('msSaveHint', 'saving');
+
+      var roleVal = document.getElementById('leaderRole').value.trim();
+      var joinDateVal = document.getElementById('leaderJoinDate').value || null;
+      var assignedUnitVal = document.getElementById('leaderAssignedUnit').value || null;
+
+      // Update leaders table
+      var updateLeaderPromise = supabase
+        .from('leaders')
+        .update({ role: roleVal, join_date: joinDateVal, unit: assignedUnitVal })
+        .eq('id', chosenMember.id);
+
+      // Compile Ranks
+      var ranksToSave = [];
+      document.querySelectorAll('.leader-rank-row').forEach(function(row) {
+        var name = row.getAttribute('data-rank');
+        var checked = row.querySelector('.rank-toggle').checked;
+        var dateVal = row.querySelector('.rank-date-input').value || null;
+        if (checked) {
+          ranksToSave.push({ leader_id: chosenMember.id, rank_name: name, effective_date: dateVal });
+        }
+      });
+
+      var saveRanksPromise = supabase
+        .from('leader_ranks')
+        .delete()
+        .eq('leader_id', chosenMember.id)
+        .then(function() {
+          if (ranksToSave.length) {
+            return supabase.from('leader_ranks').insert(ranksToSave);
+          }
+        });
+
+      // Compile Trainings
+      var trainingToSave = [];
+      document.querySelectorAll('.leader-course-row').forEach(function(row) {
+        var name = row.getAttribute('data-course');
+        var checked = row.querySelector('.course-toggle').checked;
+        var dateVal = row.querySelector('.course-date-input').value || null;
+        var notesVal = row.querySelector('.course-notes-input').value.trim() || null;
+        if (checked) {
+          trainingToSave.push({ leader_id: chosenMember.id, title: name, effective_date: dateVal, notes: notesVal });
+        }
+      });
+
+      var saveTrainingsPromise = supabase
+        .from('leader_milestones')
+        .delete()
+        .eq('leader_id', chosenMember.id)
+        .then(function() {
+          if (trainingToSave.length) {
+            return supabase.from('leader_milestones').insert(trainingToSave);
+          }
+        });
+
+      return Promise.all([updateLeaderPromise, saveRanksPromise, saveTrainingsPromise]).then(function(results) {
+        var err = results.find(function(r) { return r && r.error; });
+        if (err) {
+          markHint('msSaveHint', 'error');
+          toast('Error saving milestones', 'error');
+          return false;
+        }
+        markHint('msSaveHint', 'saved');
+        if (showToastOnDone) toast('All your leader details have been saved ✓', 'success');
         return true;
       });
     }
