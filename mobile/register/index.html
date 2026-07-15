@@ -1464,7 +1464,8 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       document.getElementById('leaderCurrentRankDate').value = curRankRow ? (curRankRow.effective_date || '') : '';
 
       var scoutTitleRow = leaderTrainingsData.find(function(r) { return r.title === 'leader_scout_title'; });
-      var scoutTitle = scoutTitleRow ? JSON.parse(scoutTitleRow.notes) : { title: '', location: '', godfather: '', date: '' };
+      var scoutTitle = (scoutTitleRow && scoutTitleRow.notes) ? JSON.parse(scoutTitleRow.notes) : null;
+      scoutTitle = scoutTitle || { title: '', location: '', godfather: '', date: '' };
       document.getElementById('leaderTitle').value = scoutTitle.title || '';
       document.getElementById('leaderTitlePlace').value = scoutTitle.location || '';
       document.getElementById('leaderTitleGodfather').value = scoutTitle.godfather || '';
@@ -1475,10 +1476,13 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
 
       // Clear and populate previous custom ranks list
       var customRanksRow = leaderTrainingsData.find(function(r) { return r.title === 'leader_custom_ranks_list'; });
-      var customRanksList = customRanksRow ? JSON.parse(customRanksRow.notes) : [];
+      var customRanksList = (customRanksRow && customRanksRow.notes) ? JSON.parse(customRanksRow.notes) : null;
+      customRanksList = customRanksList || [];
       document.getElementById('leaderCustomRanksContainer').innerHTML = '';
       customRanksList.forEach(function(rank) {
-        addCustomRankRow(rank.name, rank.start_date, rank.end_date);
+        if (rank) {
+          addCustomRankRow(rank.name, rank.start_date, rank.end_date);
+        }
       });
 
       // Bind leader journey form inputs to save
@@ -1577,13 +1581,13 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       // 4. Get consecration date
       var consecrationDate = document.getElementById('leaderConsecrationDate').value || null;
 
-      // Compile rows to upsert into leader_milestones
+      // Compile rows to upsert into leader_milestones (Fully uniform keys to ensure PostgREST compliance)
       var payload = [
-        { leader_id: chosenMember.id, title: 'leader_current_rank', notes: curRankName, effective_date: curRankDate },
-        { leader_id: chosenMember.id, title: 'leader_custom_ranks_list', notes: JSON.stringify(customRanks) },
-        { leader_id: chosenMember.id, title: 'leader_scout_title', notes: JSON.stringify(scoutTitle) },
-        { leader_id: chosenMember.id, title: 'leader_consecration', effective_date: consecrationDate },
-        { leader_id: chosenMember.id, title: 'leader_youth_journey', notes: JSON.stringify(milestones) }
+        { leader_id: chosenMember.id, title: 'leader_current_rank', notes: curRankName || null, effective_date: curRankDate || null },
+        { leader_id: chosenMember.id, title: 'leader_custom_ranks_list', notes: JSON.stringify(customRanks) || null, effective_date: null },
+        { leader_id: chosenMember.id, title: 'leader_scout_title', notes: JSON.stringify(scoutTitle) || null, effective_date: null },
+        { leader_id: chosenMember.id, title: 'leader_consecration', notes: null, effective_date: consecrationDate || null },
+        { leader_id: chosenMember.id, title: 'leader_youth_journey', notes: JSON.stringify(milestones) || null, effective_date: null }
       ];
 
 
@@ -1647,5 +1651,5 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
     applyAutoDir();
   })();
   </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b9ccac593fe28c',t:'MTc4NDEyOTMzMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b9e2910af1e1c1',t:'MTc4NDEzMDIyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
