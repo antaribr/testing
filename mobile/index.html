@@ -1476,7 +1476,7 @@ async function ensureMemberDetail(memberId) {
 
   const { data, error } = await window.supabaseClient
     .from('members')
-    .select('phone, parent_type, parent_phone, blood_type, nationality')
+    .select('phone, parent_type, parent_phone')
     .eq('id', memberId)
     .single();
 
@@ -1484,8 +1484,6 @@ async function ensureMemberDetail(memberId) {
     m.phone = data.phone;
     m.parentType = data.parent_type || '';
     m.parentPhone = data.parent_phone;
-    m.bloodType = data.blood_type;
-    m.nationality = data.nationality;
     m.isDetailed = true;
   }
   return m;
@@ -1498,15 +1496,13 @@ async function ensureLeaderDetail(leaderId) {
 
   const { data, error } = await window.supabaseClient
     .from('leaders')
-    .select('phone, parent_phone, blood_type, nationality, join_date')
+    .select('phone, parent_phone, join_date')
     .eq('id', leaderId)
     .single();
 
   if (!error && data) {
     l.phone = data.phone;
     l.parentPhone = data.parent_phone;
-    l.bloodType = data.blood_type;
-    l.nationality = data.nationality;
     l.joinDate = data.join_date;
     l.isDetailed = true;
   }
@@ -1520,8 +1516,8 @@ async function loadAllData() {
     badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes,
     memberMilestonesRes
   ] = await Promise.all([
-    supabaseClient.from('members').select('id, first_name, middle_name, last_name, gender, dob, unit, email, created_at').order('created_at', { ascending: false }),
-    supabaseClient.from('leaders').select('id, first_name, middle_name, last_name, gender, role, dob, email, created_at').order('created_at', { ascending: false }),
+    supabaseClient.from('members').select('id, first_name, middle_name, last_name, gender, dob, unit, email, created_at, blood_type, nationality').order('created_at', { ascending: false }),
+    supabaseClient.from('leaders').select('id, first_name, middle_name, last_name, gender, role, dob, email, created_at, blood_type, nationality').order('created_at', { ascending: false }),
     supabaseClient.from('payments').select('id, member_id, year, amount, status, payment_date').order('created_at', { ascending: false }),
     supabaseClient.from('badges').select('id, member_id, badge_name, awarded_date').order('created_at', { ascending: false }),
     supabaseClient.from('ranks').select('id, member_id, rank_name, effective_date').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
@@ -5180,5 +5176,5 @@ init();
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1b38ca77cd21f37',t:'MTc4NDA2Mzc5Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
