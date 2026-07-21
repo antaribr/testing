@@ -419,11 +419,8 @@
       <div class="topbar-eyebrow" id="topbarEyebrow">Dashboard</div>
       <div class="topbar-heading" id="topbarHeading">Saida One</div>
     </div>
-    <div class="topbar-actions" style="display: flex; align-items: center; gap: 8px;">
+    <div class="topbar-actions">
       <span id="roleBadge" class="role-badge"></span>
-      <button type="button" class="icon-btn" id="mobileRefreshBtn" aria-label="Refresh" style="width:36px; height:36px; display: grid; place-items: center; border-radius:10px; background:var(--primary-tint); color:var(--primary); cursor: pointer; border: none;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s ease;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-      </button>
       <span id="buildTag" style="font-size:9px;color:#94a3b8;font-family:monospace;padding-left:6px;">v22-12-months</span>
     </div>
   </header>
@@ -1468,47 +1465,6 @@ function bindForms() {
    Data loading & mapping
    ====================================================================== */
 
-
-async function ensureMemberDetail(memberId) {
-  const m = window.state.members.find(x => x.id === memberId);
-  if (!m) return null;
-  if (m.isDetailed) return m;
-
-  const { data, error } = await window.supabaseClient
-    .from('members')
-    .select('phone, parent_type, parent_phone')
-    .eq('id', memberId)
-    .single();
-
-  if (!error && data) {
-    m.phone = data.phone;
-    m.parentType = data.parent_type || '';
-    m.parentPhone = data.parent_phone;
-    m.isDetailed = true;
-  }
-  return m;
-}
-
-async function ensureLeaderDetail(leaderId) {
-  const l = window.state.leaders.find(x => x.id === leaderId);
-  if (!l) return null;
-  if (l.isDetailed) return l;
-
-  const { data, error } = await window.supabaseClient
-    .from('leaders')
-    .select('phone, parent_phone, join_date')
-    .eq('id', leaderId)
-    .single();
-
-  if (!error && data) {
-    l.phone = data.phone;
-    l.parentPhone = data.parent_phone;
-    l.joinDate = data.join_date;
-    l.isDetailed = true;
-  }
-  return l;
-}
-
 async function loadAllData() {
   const [
     membersRes, leadersRes, paymentsRes, badgesRes, ranksRes,
@@ -1516,18 +1472,18 @@ async function loadAllData() {
     badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes,
     memberMilestonesRes
   ] = await Promise.all([
-    supabaseClient.from('members').select('id, first_name, middle_name, last_name, gender, dob, unit, email, created_at, blood_type, nationality').order('created_at', { ascending: false }),
-    supabaseClient.from('leaders').select('id, first_name, middle_name, last_name, gender, role, dob, email, created_at, blood_type, nationality').order('created_at', { ascending: false }),
-    supabaseClient.from('payments').select('id, member_id, year, amount, status, payment_date').order('created_at', { ascending: false }),
-    supabaseClient.from('badges').select('id, member_id, badge_name, awarded_date').order('created_at', { ascending: false }),
-    supabaseClient.from('ranks').select('id, member_id, rank_name, effective_date').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('member_attendance').select('id, member_id, date, status, activity').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_attendance').select('id, leader_id, date, status, meeting').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('badge_definitions').select('id, name, logo_url, category').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_badges').select('id, leader_id, badge_name, awarded_date').then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_milestones').select('id, leader_id, title, effective_date').then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_ranks').select('id, leader_id, rank_name, effective_date').then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('member_milestones').select('member_id, join_year, yellow_passed, yellow_ranks, green_passed, green_ranks, green_consecration_year, red_passed, red_ranks, red_consecration_year, red_departure_year, updated_at, green_leadership, red_leadership, yellow_rank_dates, green_rank_dates, red_rank_dates').then(r => r, e => ({ data: [], error: e }))
+    supabaseClient.from('members').select('*').order('created_at', { ascending: false }),
+    supabaseClient.from('leaders').select('*').order('created_at', { ascending: false }),
+    supabaseClient.from('payments').select('*').order('created_at', { ascending: false }),
+    supabaseClient.from('badges').select('*').order('created_at', { ascending: false }),
+    supabaseClient.from('ranks').select('*').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('member_attendance').select('*').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('leader_attendance').select('*').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('badge_definitions').select('*').order('created_at', { ascending: false }).then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('leader_badges').select('*').then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('leader_milestones').select('*').then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('leader_ranks').select('*').then(r => r, e => ({ data: [], error: e })),
+    supabaseClient.from('member_milestones').select('*').then(r => r, e => ({ data: [], error: e }))
   ]);
 
   state.members = (membersRes.data || []).map(mapMember);
@@ -2530,8 +2486,8 @@ function unitLeaderRow(l) {
   `;
 }
 
-async function openMemberProfile(memberId) {
-  const m = await ensureMemberDetail(memberId);
+function openMemberProfile(memberId) {
+  const m = state.members.find(x => x.id === memberId);
   if (!m) {
     showToast('Member not found', 'error');
     return;
@@ -3197,27 +3153,6 @@ function formatTimeRange(start, end) {
 
 init();
 
-  // Bind Mobile Global Refresh Button (Bypasses cache and updates UI aggregates)
-  var mobileRefreshBtn = document.getElementById('mobileRefreshBtn');
-  if (mobileRefreshBtn) {
-    mobileRefreshBtn.addEventListener('click', function() {
-      var icon = mobileRefreshBtn.querySelector('svg');
-      if (icon) icon.style.transform = 'rotate(360deg)';
-      mobileRefreshBtn.disabled = true;
-      var toast = (typeof window.showToast === 'function') ? window.showToast : function(m){alert(m);};
-      toast('Refreshing all data...', 'info');
-      loadAllData().then(function() {
-        toast('Data refreshed successfully ✓', 'success');
-        mobileRefreshBtn.disabled = false;
-        renderAll();
-      }).catch(function(err) {
-        toast('Refresh failed: ' + err.message, 'error');
-        mobileRefreshBtn.disabled = false;
-      });
-    });
-  }
-
-
 </script>
 
 <script>
@@ -3506,13 +3441,10 @@ init();
     return html;
   }
 
-  async function renderProfile(id, type){
+  function renderProfile(id, type){
     var person=null;
-    if(type==='leader'){
-      person = await ensureLeaderDetail(id);
-    } else {
-      person = await ensureMemberDetail(id);
-    }
+    if(type==='leader'){person=((window.state&&window.state.leaders)||[]).find(function(x){return x.id===id;});}
+    else{person=((window.state&&window.state.members)||[]).find(function(x){return x.id===id;});}
     if(!person){
       var toast=(typeof window.showToast==='function')?window.showToast:function(m){alert(m);};
       toast('Profile not found','error');
@@ -4521,14 +4453,10 @@ init();
   });
 
   /* ---------- Download profile as PDF ---------- */
-  window.__downloadProfilePdf=async function(id,type){
+  window.__downloadProfilePdf=function(id,type){
     var person=null;
-    if(type==='leader'){
-      person = await ensureLeaderDetail(id);
-    } else {
-      person = await ensureMemberDetail(id);
-    }
-    
+    if(type==='leader'){person=((window.state&&window.state.leaders)||[]).find(function(x){return x.id===id;});}
+    else{person=((window.state&&window.state.members)||[]).find(function(x){return x.id===id;});}
     if(!person){alert('Profile not found');return;}
     // No JS PDF library needed anymore — we use the browser's native print
     // pipeline (window.print → user picks "Save as PDF"). The legacy raster
