@@ -485,6 +485,27 @@
       </div>
     </section>
 
+    <section id="groupLeader" class="view">
+      <div class="header-block" style="margin-bottom: 20px;">
+        <div class="eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: .06em; color: var(--muted); font-weight: 700;">Group Leader / القائد العام</div>
+        <h1 style="font-size: 24px; font-weight: 800; margin: 4px 0 0;">لوحة إدارة المراحل</h1>
+      </div>
+
+      <!-- Unit Grid (Always visible on start) -->
+      <div id="glUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+        <!-- Dynamically rendered unit boxes -->
+      </div>
+
+      <!-- Specific Unit Members Container (Hidden by default, shows on click) -->
+      <div id="glMembersContainer" class="mobile-panel" style="display: none; padding: 16px; border-radius: var(--radius);">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
+          <h3 id="glSelectedUnitTitle" style="margin: 0; font-size: 18px; font-weight: 800; color: var(--primary);">Members</h3>
+          <button type="button" id="glBackToGridBtn" style="color: var(--primary); font-weight: 700; font-size: 14px; background: none; border: none; cursor: pointer;">✕ إغلاق</button>
+        </div>
+        <div id="glMembersList" class="people-list"></div>
+      </div>
+    </section>
+
     <section id="units" class="view">
       <div class="unit-tabs" id="unitsTabs"></div>
       <div id="unitsContent" class="units-content"></div>
@@ -637,6 +658,10 @@
   </main>
 
   <nav class="bottom-nav" id="bottomNav">
+    <button type="button" class="tab-btn group-leader-only" data-view="groupLeader" onclick="window.__go && window.__go('groupLeader')" style="display:none;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Stages</span>
+    </button>
     <button type="button" class="tab-btn active" data-view="dashboard" onclick="window.__go && window.__go('dashboard')">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span>Home</span>
@@ -1065,6 +1090,7 @@ async function resolveCurrentUser() {
         return le && le === email;
       })
     : null) || null;
+  currentUser.role = rawRole;
 }
 
 function scopedMembers() {
@@ -3177,8 +3203,16 @@ init();
   drawer&&drawer.addEventListener('touchstart',function(e){touchStartX=e.touches[0].clientX;},{passive:true});
   drawer&&drawer.addEventListener('touchmove',function(e){if(touchStartX==null)return;var dx=e.touches[0].clientX-touchStartX;if(dx<-40){closeDrawer();touchStartX=null;}},{passive:true});
 
-  var VIEWS=['dashboard','units','submit','assign','settings','profile'];
-  var HEADINGS={dashboard:{eyebrow:'Overview',heading:'Dashboard'},units:{eyebrow:'Roster',heading:'Members'},submit:{eyebrow:'Submit',heading:'Weekly Program'},assign:{eyebrow:'Awards',heading:'Assign Badges'},settings:{eyebrow:'Account',heading:'Settings'},profile:{eyebrow:'Profile',heading:'Member'}};
+  var VIEWS=['dashboard','units','submit','assign','settings','profile','groupLeader'];
+  var HEADINGS={
+    dashboard:{eyebrow:'Overview',heading:'Dashboard'},
+    units:{eyebrow:'Roster',heading:'Members'},
+    submit:{eyebrow:'Submit',heading:'Weekly Program'},
+    assign:{eyebrow:'Awards',heading:'Assign Badges'},
+    settings:{eyebrow:'Account',heading:'Settings'},
+    profile:{eyebrow:'Profile',heading:'Member'},
+    groupLeader:{eyebrow:'Group Leader',heading:'لوحة إدارة المراحل'}
+  };
 
   function go(id){
     if(VIEWS.indexOf(id)===-1)id='dashboard';
@@ -3222,6 +3256,12 @@ init();
     var isAdmin=!!(window.currentUser&&window.currentUser.isAdmin);
     var admins=document.querySelectorAll('.admin-only');
     for(var i=0;i<admins.length;i++)admins[i].style.display=isAdmin?'':'none';
+    
+    // Toggle Group Leader view tabs/elements
+    var isGroupLeader = !!(window.currentUser && window.currentUser.role === 'group_leader');
+    var groupLeaders = document.querySelectorAll('.group-leader-only');
+    for(var i=0;i<groupLeaders.length;i++)groupLeaders[i].style.display=isGroupLeader?'':'none';
+
     var nav=document.getElementById('bottomNav');
     if(nav){var visible=0;var btns=nav.querySelectorAll('.tab-btn');for(var j=0;j<btns.length;j++)if(btns[j].style.display!=='none')visible++;if(!visible)visible=4;nav.style.gridTemplateColumns='repeat('+visible+', 1fr)';}
     var emailEl=document.getElementById('drawerEmail');if(emailEl)emailEl.textContent=(window.currentUser&&window.currentUser.email)||'—';
@@ -5104,5 +5144,5 @@ init();
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ec15a53f6ae30c',t:'MTc4NDY1NjYxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
