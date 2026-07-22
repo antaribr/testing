@@ -487,8 +487,8 @@
 
     <section id="groupLeader" class="view">
       <div class="header-block" style="margin-bottom: 20px;">
-        <div class="eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: .06em; color: var(--muted); font-weight: 700;">Group Leader / القائد العام</div>
-        <h1 style="font-size: 24px; font-weight: 800; margin: 4px 0 0;">لوحة إدارة المراحل</h1>
+        <div class="eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: .06em; color: var(--muted); font-weight: 700;">Admin Overview</div>
+        <h1 style="font-size: 24px; font-weight: 800; margin: 4px 0 0;">Unit Stages Dashboard</h1>
       </div>
 
       <!-- Unit Grid (Always visible on start) -->
@@ -500,7 +500,7 @@
       <div id="glMembersContainer" class="mobile-panel" style="display: none; padding: 16px; border-radius: var(--radius);">
         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
           <h3 id="glSelectedUnitTitle" style="margin: 0; font-size: 18px; font-weight: 800; color: var(--primary);">Members</h3>
-          <button type="button" id="glBackToGridBtn" style="color: var(--primary); font-weight: 700; font-size: 14px; background: none; border: none; cursor: pointer;">✕ إغلاق</button>
+          <button type="button" id="glBackToGridBtn" style="color: var(--primary); font-weight: 700; font-size: 14px; background: none; border: none; cursor: pointer;">✕ Close</button>
         </div>
         <div id="glMembersList" class="people-list"></div>
       </div>
@@ -658,7 +658,7 @@
   </main>
 
   <nav class="bottom-nav" id="bottomNav">
-    <button type="button" class="tab-btn group-leader-only" data-view="groupLeader" onclick="window.__go && window.__go('groupLeader')" style="display:none;">
+    <button type="button" class="tab-btn admin-only" data-view="groupLeader" onclick="window.__go && window.__go('groupLeader')" style="display:none;">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span>Stages</span>
     </button>
@@ -3212,7 +3212,7 @@ init();
     assign:{eyebrow:'Awards',heading:'Assign Badges'},
     settings:{eyebrow:'Account',heading:'Settings'},
     profile:{eyebrow:'Profile',heading:'Member'},
-    groupLeader:{eyebrow:'Group Leader',heading:'لوحة إدارة المراحل'}
+    groupLeader:{eyebrow:'Admin',heading:'Unit Stages'}
   };
 
   function go(id){
@@ -3258,10 +3258,7 @@ init();
     var admins=document.querySelectorAll('.admin-only');
     for(var i=0;i<admins.length;i++)admins[i].style.display=isAdmin?'':'none';
     
-    // Toggle Group Leader view tabs/elements
-    var isGroupLeader = !!(window.currentUser && window.currentUser.role === 'group_leader');
-    var groupLeaders = document.querySelectorAll('.group-leader-only');
-    for(var i=0;i<groupLeaders.length;i++)groupLeaders[i].style.display=isGroupLeader?'':'none';
+
 
     var nav=document.getElementById('bottomNav');
     if(nav){var visible=0;var btns=nav.querySelectorAll('.tab-btn');for(var j=0;j<btns.length;j++)if(btns[j].style.display!=='none')visible++;if(!visible)visible=4;nav.style.gridTemplateColumns='repeat('+visible+', 1fr)';}
@@ -3278,8 +3275,7 @@ init();
     var UNIT_ORDER=['Beavers','Cubs','Boyscouts','Girlscouts','Pioneers','Rovers','Leaders'];
     var UNIT_ICONS={Beavers:'🦫',Cubs:'🐾',Boyscouts:'⚜',Girlscouts:'🌸',Pioneers:'🏕',Rovers:'🧭',Leaders:'👔'};
     var cu=window.currentUser||{};
-    var isGL=(cu.role === 'group_leader');
-    var visible=(cu.isAdmin || isGL)?UNIT_ORDER:(cu.unit?[cu.unit]:[]);
+    var visible=(cu.isAdmin)?UNIT_ORDER:(cu.unit?[cu.unit]:[]);
     if(!window.activeUnit||visible.indexOf(window.activeUnit)===-1)window.activeUnit=visible[0]||'Beavers';
     if(!visible.length){tabsEl.innerHTML='';contentEl.innerHTML='<div class="empty-state"><div class="icon">🔒</div><h4>No unit assigned</h4><p>Contact an admin to assign your role.</p></div>';return;}
     tabsEl.innerHTML=visible.map(function(u){
@@ -5146,5 +5142,5 @@ init();
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ee39552f10e15a',t:'MTc4NDY3OTA0Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f2d0acdf3b2438',t:'MTc4NDcyNzE4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
