@@ -1063,7 +1063,7 @@ async function resolveCurrentUser() {
   const rawRole = String(appMeta.role || userMeta.role || '').trim().toLowerCase();
   const rawUnit = String(appMeta.unit || userMeta.unit || '').trim();
 
-  if (rawRole === 'admin' || rawRole === 'administrator' || rawRole.includes('admin')) {
+  if (rawRole === 'admin' || rawRole === 'administrator' || rawRole.includes('admin') || rawRole === 'super_admin' || rawRole === 'superadmin') {
     currentUser.isAdmin = true;
   } else {
     // Try, in order: role metadata -> explicit unit metadata -> email pattern.
@@ -3793,20 +3793,24 @@ init();
   // ---- Admin Stages Dashboard ----
   function renderGroupLeaderDashboard() {
     var pillsRow = document.getElementById('glUnitFilters');
-    if (pillsRow && !pillsRow.dataset.bound) {
-      pillsRow.dataset.bound = '1';
-      pillsRow.querySelectorAll('.filter-pill').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          pillsRow.querySelectorAll('.filter-pill').forEach(function(b) { b.classList.remove('active'); });
-          btn.classList.add('active');
-          var filterVal = btn.getAttribute('data-unit');
-          renderGroupLeaderTransitions(filterVal);
+    var isAdmin = !!(currentUser && currentUser.isAdmin);
+    if (pillsRow) {
+      pillsRow.style.display = isAdmin ? 'flex' : 'none'; // Hide filter pills for non-admin unit leaders
+      if (!pillsRow.dataset.bound) {
+        pillsRow.dataset.bound = '1';
+        pillsRow.querySelectorAll('.filter-pill').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            pillsRow.querySelectorAll('.filter-pill').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var filterVal = btn.getAttribute('data-unit');
+            renderGroupLeaderTransitions(filterVal);
+          });
         });
-      });
+      }
     }
 
     var activeBtn = pillsRow ? pillsRow.querySelector('.filter-pill.active') : null;
-    var activeFilter = activeBtn ? activeBtn.getAttribute('data-unit') : 'All';
+    var activeFilter = (activeBtn && isAdmin) ? activeBtn.getAttribute('data-unit') : 'All';
     renderGroupLeaderTransitions(activeFilter);
   }
 
@@ -3821,7 +3825,8 @@ init();
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var results = [];
 
-    (state.members || []).forEach(function(m) {
+    var visibleMembers = scopedMembers(); // Scope members: Admin sees all, leaders see their unit only
+    visibleMembers.forEach(function(m) {
       if (!m.dob || !m.unit) return;
       var unit = window.canonicalUnit(m.unit);
       var rule = unit ? UNIT_TRANSITIONS[unit] : null;
@@ -5262,5 +5267,5 @@ init();
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f35d858b9de173',t:'MTc4NDczMjk1NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f371ebff208df0',t:'MTc4NDczMzc5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
