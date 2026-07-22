@@ -2019,7 +2019,8 @@ function renderUpcomingTransitions() {
 
 function renderStats() {
   // Scope for non-admins: only their unit's members.
-  if (!currentUser.isAdmin && !currentUser.unit) {
+  var isGL = (currentUser && currentUser.role === 'group_leader');
+  if (!currentUser.isAdmin && !currentUser.unit && !isGL) {
     renderNoUnitDashboard();
     return;
   }
@@ -3277,7 +3278,8 @@ init();
     var UNIT_ORDER=['Beavers','Cubs','Boyscouts','Girlscouts','Pioneers','Rovers','Leaders'];
     var UNIT_ICONS={Beavers:'🦫',Cubs:'🐾',Boyscouts:'⚜',Girlscouts:'🌸',Pioneers:'🏕',Rovers:'🧭',Leaders:'👔'};
     var cu=window.currentUser||{};
-    var visible=cu.isAdmin?UNIT_ORDER:(cu.unit?[cu.unit]:[]);
+    var isGL=(cu.role === 'group_leader');
+    var visible=(cu.isAdmin || isGL)?UNIT_ORDER:(cu.unit?[cu.unit]:[]);
     if(!window.activeUnit||visible.indexOf(window.activeUnit)===-1)window.activeUnit=visible[0]||'Beavers';
     if(!visible.length){tabsEl.innerHTML='';contentEl.innerHTML='<div class="empty-state"><div class="icon">🔒</div><h4>No unit assigned</h4><p>Contact an admin to assign your role.</p></div>';return;}
     tabsEl.innerHTML=visible.map(function(u){
@@ -5144,5 +5146,5 @@ init();
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1ee39552f10e15a',t:'MTc4NDY3OTA0Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
