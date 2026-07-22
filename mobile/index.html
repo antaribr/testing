@@ -3290,7 +3290,7 @@ init();
     if(!window.activeUnit||visible.indexOf(window.activeUnit)===-1)window.activeUnit=visible[0]||'Beavers';
     if(!visible.length){tabsEl.innerHTML='';contentEl.innerHTML='<div class="empty-state"><div class="icon">🔒</div><h4>No unit assigned</h4><p>Contact an admin to assign your role.</p></div>';return;}
     tabsEl.innerHTML=visible.map(function(u){
-      var count=u==='Leaders'?((window.state&&window.state.leaders&&window.state.leaders.length)||0):((window.state&&window.state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===u;}).length;
+      var count=u==='Leaders'?((window.state&&state.leaders&&state.leaders.length)||0):((window.state&&state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===u;}).length;
       var active=u===window.activeUnit?'active':'';
       return '<button type="button" class="unit-tab '+active+'" data-unit="'+u+'"><span class="unit-tab-icon">'+(UNIT_ICONS[u]||'•')+'</span><span>'+u+'</span><span class="unit-tab-count">'+count+'</span></button>';
     }).join('');
@@ -3298,8 +3298,8 @@ init();
     for(var i=0;i<utabs.length;i++){utabs[i].addEventListener('click',function(){window.activeUnit=this.getAttribute('data-unit');mobileRenderUnitsPage();});}
     var unit=window.activeUnit;
     var people;
-    if(unit==='Leaders'){people=((window.state&&window.state.leaders)||[]).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
-    else{people=((window.state&&window.state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===unit;}).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
+    if(unit==='Leaders'){people=((window.state&&state.leaders)||[]).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
+    else{people=((window.state&&state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===unit;}).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
     var ages=unit==='Leaders'?[]:people.map(function(m){return window.ageDecimal&&window.ageDecimal(m.dob);}).filter(function(a){return a!=null;});
     var avgAge=ages.length?(ages.reduce(function(s,v){return s+v;},0)/ages.length).toFixed(1):'—';
     var males=people.filter(function(p){return (p.gender||'').toLowerCase().charAt(0)==='m';}).length;
@@ -3334,7 +3334,7 @@ init();
   // Build the HTML for a member's milestones (from member_milestones table).
   // Shows join year + Yellow / Green / Red branches with their ranks and years.
   function buildMemberMilestonesHtml(memberId){
-    var member = ((window.state&&window.state.members)||[]).find(function(m){return m.id===memberId;});
+    var member = ((window.state&&state.members)||[]).find(function(m){return m.id===memberId;});
     var unit   = member ? window.canonicalUnit(member.unit) : null;
     var showRed = !(unit === 'Boyscouts' || unit === 'Girlscouts');
 
@@ -3492,8 +3492,8 @@ init();
 
   function renderProfile(id, type){
     var person=null;
-    if(type==='leader'){person=((window.state&&window.state.leaders)||[]).find(function(x){return x.id===id;});}
-    else{person=((window.state&&window.state.members)||[]).find(function(x){return x.id===id;});}
+    if(type==='leader'){person=((window.state&&state.leaders)||[]).find(function(x){return x.id===id;});}
+    else{person=((window.state&&state.members)||[]).find(function(x){return x.id===id;});}
     if(!person){
       var toast=(typeof window.showToast==='function')?window.showToast:function(m){alert(m);};
       toast('Profile not found','error');
@@ -3578,7 +3578,7 @@ init();
     if(badgesEl){
       var badges = type==='leader'
         ? ((window.state&&window.state.leaderBadges)||[]).filter(function(b){return b.leaderId===id;})
-        : ((window.state&&window.state.badges)||[]).filter(function(b){return b.memberId===id;});
+        : ((window.state&&state.badges)||[]).filter(function(b){return b.memberId===id;});
       if(badgeCountEl)badgeCountEl.textContent = badges.length+' earned';
       if(!badges.length){
         badgesEl.innerHTML='<div class="empty-state" style="grid-column:1/-1;padding:20px 8px;"><div class="icon">🏅</div><h4>No badges yet</h4><p>Awarded badges will appear here.</p></div>';
@@ -3611,7 +3611,7 @@ init();
   function findLeaderByEmail(email){
     if(!email) return null;
     var e = String(email).trim().toLowerCase();
-    var leaders=(window.state&&window.state.leaders)||[];
+    var leaders=(window.state&&state.leaders)||[];
     for(var i=0;i<leaders.length;i++){
       var le=(leaders[i]&&leaders[i].email?String(leaders[i].email):'').trim().toLowerCase();
       if(le && le===e) return leaders[i];
@@ -3688,10 +3688,10 @@ init();
 
     // Find the current avatar_url (if any) so we can delete the old file.
     var existing = null;
-    if(window.state && window.state.leaders){
-      for(var i=0; i<window.state.leaders.length; i++){
-        if(window.state.leaders[i].id === leaderId){
-          existing = window.state.leaders[i].avatarUrl || null;
+    if(window.state && state.leaders){
+      for(var i=0; i<state.leaders.length; i++){
+        if(state.leaders[i].id === leaderId){
+          existing = state.leaders[i].avatarUrl || null;
           break;
         }
       }
@@ -3747,10 +3747,10 @@ init();
       .select().single()
       .then(function(res){
         if(res.error) throw res.error;
-        if(window.state && window.state.leaders){
-          for(var i=0; i<window.state.leaders.length; i++){
-            if(window.state.leaders[i].id === leaderId){
-              window.state.leaders[i].avatarUrl = url;
+        if(window.state && state.leaders){
+          for(var i=0; i<state.leaders.length; i++){
+            if(state.leaders[i].id === leaderId){
+              state.leaders[i].avatarUrl = url;
               break;
             }
           }
@@ -3775,10 +3775,10 @@ init();
     var sb = window.supabaseClient;
     if(!sb) return;
     var existing = null;
-    if(window.state && window.state.leaders){
-      for(var i=0; i<window.state.leaders.length; i++){
-        if(window.state.leaders[i].id === leaderId){
-          existing = window.state.leaders[i].avatarUrl || null;
+    if(window.state && state.leaders){
+      for(var i=0; i<state.leaders.length; i++){
+        if(state.leaders[i].id === leaderId){
+          existing = state.leaders[i].avatarUrl || null;
           break;
         }
       }
@@ -3821,7 +3821,7 @@ init();
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var results = [];
 
-    (window.state.members || []).forEach(function(m) {
+    (state.members || []).forEach(function(m) {
       if (!m.dob || !m.unit) return;
       var unit = window.canonicalUnit(m.unit);
       var rule = unit ? UNIT_TRANSITIONS[unit] : null;
@@ -3906,7 +3906,7 @@ init();
       .then(function(res){
         if(res.error){ console.error('leaders refresh error', res.error); return false; }
         if(typeof window.mapLeader === 'function'){
-          window.state.leaders = (res.data || []).map(window.mapLeader);
+          state.leaders = (res.data || []).map(window.mapLeader);
           return true;
         }
         return false;
@@ -3996,10 +3996,10 @@ init();
 
     // Prefer values from the signed-in leader's DB row.
     var leader = null;
-    if(authEmail && window.state && window.state.leaders){
-      for(var i=0;i<window.state.leaders.length;i++){
-        var le = ((window.state.leaders[i].email)||'').trim().toLowerCase();
-        if(le && le === authEmail){ leader = window.state.leaders[i]; break; }
+    if(authEmail && window.state && state.leaders){
+      for(var i=0;i<state.leaders.length;i++){
+        var le = ((state.leaders[i].email)||'').trim().toLowerCase();
+        if(le && le === authEmail){ leader = state.leaders[i]; break; }
       }
     }
     var unitAr    = (leader && leader.unitArabic) || UNIT_AR[unit] || '';
@@ -4262,10 +4262,10 @@ init();
     var cu2 = window.currentUser || {};
     var leader2 = null;
     var ae = (cu2.email||'').trim().toLowerCase();
-    if(ae && window.state && window.state.leaders){
-      for(var xi=0; xi<window.state.leaders.length; xi++){
-        var xle = (window.state.leaders[xi].email||'').trim().toLowerCase();
-        if(xle && xle===ae){ leader2 = window.state.leaders[xi]; break; }
+    if(ae && window.state && state.leaders){
+      for(var xi=0; xi<state.leaders.length; xi++){
+        var xle = (state.leaders[xi].email||'').trim().toLowerCase();
+        if(xle && xle===ae){ leader2 = state.leaders[xi]; break; }
       }
     }
     var forcedUnit = (leader2 && leader2.unitArabic) || UNIT_AR[cu2.unit] || '';
@@ -4546,7 +4546,7 @@ init();
     } else {
       if(missing){
         missing.style.display='';
-        var leaders=(window.state&&window.state.leaders)||[];
+        var leaders=(window.state&&state.leaders)||[];
         var withEmail = leaders.filter(function(l){return l && l.email && String(l.email).trim();});
         var similar = withEmail.filter(function(l){
           var le = String(l.email).trim().toLowerCase();
@@ -4613,8 +4613,8 @@ init();
   /* ---------- Download profile as PDF ---------- */
   window.__downloadProfilePdf=function(id,type){
     var person=null;
-    if(type==='leader'){person=((window.state&&window.state.leaders)||[]).find(function(x){return x.id===id;});}
-    else{person=((window.state&&window.state.members)||[]).find(function(x){return x.id===id;});}
+    if(type==='leader'){person=((window.state&&state.leaders)||[]).find(function(x){return x.id===id;});}
+    else{person=((window.state&&state.members)||[]).find(function(x){return x.id===id;});}
     if(!person){alert('Profile not found');return;}
     // No JS PDF library needed anymore — we use the browser's native print
     // pipeline (window.print → user picks "Save as PDF"). The legacy raster
@@ -4653,7 +4653,7 @@ init();
 
     var badges = type==='leader'
       ? ((window.state&&window.state.leaderBadges)||[]).filter(function(b){return b.leaderId===id;})
-      : ((window.state&&window.state.badges)||[]).filter(function(b){return b.memberId===id;});
+      : ((window.state&&state.badges)||[]).filter(function(b){return b.memberId===id;});
 
     var ranks = type==='leader'
       ? []
@@ -5205,12 +5205,12 @@ init();
   function renderQuickTiles(){
     var el=document.getElementById('quickTiles');if(!el)return;
     var cu=window.currentUser||{};if(!cu.isAdmin&&!cu.unit){el.innerHTML='';return;}
-    var members=cu.isAdmin?((window.state&&window.state.members)||[]):((window.state&&window.state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===cu.unit;});
+    var members=cu.isAdmin?((window.state&&state.members)||[]):((window.state&&state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===cu.unit;});
     var ages=members.map(function(m){return window.ageDecimal&&window.ageDecimal(m.dob);}).filter(function(a){return a!=null;});
     var avgAge=ages.length?(ages.reduce(function(s,v){return s+v;},0)/ages.length).toFixed(1):'—';
     var males=members.filter(function(m){return (m.gender||'').toLowerCase().charAt(0)==='m';}).length;
     var females=members.filter(function(m){return (m.gender||'').toLowerCase().charAt(0)==='f';}).length;
-    var badgesCount=((window.state&&window.state.badges)||[]).filter(function(b){return members.some(function(m){return m.id===b.memberId;});}).length;
+    var badgesCount=((window.state&&state.badges)||[]).filter(function(b){return members.some(function(m){return m.id===b.memberId;});}).length;
     el.innerHTML='<div class="quick-tile"><div class="icon">👤</div><div><div class="label">Avg age</div><div class="value">'+avgAge+'</div></div></div><div class="quick-tile"><div class="icon">⚧</div><div><div class="label">M / F</div><div class="value">'+males+' / '+females+'</div></div></div><div class="quick-tile"><div class="icon">🏅</div><div><div class="label">Badges given</div><div class="value">'+badgesCount+'</div></div></div><div class="quick-tile"><div class="icon">👥</div><div><div class="label">Members</div><div class="value">'+members.length+'</div></div></div>';
   }
 
@@ -5262,5 +5262,5 @@ init();
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f345782c69f5c5',t:'MTc4NDczMTk2OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f35d858b9de173',t:'MTc4NDczMjk1NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
