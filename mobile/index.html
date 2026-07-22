@@ -337,7 +337,7 @@
      new version.                                                    -->
 <script>
 (function(){
-  window.__BUILD_ID__ = 'mobile-2026-07-15-v23-group-leader-and-sync';
+  window.__BUILD_ID__ = 'mobile-2026-07-15-v25-perfect-stages-rebuild';
   console.log('[Saida One] build =', window.__BUILD_ID__);
 
   // === Aggressive cleanup of any old service worker / cache from a
@@ -491,51 +491,33 @@
         <h1 style="font-size: 24px; font-weight: 800; margin: 4px 0 0;">Unit Stages Dashboard</h1>
       </div>
 
-      <!-- Filter Pills (ALL and units) -->
-      <div id="glUnitFilters" class="filter-pills-row" style="margin-bottom: 16px; overflow-x: auto; display: flex; gap: 8px; padding-bottom: 8px; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--line);">
-        <button type="button" class="filter-pill active" data-unit="All">All</button>
-        <button type="button" class="filter-pill" data-unit="Beavers">Beavers</button>
-        <button type="button" class="filter-pill" data-unit="Cubs">Cubs</button>
-        <button type="button" class="filter-pill" data-unit="Boyscouts">Boyscouts</button>
-        <button type="button" class="filter-pill" data-unit="Girlscouts">Girlscouts</button>
-        <button type="button" class="filter-pill" data-unit="Pioneers">Pioneers</button>
-        <button type="button" class="filter-pill" data-unit="Rovers">Rovers</button>
-      </div>
-
-      <!-- Transitions List Container -->
-      <div class="mobile-panel" style="padding: 16px; border-radius: var(--radius);">
-        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
-          <h3 id="glActiveFilterTitle" style="margin: 0; font-size: 18px; font-weight: 800; color: var(--primary);">All Transitions</h3>
-          <span class="hint" id="glTransitionsCount" style="font-size: 13px; color: var(--muted); font-weight: 700;">0 members</span>
+      <!-- 1. Upcoming Transitions (At the top of the Stages tab) -->
+      <div class="mobile-panel">
+        <div class="mobile-panel-header">
+          <h3>Upcoming Transitions</h3>
+          <span class="hint" style="font-weight: 700;">Next 6 months</span>
         </div>
-        <div id="glTransitionsList" class="people-list"></div>
-      </div>
-    </section>
-
-    <section id="groupLeader" class="view">
-      <div class="header-block" style="margin-bottom: 20px;">
-        <div class="eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: .06em; color: var(--muted); font-weight: 700;">Admin Overview</div>
-        <h1 style="font-size: 24px; font-weight: 800; margin: 4px 0 0;">Unit Stages Dashboard</h1>
+        <div id="glUpcomingTransitions" class="transitions-list" style="padding-top: 8px;"></div>
       </div>
 
-      <!-- Filter Pills (ALL and units) -->
-      <div id="glUnitFilters" class="filter-pills-row" style="margin-bottom: 16px; overflow-x: auto; display: flex; gap: 8px; padding-bottom: 8px; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--line);">
-        <button type="button" class="filter-pill active" data-unit="All">All</button>
-        <button type="button" class="filter-pill" data-unit="Beavers">Beavers</button>
-        <button type="button" class="filter-pill" data-unit="Cubs">Cubs</button>
-        <button type="button" class="filter-pill" data-unit="Boyscouts">Boyscouts</button>
-        <button type="button" class="filter-pill" data-unit="Girlscouts">Girlscouts</button>
-        <button type="button" class="filter-pill" data-unit="Pioneers">Pioneers</button>
-        <button type="button" class="filter-pill" data-unit="Rovers">Rovers</button>
-      </div>
-
-      <!-- Transitions List Container -->
-      <div class="mobile-panel" style="padding: 16px; border-radius: var(--radius);">
-        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
-          <h3 id="glActiveFilterTitle" style="margin: 0; font-size: 18px; font-weight: 800; color: var(--primary);">All Transitions</h3>
-          <span class="hint" id="glTransitionsCount" style="font-size: 13px; color: var(--muted); font-weight: 700;">0 members</span>
+      <!-- 2. Stages List (Cards for each scout unit with member counts) -->
+      <div class="mobile-panel" style="padding: 16px; border-radius: var(--radius); margin-top: 16px;">
+        <div class="mobile-panel-header" style="border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Scout Stages</h3>
+          <span class="hint" id="glTotalStagesCount" style="font-size: 13px; color: var(--muted); font-weight: 700;">6 stages</span>
         </div>
-        <div id="glTransitionsList" class="people-list"></div>
+        <div id="glStagesList" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Stage cards with member counts will be injected here -->
+        </div>
+      </div>
+
+      <!-- 3. Stage Details View (Hidden by default, shows when a stage card is clicked) -->
+      <div id="glStageDetailsContainer" class="mobile-panel" style="display: none; padding: 16px; border-radius: var(--radius); margin-top: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
+          <h3 id="glStageDetailsTitle" style="margin: 0; font-size: 18px; font-weight: 800; color: var(--primary);">Stage Members</h3>
+          <button type="button" id="glCloseDetailsBtn" style="color: var(--primary); font-weight: 700; font-size: 14px; background: none; border: none; cursor: pointer;">✕ Close</button>
+        </div>
+        <div id="glStageMembersList" class="people-list"></div>
       </div>
     </section>
 
@@ -1090,7 +1072,7 @@ async function resolveCurrentUser() {
   const rawRole = String(appMeta.role || userMeta.role || '').trim().toLowerCase();
   const rawUnit = String(appMeta.unit || userMeta.unit || '').trim();
 
-  if (rawRole === 'admin' || rawRole === 'administrator' || rawRole.includes('admin') || rawRole === 'super_admin' || rawRole === 'superadmin') {
+  if (rawRole === 'admin' || rawRole === 'administrator' || rawRole.includes('admin')) {
     currentUser.isAdmin = true;
   } else {
     // Try, in order: role metadata -> explicit unit metadata -> email pattern.
@@ -1674,11 +1656,11 @@ function renderAll() {
   renderBadgeDefs();
   renderBadgeSelectOptions();
   
-  // Update the Admin Stages (Transitions) Dashboard automatically on boot and refresh!
+  // Auto-render Stages dashboard on start and refreshes
   try {
     renderGroupLeaderDashboard();
   } catch (e) {
-    console.warn("Stages rendering failed:", e);
+    console.warn("Stages auto-rendering failed:", e);
   }
 }
 
@@ -2059,8 +2041,7 @@ function renderUpcomingTransitions() {
 
 function renderStats() {
   // Scope for non-admins: only their unit's members.
-  var isGL = (currentUser && currentUser.role === 'group_leader');
-  if (!currentUser.isAdmin && !currentUser.unit && !isGL) {
+  if (!currentUser.isAdmin && !currentUser.unit) {
     renderNoUnitDashboard();
     return;
   }
@@ -3287,7 +3268,7 @@ init();
   }
   window.__go=go;
   
-  // Expose local IIFE helper functions to window so the mobile PWA can boot and run perfectly in standalone mode (no iframe required!)
+  // Expose PWA helper functions to window
   window.canonicalUnit = canonicalUnit;
   window.ageDecimal = ageDecimal;
   window.timeUntilNextUnit = timeUntilNextUnit;
@@ -3302,9 +3283,6 @@ init();
     var isAdmin=!!(window.currentUser&&window.currentUser.isAdmin);
     var admins=document.querySelectorAll('.admin-only');
     for(var i=0;i<admins.length;i++)admins[i].style.display=isAdmin?'':'none';
-    
-
-
     var nav=document.getElementById('bottomNav');
     if(nav){var visible=0;var btns=nav.querySelectorAll('.tab-btn');for(var j=0;j<btns.length;j++)if(btns[j].style.display!=='none')visible++;if(!visible)visible=4;nav.style.gridTemplateColumns='repeat('+visible+', 1fr)';}
     var emailEl=document.getElementById('drawerEmail');if(emailEl)emailEl.textContent=(window.currentUser&&window.currentUser.email)||'—';
@@ -3320,11 +3298,11 @@ init();
     var UNIT_ORDER=['Beavers','Cubs','Boyscouts','Girlscouts','Pioneers','Rovers','Leaders'];
     var UNIT_ICONS={Beavers:'🦫',Cubs:'🐾',Boyscouts:'⚜',Girlscouts:'🌸',Pioneers:'🏕',Rovers:'🧭',Leaders:'👔'};
     var cu=window.currentUser||{};
-    var visible=(cu.isAdmin)?UNIT_ORDER:(cu.unit?[cu.unit]:[]);
+    var visible=cu.isAdmin?UNIT_ORDER:(cu.unit?[cu.unit]:[]);
     if(!window.activeUnit||visible.indexOf(window.activeUnit)===-1)window.activeUnit=visible[0]||'Beavers';
     if(!visible.length){tabsEl.innerHTML='';contentEl.innerHTML='<div class="empty-state"><div class="icon">🔒</div><h4>No unit assigned</h4><p>Contact an admin to assign your role.</p></div>';return;}
     tabsEl.innerHTML=visible.map(function(u){
-      var count=u==='Leaders'?((window.state&&state.leaders&&state.leaders.length)||0):((window.state&&state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===u;}).length;
+      var count=u==='Leaders'?((window.state&&window.state.leaders&&window.state.leaders.length)||0):((window.state&&window.state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===u;}).length;
       var active=u===window.activeUnit?'active':'';
       return '<button type="button" class="unit-tab '+active+'" data-unit="'+u+'"><span class="unit-tab-icon">'+(UNIT_ICONS[u]||'•')+'</span><span>'+u+'</span><span class="unit-tab-count">'+count+'</span></button>';
     }).join('');
@@ -3332,8 +3310,8 @@ init();
     for(var i=0;i<utabs.length;i++){utabs[i].addEventListener('click',function(){window.activeUnit=this.getAttribute('data-unit');mobileRenderUnitsPage();});}
     var unit=window.activeUnit;
     var people;
-    if(unit==='Leaders'){people=((window.state&&state.leaders)||[]).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
-    else{people=((window.state&&state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===unit;}).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
+    if(unit==='Leaders'){people=((window.state&&window.state.leaders)||[]).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
+    else{people=((window.state&&window.state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===unit;}).slice().sort(function(a,b){return (a.fullName||'').localeCompare(b.fullName||'');});}
     var ages=unit==='Leaders'?[]:people.map(function(m){return window.ageDecimal&&window.ageDecimal(m.dob);}).filter(function(a){return a!=null;});
     var avgAge=ages.length?(ages.reduce(function(s,v){return s+v;},0)/ages.length).toFixed(1):'—';
     var males=people.filter(function(p){return (p.gender||'').toLowerCase().charAt(0)==='m';}).length;
@@ -3368,7 +3346,7 @@ init();
   // Build the HTML for a member's milestones (from member_milestones table).
   // Shows join year + Yellow / Green / Red branches with their ranks and years.
   function buildMemberMilestonesHtml(memberId){
-    var member = ((window.state&&state.members)||[]).find(function(m){return m.id===memberId;});
+    var member = ((window.state&&window.state.members)||[]).find(function(m){return m.id===memberId;});
     var unit   = member ? window.canonicalUnit(member.unit) : null;
     var showRed = !(unit === 'Boyscouts' || unit === 'Girlscouts');
 
@@ -3526,8 +3504,8 @@ init();
 
   function renderProfile(id, type){
     var person=null;
-    if(type==='leader'){person=((window.state&&state.leaders)||[]).find(function(x){return x.id===id;});}
-    else{person=((window.state&&state.members)||[]).find(function(x){return x.id===id;});}
+    if(type==='leader'){person=((window.state&&window.state.leaders)||[]).find(function(x){return x.id===id;});}
+    else{person=((window.state&&window.state.members)||[]).find(function(x){return x.id===id;});}
     if(!person){
       var toast=(typeof window.showToast==='function')?window.showToast:function(m){alert(m);};
       toast('Profile not found','error');
@@ -3612,7 +3590,7 @@ init();
     if(badgesEl){
       var badges = type==='leader'
         ? ((window.state&&window.state.leaderBadges)||[]).filter(function(b){return b.leaderId===id;})
-        : ((window.state&&state.badges)||[]).filter(function(b){return b.memberId===id;});
+        : ((window.state&&window.state.badges)||[]).filter(function(b){return b.memberId===id;});
       if(badgeCountEl)badgeCountEl.textContent = badges.length+' earned';
       if(!badges.length){
         badgesEl.innerHTML='<div class="empty-state" style="grid-column:1/-1;padding:20px 8px;"><div class="icon">🏅</div><h4>No badges yet</h4><p>Awarded badges will appear here.</p></div>';
@@ -3645,7 +3623,7 @@ init();
   function findLeaderByEmail(email){
     if(!email) return null;
     var e = String(email).trim().toLowerCase();
-    var leaders=(window.state&&state.leaders)||[];
+    var leaders=(window.state&&window.state.leaders)||[];
     for(var i=0;i<leaders.length;i++){
       var le=(leaders[i]&&leaders[i].email?String(leaders[i].email):'').trim().toLowerCase();
       if(le && le===e) return leaders[i];
@@ -3722,10 +3700,10 @@ init();
 
     // Find the current avatar_url (if any) so we can delete the old file.
     var existing = null;
-    if(window.state && state.leaders){
-      for(var i=0; i<state.leaders.length; i++){
-        if(state.leaders[i].id === leaderId){
-          existing = state.leaders[i].avatarUrl || null;
+    if(window.state && window.state.leaders){
+      for(var i=0; i<window.state.leaders.length; i++){
+        if(window.state.leaders[i].id === leaderId){
+          existing = window.state.leaders[i].avatarUrl || null;
           break;
         }
       }
@@ -3781,10 +3759,10 @@ init();
       .select().single()
       .then(function(res){
         if(res.error) throw res.error;
-        if(window.state && state.leaders){
-          for(var i=0; i<state.leaders.length; i++){
-            if(state.leaders[i].id === leaderId){
-              state.leaders[i].avatarUrl = url;
+        if(window.state && window.state.leaders){
+          for(var i=0; i<window.state.leaders.length; i++){
+            if(window.state.leaders[i].id === leaderId){
+              window.state.leaders[i].avatarUrl = url;
               break;
             }
           }
@@ -3809,10 +3787,10 @@ init();
     var sb = window.supabaseClient;
     if(!sb) return;
     var existing = null;
-    if(window.state && state.leaders){
-      for(var i=0; i<state.leaders.length; i++){
-        if(state.leaders[i].id === leaderId){
-          existing = state.leaders[i].avatarUrl || null;
+    if(window.state && window.state.leaders){
+      for(var i=0; i<window.state.leaders.length; i++){
+        if(window.state.leaders[i].id === leaderId){
+          existing = window.state.leaders[i].avatarUrl || null;
           break;
         }
       }
@@ -3824,120 +3802,6 @@ init();
     });
   }
 
-  // ---- Admin Stages Dashboard ----
-  function renderGroupLeaderDashboard() {
-    var pillsRow = document.getElementById('glUnitFilters');
-    var isAdmin = !!(currentUser && currentUser.isAdmin);
-    if (pillsRow) {
-      pillsRow.style.display = isAdmin ? 'flex' : 'none'; // Hide filter pills for non-admin unit leaders
-      if (!pillsRow.dataset.bound) {
-        pillsRow.dataset.bound = '1';
-        pillsRow.querySelectorAll('.filter-pill').forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            pillsRow.querySelectorAll('.filter-pill').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            var filterVal = btn.getAttribute('data-unit');
-            renderGroupLeaderTransitions(filterVal);
-          });
-        });
-      }
-    }
-
-    var activeBtn = pillsRow ? pillsRow.querySelector('.filter-pill.active') : null;
-    var activeFilter = (activeBtn && isAdmin) ? activeBtn.getAttribute('data-unit') : 'All';
-    renderGroupLeaderTransitions(activeFilter);
-  }
-
-  function renderGroupLeaderTransitions(filterVal) {
-    var listEl = document.getElementById('glTransitionsList');
-    var countEl = document.getElementById('glTransitionsCount');
-    var titleEl = document.getElementById('glActiveFilterTitle');
-    if (!listEl || !countEl || !titleEl) return;
-
-    titleEl.textContent = filterVal === 'All' ? 'All Transitions' : filterVal + ' Transitions';
-
-    var today = new Date(); today.setHours(0, 0, 0, 0);
-    var results = [];
-
-    var visibleMembers = scopedMembers(); // Scope members: Admin sees all, leaders see their unit only
-    visibleMembers.forEach(function(m) {
-      if (!m.dob || !m.unit) return;
-      var unit = window.canonicalUnit(m.unit);
-      var rule = unit ? UNIT_TRANSITIONS[unit] : null;
-      if (!rule) return;
-
-      var birth = new Date(m.dob);
-      if (isNaN(birth)) return;
-      var boundary = new Date(birth);
-      boundary.setFullYear(birth.getFullYear() + rule.nextAge);
-      boundary.setHours(0, 0, 0, 0);
-
-      var daysLeft = Math.round((boundary - today) / (1000 * 60 * 60 * 24));
-      var transitionObj = window.timeUntilNextUnit ? window.timeUntilNextUnit(m) : null;
-      var countdownText = transitionObj ? transitionObj.text : '';
-
-      results.push({
-        member: m,
-        currentUnit: unit,
-        nextUnit: window.nextUnitFor ? window.nextUnitFor(unit, m) : rule.next,
-        daysLeft: daysLeft,
-        boundaryDate: boundary,
-        countdownText: countdownText
-      });
-    });
-
-    if (filterVal !== 'All') {
-      results = results.filter(function(r) {
-        return r.currentUnit === filterVal;
-      });
-    }
-
-    // Sort by daysLeft ascending (closest or already overdue transitions first)
-    results.sort(function(a, b) {
-      return a.daysLeft - b.daysLeft;
-    });
-
-    countEl.textContent = results.length + ' ' + (results.length === 1 ? 'member' : 'members');
-
-    if (!results.length) {
-      listEl.innerHTML = '<div class="empty-state" style="padding:20px 8px;"><div class="icon">🧭</div><h4>No Transitions Found</h4><p>No members match this transition filter.</p></div>';
-      return;
-    }
-
-    listEl.innerHTML = results.map(function(r) {
-      var m = r.member;
-      var full = m.fullName || [m.firstName, m.middleName, m.lastName].filter(Boolean).join(' ');
-      var age = window.ageDecimal ? window.ageDecimal(m.dob) : null;
-      var dateStr = r.boundaryDate ? new Date(r.boundaryDate).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '';
-      
-      var transText = '';
-      var transColor = 'var(--text-secondary)';
-      if (r.daysLeft <= 0) {
-        transText = 'Immediate move to ' + r.nextUnit + ' (Due: ' + dateStr + ')';
-        transColor = 'var(--danger)';
-      } else {
-        transText = 'Move to ' + r.nextUnit + ' on ' + dateStr + ' (' + r.countdownText + ')';
-        transColor = 'var(--success)';
-      }
-
-      var av = m.avatarUrl ? '<img src="'+esc(m.avatarUrl)+'" alt="" />' : esc(initials(full));
-
-      return '<div class="person-row" style="border-bottom: 1px solid var(--line); padding: 12px 0;">' +
-               '<div style="display: flex; align-items: center; gap: 12px;">' +
-                 '<div class="person-avatar">'+av+'</div>' +
-                 '<div style="flex: 1; min-width: 0;">' +
-                   '<div class="person-name" style="font-weight: 700; font-size: 15px;">'+esc(full)+'</div>' +
-                   '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Age: '+(age ? age.toFixed(1) : '—')+' · From: '+esc(r.currentUnit)+'</div>' +
-                   '<div style="font-size: 12.5px; font-weight: 700; color: '+transColor+'; margin-top: 4px; display: flex; align-items: center; gap: 6px;">' +
-                     '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: '+transColor+';"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
-                     '<span>'+esc(transText)+'</span>' +
-                   '</div>' +
-                 '</div>' +
-               '</div>' +
-             '</div>';
-    }).join('');
-  }
-
   function refreshLeadersFromSupabase(){
     if(!window.supabaseClient || !window.state) return Promise.resolve(false);
     return window.supabaseClient
@@ -3945,7 +3809,7 @@ init();
       .then(function(res){
         if(res.error){ console.error('leaders refresh error', res.error); return false; }
         if(typeof window.mapLeader === 'function'){
-          state.leaders = (res.data || []).map(window.mapLeader);
+          window.state.leaders = (res.data || []).map(window.mapLeader);
           return true;
         }
         return false;
@@ -4035,10 +3899,10 @@ init();
 
     // Prefer values from the signed-in leader's DB row.
     var leader = null;
-    if(authEmail && window.state && state.leaders){
-      for(var i=0;i<state.leaders.length;i++){
-        var le = ((state.leaders[i].email)||'').trim().toLowerCase();
-        if(le && le === authEmail){ leader = state.leaders[i]; break; }
+    if(authEmail && window.state && window.state.leaders){
+      for(var i=0;i<window.state.leaders.length;i++){
+        var le = ((window.state.leaders[i].email)||'').trim().toLowerCase();
+        if(le && le === authEmail){ leader = window.state.leaders[i]; break; }
       }
     }
     var unitAr    = (leader && leader.unitArabic) || UNIT_AR[unit] || '';
@@ -4301,10 +4165,10 @@ init();
     var cu2 = window.currentUser || {};
     var leader2 = null;
     var ae = (cu2.email||'').trim().toLowerCase();
-    if(ae && window.state && state.leaders){
-      for(var xi=0; xi<state.leaders.length; xi++){
-        var xle = (state.leaders[xi].email||'').trim().toLowerCase();
-        if(xle && xle===ae){ leader2 = state.leaders[xi]; break; }
+    if(ae && window.state && window.state.leaders){
+      for(var xi=0; xi<window.state.leaders.length; xi++){
+        var xle = (window.state.leaders[xi].email||'').trim().toLowerCase();
+        if(xle && xle===ae){ leader2 = window.state.leaders[xi]; break; }
       }
     }
     var forcedUnit = (leader2 && leader2.unitArabic) || UNIT_AR[cu2.unit] || '';
@@ -4585,7 +4449,7 @@ init();
     } else {
       if(missing){
         missing.style.display='';
-        var leaders=(window.state&&state.leaders)||[];
+        var leaders=(window.state&&window.state.leaders)||[];
         var withEmail = leaders.filter(function(l){return l && l.email && String(l.email).trim();});
         var similar = withEmail.filter(function(l){
           var le = String(l.email).trim().toLowerCase();
@@ -4652,8 +4516,8 @@ init();
   /* ---------- Download profile as PDF ---------- */
   window.__downloadProfilePdf=function(id,type){
     var person=null;
-    if(type==='leader'){person=((window.state&&state.leaders)||[]).find(function(x){return x.id===id;});}
-    else{person=((window.state&&state.members)||[]).find(function(x){return x.id===id;});}
+    if(type==='leader'){person=((window.state&&window.state.leaders)||[]).find(function(x){return x.id===id;});}
+    else{person=((window.state&&window.state.members)||[]).find(function(x){return x.id===id;});}
     if(!person){alert('Profile not found');return;}
     // No JS PDF library needed anymore — we use the browser's native print
     // pipeline (window.print → user picks "Save as PDF"). The legacy raster
@@ -4692,7 +4556,7 @@ init();
 
     var badges = type==='leader'
       ? ((window.state&&window.state.leaderBadges)||[]).filter(function(b){return b.leaderId===id;})
-      : ((window.state&&state.badges)||[]).filter(function(b){return b.memberId===id;});
+      : ((window.state&&window.state.badges)||[]).filter(function(b){return b.memberId===id;});
 
     var ranks = type==='leader'
       ? []
@@ -5244,12 +5108,12 @@ init();
   function renderQuickTiles(){
     var el=document.getElementById('quickTiles');if(!el)return;
     var cu=window.currentUser||{};if(!cu.isAdmin&&!cu.unit){el.innerHTML='';return;}
-    var members=cu.isAdmin?((window.state&&state.members)||[]):((window.state&&state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===cu.unit;});
+    var members=cu.isAdmin?((window.state&&window.state.members)||[]):((window.state&&window.state.members)||[]).filter(function(m){return window.canonicalUnit(m.unit)===cu.unit;});
     var ages=members.map(function(m){return window.ageDecimal&&window.ageDecimal(m.dob);}).filter(function(a){return a!=null;});
     var avgAge=ages.length?(ages.reduce(function(s,v){return s+v;},0)/ages.length).toFixed(1):'—';
     var males=members.filter(function(m){return (m.gender||'').toLowerCase().charAt(0)==='m';}).length;
     var females=members.filter(function(m){return (m.gender||'').toLowerCase().charAt(0)==='f';}).length;
-    var badgesCount=((window.state&&state.badges)||[]).filter(function(b){return members.some(function(m){return m.id===b.memberId;});}).length;
+    var badgesCount=((window.state&&window.state.badges)||[]).filter(function(b){return members.some(function(m){return m.id===b.memberId;});}).length;
     el.innerHTML='<div class="quick-tile"><div class="icon">👤</div><div><div class="label">Avg age</div><div class="value">'+avgAge+'</div></div></div><div class="quick-tile"><div class="icon">⚧</div><div><div class="label">M / F</div><div class="value">'+males+' / '+females+'</div></div></div><div class="quick-tile"><div class="icon">🏅</div><div><div class="label">Badges given</div><div class="value">'+badgesCount+'</div></div></div><div class="quick-tile"><div class="icon">👥</div><div><div class="label">Members</div><div class="value">'+members.length+'</div></div></div>';
   }
 
@@ -5301,98 +5165,114 @@ init();
 
   // ---- Admin Stages Dashboard ----
   function renderGroupLeaderDashboard() {
-    var pillsRow = document.getElementById('glUnitFilters');
-    var isAdmin = !!(currentUser && currentUser.isAdmin);
-    if (pillsRow) {
-      pillsRow.style.display = isAdmin ? 'flex' : 'none'; // Hide filter pills for non-admin unit leaders
-      if (!pillsRow.dataset.bound) {
-        pillsRow.dataset.bound = '1';
-        pillsRow.querySelectorAll('.filter-pill').forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            pillsRow.querySelectorAll('.filter-pill').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            var filterVal = btn.getAttribute('data-unit');
-            renderGroupLeaderTransitions(filterVal);
-          });
-        });
+    // 1. Render Upcoming Transitions in the Stages tab (Same as Home transitions block)
+    var upcomingContainer = document.getElementById('glUpcomingTransitions');
+    if (upcomingContainer) {
+      var items = computeUpcomingTransitions();
+      if (!items.length) {
+        upcomingContainer.innerHTML = '<div class="empty" style="padding: 16px 8px; text-align: center; color: var(--muted); font-size: 13.5px;">No members are eligible to move or within 6 months of moving to another unit.</div>';
+      } else {
+        upcomingContainer.innerHTML = items.map(function(item) {
+          var overdue = item.daysLeft < 0;
+          var overdueDays = Math.abs(item.daysLeft);
+
+          var urgencyClass =
+            overdue ? 'urgency-overdue' :
+              item.daysLeft <= 30 ? 'urgency-critical' :
+                item.daysLeft <= 90 ? 'urgency-warning' : 'urgency-info';
+
+          var dayLabel;
+          if (overdue) dayLabel = 'Eligible now — ' + overdueDays + ' day' + (overdueDays === 1 ? '' : 's') + ' overdue';
+          else if (item.daysLeft === 0) dayLabel = 'Eligible today';
+          else dayLabel = item.daysLeft + ' day' + (item.daysLeft === 1 ? '' : 's') + ' left';
+
+          var dateLabel = new Date(item.boundaryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+          return '<div class="transition-row ' + urgencyClass + '" style="margin-bottom: 12px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">' +
+                   '<div class="transition-name" style="display:flex; justify-content:space-between; align-items:center;">' +
+                     '<strong>' + esc(item.member.fullName) + '</strong>' +
+                     '<span class="transition-meta" style="font-size:11px; font-weight:700; color:var(--primary);">' + esc(item.currentUnit) + ' → ' + esc(item.nextUnit) + '</span>' +
+                   '</div>' +
+                   '<div class="transition-detail" style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:12.5px;">' +
+                     '<span class="transition-days" style="font-weight:700;">' + dayLabel + '</span>' +
+                     '<span class="transition-sub" style="color:var(--text-secondary);">' + dateLabel + '</span>' +
+                   '</div>' +
+                 '</div>';
+        }).join('');
       }
     }
 
-    var activeBtn = pillsRow ? pillsRow.querySelector('.filter-pill.active') : null;
-    var activeFilter = (activeBtn && isAdmin) ? activeBtn.getAttribute('data-unit') : 'All';
-    renderGroupLeaderTransitions(activeFilter);
-  }
+    // 2. Render Stage Cards List with Correct Member Counts
+    var stagesList = document.getElementById('glStagesList');
+    if (stagesList) {
+      var units = [
+        { key: 'Beavers', ar: 'Beavers', color: '#ec4899', icon: '🦫' },
+        { key: 'Cubs', ar: 'Cubs', color: '#facc15', icon: '🐾' },
+        { key: 'Girlscouts', ar: 'Girlscouts', color: '#86efac', icon: '🌸' },
+        { key: 'Boyscouts', ar: 'Boyscouts', color: '#166534', icon: '⚜' },
+        { key: 'Pioneers', ar: 'Pioneers', color: '#fca5a5', icon: '🏕' },
+        { key: 'Rovers', ar: 'Rovers', color: '#991b1b', icon: '🧭' }
+      ];
 
-  function renderGroupLeaderTransitions(filterVal) {
-    var listEl = document.getElementById('glTransitionsList');
-    var countEl = document.getElementById('glTransitionsCount');
-    var titleEl = document.getElementById('glActiveFilterTitle');
-    if (!listEl || !countEl || !titleEl) return;
+      stagesList.innerHTML = units.map(function(stage) {
+        var count = (state.members || []).filter(function(m) {
+          return canonicalUnit(m.unit) === stage.key;
+        }).length;
 
-    titleEl.textContent = filterVal === 'All' ? 'All Transitions' : filterVal + ' Transitions';
+        return '<div class="stage-card" data-unit="'+stage.key+'" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid var(--line); border-left: 4px solid '+stage.color+'; border-radius: 12px; cursor: pointer; background: var(--panel); transition: transform 0.15s ease;">' +
+                 '<div style="display: flex; align-items: center; gap: 10px;">' +
+                   '<span style="font-size: 20px;">'+stage.icon+'</span>' +
+                   '<h3 style="margin: 0; font-size: 15px; font-weight: 700;">'+esc(stage.ar)+'</h3>' +
+                 '</div>' +
+                 '<span style="background: var(--primary-tint); color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px;">'+count+' members</span>' +
+               '</div>';
+      }).join('');
 
-    var today = new Date(); today.setHours(0, 0, 0, 0);
-    var results = [];
-
-    var visibleMembers = scopedMembers(); // Scope members: Admin sees all, leaders see their unit only
-    visibleMembers.forEach(function(m) {
-      if (!m.dob || !m.unit) return;
-      var unit = canonicalUnit(m.unit);
-      var rule = unit ? UNIT_TRANSITIONS[unit] : null;
-      if (!rule) return;
-
-      var birth = new Date(m.dob);
-      if (isNaN(birth)) return;
-      var boundary = new Date(birth);
-      boundary.setFullYear(birth.getFullYear() + rule.nextAge);
-      boundary.setHours(0, 0, 0, 0);
-
-      var daysLeft = Math.round((boundary - today) / (1000 * 60 * 60 * 24));
-      var transitionObj = timeUntilNextUnit(m);
-      var countdownText = transitionObj ? transitionObj.text : '';
-
-      results.push({
-        member: m,
-        currentUnit: unit,
-        nextUnit: nextUnitFor(unit, m),
-        daysLeft: daysLeft,
-        boundaryDate: boundary,
-        countdownText: countdownText
-      });
-    });
-
-    if (filterVal !== 'All') {
-      results = results.filter(function(r) {
-        return r.currentUnit === filterVal;
+      // Click listener for stage cards to open details view
+      stagesList.querySelectorAll('.stage-card').forEach(function(card) {
+        card.style.transform = 'translateZ(0)';
+        card.addEventListener('click', function() {
+          var unitKey = card.getAttribute('data-unit');
+          openStageDetails(unitKey);
+        });
       });
     }
+  }
 
-    // Sort by daysLeft ascending (closest or already overdue transitions first)
-    results.sort(function(a, b) {
-      return a.daysLeft - b.daysLeft;
+  function openStageDetails(unitKey) {
+    var container = document.getElementById('glStageDetailsContainer');
+    var titleEl = document.getElementById('glStageDetailsTitle');
+    var listEl = document.getElementById('glStageMembersList');
+    if (!container || !listEl) return;
+
+    var matched = (state.members || []).filter(function(m) {
+      return canonicalUnit(m.unit) === unitKey;
     });
 
-    countEl.textContent = results.length + ' ' + (results.length === 1 ? 'member' : 'members');
+    titleEl.textContent = unitKey + ' Stage Members (' + matched.length + ')';
+    container.style.display = 'block';
 
-    if (!results.length) {
-      listEl.innerHTML = '<div class="empty-state" style="padding:20px 8px;"><div class="icon">🧭</div><h4>No Transitions Found</h4><p>No members match this transition filter.</p></div>';
+    if (!matched.length) {
+      listEl.innerHTML = '<div class="empty-state" style="padding:20px 8px;"><div class="icon">👥</div><h4>No Members</h4><p>No members registered in this stage yet.</p></div>';
       return;
     }
 
-    listEl.innerHTML = results.map(function(r) {
-      var m = r.member;
+    listEl.innerHTML = matched.map(function(m) {
       var full = m.fullName || [m.firstName, m.middleName, m.lastName].filter(Boolean).join(' ');
       var age = ageDecimal(m.dob);
-      var dateStr = r.boundaryDate ? new Date(r.boundaryDate).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '';
+      var transition = timeUntilNextUnit(m);
       
-      var transText = '';
+      var transText = '—';
       var transColor = 'var(--text-secondary)';
-      if (r.daysLeft <= 0) {
-        transText = 'Immediate move to ' + r.nextUnit + ' (Due: ' + dateStr + ')';
-        transColor = 'var(--danger)';
-      } else {
-        transText = 'Move to ' + r.nextUnit + ' on ' + dateStr + ' (' + r.countdownText + ')';
-        transColor = 'var(--success)';
+      if (transition) {
+        var dateStr = transition.boundaryDate ? new Date(transition.boundaryDate).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '';
+        if (transition.passed) {
+          transText = 'Immediate transition to ' + transition.nextUnit + ' (Due: ' + dateStr + ')';
+          transColor = 'var(--danger)';
+        } else {
+          transText = 'Transition to ' + transition.nextUnit + ' on ' + dateStr + ' (' + transition.text + ')';
+          transColor = 'var(--success)';
+        }
       }
 
       var av = m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" alt="" />' : esc(initials(full));
@@ -5402,7 +5282,7 @@ init();
                  '<div class="person-avatar">'+av+'</div>' +
                  '<div style="flex: 1; min-width: 0;">' +
                    '<div class="person-name" style="font-weight: 700; font-size: 15px;">'+esc(full)+'</div>' +
-                   '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Age: '+(age ? age.toFixed(1) : '—')+' · From: '+esc(r.currentUnit)+'</div>' +
+                   '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Age: '+(age ? age.toFixed(1) : '—')+' · Gender: '+esc(m.gender || '—')+'</div>' +
                    '<div style="font-size: 12.5px; font-weight: 700; color: '+transColor+'; margin-top: 4px; display: flex; align-items: center; gap: 6px;">' +
                      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: '+transColor+';"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
                      '<span>'+esc(transText)+'</span>' +
@@ -5411,9 +5291,21 @@ init();
                '</div>' +
              '</div>';
     }).join('');
+
+    container.scrollIntoView({ behavior: 'smooth' });
   }
+
+  // Bind close button
+  document.addEventListener('DOMContentLoaded', function() {
+    var closeBtn = document.getElementById('glCloseDetailsBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        document.getElementById('glStageDetailsContainer').style.display = 'none';
+      });
+    }
+  });
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f386992c44134e',t:'MTc4NDczNDYzNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f3920aefb9a6ea',t:'MTc4NDczNTEwNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
