@@ -337,7 +337,7 @@
      new version.                                                    -->
 <script>
 (function(){
-  window.__BUILD_ID__ = 'mobile-2026-07-15-v25-perfect-stages-rebuild';
+  window.__BUILD_ID__ = 'mobile-2026-07-08-v22-window-12-months';
   console.log('[Saida One] build =', window.__BUILD_ID__);
 
   // === Aggressive cleanup of any old service worker / cache from a
@@ -482,42 +482,6 @@
         <div class="mobile-panel"><div class="mobile-panel-header"><h3>Blood Types</h3></div><div class="chart-container"><canvas id="bloodChart"></canvas></div></div>
         <div class="mobile-panel"><div class="mobile-panel-header"><h3>Top Nationalities</h3></div><div class="chart-container"><canvas id="nationalityChart"></canvas></div></div>
         <div class="mobile-panel"><div class="mobile-panel-header"><h3>Top Names</h3></div><div class="chart-container"><canvas id="namesChart"></canvas></div></div>
-      </div>
-    </section>
-
-    <section id="groupLeader" class="view">
-      <div class="header-block" style="margin-bottom: 20px;">
-        <div class="eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: .06em; color: var(--muted); font-weight: 700;">Admin Overview</div>
-        <h1 style="font-size: 24px; font-weight: 800; margin: 4px 0 0;">Unit Stages Dashboard</h1>
-      </div>
-
-      <!-- 1. Upcoming Transitions (At the top of the Stages tab) -->
-      <div class="mobile-panel">
-        <div class="mobile-panel-header">
-          <h3>Upcoming Transitions</h3>
-          <span class="hint" style="font-weight: 700;">Next 6 months</span>
-        </div>
-        <div id="glUpcomingTransitions" class="transitions-list" style="padding-top: 8px;"></div>
-      </div>
-
-      <!-- 2. Stages List (Cards for each scout unit with member counts) -->
-      <div class="mobile-panel" style="padding: 16px; border-radius: var(--radius); margin-top: 16px;">
-        <div class="mobile-panel-header" style="border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 800;">Scout Stages</h3>
-          <span class="hint" id="glTotalStagesCount" style="font-size: 13px; color: var(--muted); font-weight: 700;">6 stages</span>
-        </div>
-        <div id="glStagesList" style="display: flex; flex-direction: column; gap: 10px;">
-          <!-- Stage cards with member counts will be injected here -->
-        </div>
-      </div>
-
-      <!-- 3. Stage Details View (Hidden by default, shows when a stage card is clicked) -->
-      <div id="glStageDetailsContainer" class="mobile-panel" style="display: none; padding: 16px; border-radius: var(--radius); margin-top: 16px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px;">
-          <h3 id="glStageDetailsTitle" style="margin: 0; font-size: 18px; font-weight: 800; color: var(--primary);">Stage Members</h3>
-          <button type="button" id="glCloseDetailsBtn" style="color: var(--primary); font-weight: 700; font-size: 14px; background: none; border: none; cursor: pointer;">✕ Close</button>
-        </div>
-        <div id="glStageMembersList" class="people-list"></div>
       </div>
     </section>
 
@@ -673,10 +637,6 @@
   </main>
 
   <nav class="bottom-nav" id="bottomNav">
-    <button type="button" class="tab-btn admin-only" data-view="groupLeader" onclick="window.__go && window.__go('groupLeader')" style="display:none;">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      <span>Stages</span>
-    </button>
     <button type="button" class="tab-btn active" data-view="dashboard" onclick="window.__go && window.__go('dashboard')">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span>Home</span>
@@ -1105,7 +1065,6 @@ async function resolveCurrentUser() {
         return le && le === email;
       })
     : null) || null;
-  currentUser.role = rawRole;
 }
 
 function scopedMembers() {
@@ -1655,13 +1614,6 @@ function renderAll() {
   renderUnitsPage();
   renderBadgeDefs();
   renderBadgeSelectOptions();
-  
-  // Auto-render Stages dashboard on start and refreshes
-  try {
-    renderGroupLeaderDashboard();
-  } catch (e) {
-    console.warn("Stages auto-rendering failed:", e);
-  }
 }
 
 /* ======================================================================
@@ -3225,16 +3177,8 @@ init();
   drawer&&drawer.addEventListener('touchstart',function(e){touchStartX=e.touches[0].clientX;},{passive:true});
   drawer&&drawer.addEventListener('touchmove',function(e){if(touchStartX==null)return;var dx=e.touches[0].clientX-touchStartX;if(dx<-40){closeDrawer();touchStartX=null;}},{passive:true});
 
-  var VIEWS=['dashboard','units','submit','assign','settings','profile','groupLeader'];
-  var HEADINGS={
-    dashboard:{eyebrow:'Overview',heading:'Dashboard'},
-    units:{eyebrow:'Roster',heading:'Members'},
-    submit:{eyebrow:'Submit',heading:'Weekly Program'},
-    assign:{eyebrow:'Awards',heading:'Assign Badges'},
-    settings:{eyebrow:'Account',heading:'Settings'},
-    profile:{eyebrow:'Profile',heading:'Member'},
-    groupLeader:{eyebrow:'Admin',heading:'Unit Stages'}
-  };
+  var VIEWS=['dashboard','units','submit','assign','settings','profile'];
+  var HEADINGS={dashboard:{eyebrow:'Overview',heading:'Dashboard'},units:{eyebrow:'Roster',heading:'Members'},submit:{eyebrow:'Submit',heading:'Weekly Program'},assign:{eyebrow:'Awards',heading:'Assign Badges'},settings:{eyebrow:'Account',heading:'Settings'},profile:{eyebrow:'Profile',heading:'Member'}};
 
   function go(id){
     if(VIEWS.indexOf(id)===-1)id='dashboard';
@@ -3267,11 +3211,6 @@ init();
     closeDrawer();
   }
   window.__go=go;
-  
-  // Expose PWA helper functions to window
-  window.canonicalUnit = canonicalUnit;
-  window.ageDecimal = ageDecimal;
-  window.timeUntilNextUnit = timeUntilNextUnit;
 
   document.addEventListener('click',function(e){
     var btn=e.target.closest&&e.target.closest('.tab-btn[data-view], .drawer-item[data-view]');
@@ -5162,150 +5101,8 @@ init();
     if(!('serviceWorker' in navigator))return;
     setTimeout(function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});},2000);
   });
-
-  // ---- Admin Stages Dashboard ----
-  function renderGroupLeaderDashboard() {
-    // 1. Render Upcoming Transitions in the Stages tab (Same as Home transitions block)
-    var upcomingContainer = document.getElementById('glUpcomingTransitions');
-    if (upcomingContainer) {
-      var items = computeUpcomingTransitions();
-      if (!items.length) {
-        upcomingContainer.innerHTML = '<div class="empty" style="padding: 16px 8px; text-align: center; color: var(--muted); font-size: 13.5px;">No members are eligible to move or within 6 months of moving to another unit.</div>';
-      } else {
-        upcomingContainer.innerHTML = items.map(function(item) {
-          var overdue = item.daysLeft < 0;
-          var overdueDays = Math.abs(item.daysLeft);
-
-          var urgencyClass =
-            overdue ? 'urgency-overdue' :
-              item.daysLeft <= 30 ? 'urgency-critical' :
-                item.daysLeft <= 90 ? 'urgency-warning' : 'urgency-info';
-
-          var dayLabel;
-          if (overdue) dayLabel = 'Eligible now — ' + overdueDays + ' day' + (overdueDays === 1 ? '' : 's') + ' overdue';
-          else if (item.daysLeft === 0) dayLabel = 'Eligible today';
-          else dayLabel = item.daysLeft + ' day' + (item.daysLeft === 1 ? '' : 's') + ' left';
-
-          var dateLabel = new Date(item.boundaryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-          return '<div class="transition-row ' + urgencyClass + '" style="margin-bottom: 12px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">' +
-                   '<div class="transition-name" style="display:flex; justify-content:space-between; align-items:center;">' +
-                     '<strong>' + esc(item.member.fullName) + '</strong>' +
-                     '<span class="transition-meta" style="font-size:11px; font-weight:700; color:var(--primary);">' + esc(item.currentUnit) + ' → ' + esc(item.nextUnit) + '</span>' +
-                   '</div>' +
-                   '<div class="transition-detail" style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:12.5px;">' +
-                     '<span class="transition-days" style="font-weight:700;">' + dayLabel + '</span>' +
-                     '<span class="transition-sub" style="color:var(--text-secondary);">' + dateLabel + '</span>' +
-                   '</div>' +
-                 '</div>';
-        }).join('');
-      }
-    }
-
-    // 2. Render Stage Cards List with Correct Member Counts
-    var stagesList = document.getElementById('glStagesList');
-    if (stagesList) {
-      var units = [
-        { key: 'Beavers', ar: 'Beavers', color: '#ec4899', icon: '🦫' },
-        { key: 'Cubs', ar: 'Cubs', color: '#facc15', icon: '🐾' },
-        { key: 'Girlscouts', ar: 'Girlscouts', color: '#86efac', icon: '🌸' },
-        { key: 'Boyscouts', ar: 'Boyscouts', color: '#166534', icon: '⚜' },
-        { key: 'Pioneers', ar: 'Pioneers', color: '#fca5a5', icon: '🏕' },
-        { key: 'Rovers', ar: 'Rovers', color: '#991b1b', icon: '🧭' }
-      ];
-
-      stagesList.innerHTML = units.map(function(stage) {
-        var count = (state.members || []).filter(function(m) {
-          return canonicalUnit(m.unit) === stage.key;
-        }).length;
-
-        return '<div class="stage-card" data-unit="'+stage.key+'" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid var(--line); border-left: 4px solid '+stage.color+'; border-radius: 12px; cursor: pointer; background: var(--panel); transition: transform 0.15s ease;">' +
-                 '<div style="display: flex; align-items: center; gap: 10px;">' +
-                   '<span style="font-size: 20px;">'+stage.icon+'</span>' +
-                   '<h3 style="margin: 0; font-size: 15px; font-weight: 700;">'+esc(stage.ar)+'</h3>' +
-                 '</div>' +
-                 '<span style="background: var(--primary-tint); color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px;">'+count+' members</span>' +
-               '</div>';
-      }).join('');
-
-      // Click listener for stage cards to open details view
-      stagesList.querySelectorAll('.stage-card').forEach(function(card) {
-        card.style.transform = 'translateZ(0)';
-        card.addEventListener('click', function() {
-          var unitKey = card.getAttribute('data-unit');
-          openStageDetails(unitKey);
-        });
-      });
-    }
-  }
-
-  function openStageDetails(unitKey) {
-    var container = document.getElementById('glStageDetailsContainer');
-    var titleEl = document.getElementById('glStageDetailsTitle');
-    var listEl = document.getElementById('glStageMembersList');
-    if (!container || !listEl) return;
-
-    var matched = (state.members || []).filter(function(m) {
-      return canonicalUnit(m.unit) === unitKey;
-    });
-
-    titleEl.textContent = unitKey + ' Stage Members (' + matched.length + ')';
-    container.style.display = 'block';
-
-    if (!matched.length) {
-      listEl.innerHTML = '<div class="empty-state" style="padding:20px 8px;"><div class="icon">👥</div><h4>No Members</h4><p>No members registered in this stage yet.</p></div>';
-      return;
-    }
-
-    listEl.innerHTML = matched.map(function(m) {
-      var full = m.fullName || [m.firstName, m.middleName, m.lastName].filter(Boolean).join(' ');
-      var age = ageDecimal(m.dob);
-      var transition = timeUntilNextUnit(m);
-      
-      var transText = '—';
-      var transColor = 'var(--text-secondary)';
-      if (transition) {
-        var dateStr = transition.boundaryDate ? new Date(transition.boundaryDate).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '';
-        if (transition.passed) {
-          transText = 'Immediate transition to ' + transition.nextUnit + ' (Due: ' + dateStr + ')';
-          transColor = 'var(--danger)';
-        } else {
-          transText = 'Transition to ' + transition.nextUnit + ' on ' + dateStr + ' (' + transition.text + ')';
-          transColor = 'var(--success)';
-        }
-      }
-
-      var av = m.avatar_url ? '<img src="'+esc(m.avatar_url)+'" alt="" />' : esc(initials(full));
-
-      return '<div class="person-row" style="border-bottom: 1px solid var(--line); padding: 12px 0;">' +
-               '<div style="display: flex; align-items: center; gap: 12px;">' +
-                 '<div class="person-avatar">'+av+'</div>' +
-                 '<div style="flex: 1; min-width: 0;">' +
-                   '<div class="person-name" style="font-weight: 700; font-size: 15px;">'+esc(full)+'</div>' +
-                   '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Age: '+(age ? age.toFixed(1) : '—')+' · Gender: '+esc(m.gender || '—')+'</div>' +
-                   '<div style="font-size: 12.5px; font-weight: 700; color: '+transColor+'; margin-top: 4px; display: flex; align-items: center; gap: 6px;">' +
-                     '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: '+transColor+';"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
-                     '<span>'+esc(transText)+'</span>' +
-                   '</div>' +
-                 '</div>' +
-               '</div>' +
-             '</div>';
-    }).join('');
-
-    container.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // Bind close button
-  document.addEventListener('DOMContentLoaded', function() {
-    var closeBtn = document.getElementById('glCloseDetailsBtn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function() {
-        document.getElementById('glStageDetailsContainer').style.display = 'none';
-      });
-    }
-  });
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f3920aefb9a6ea',t:'MTc4NDczNTEwNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a181b4e0b8fde1c0',t:'MTc4MzU0MTE1NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
