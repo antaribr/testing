@@ -326,6 +326,98 @@
       .unit-summary-stats{grid-template-columns:repeat(2,1fr)}
     }
 
+    /* Submit Menu Styles */
+    .submit-menu-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .submit-menu-card {
+      background: #ffffff;
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all 0.2s ease;
+    }
+    .submit-menu-card.active {
+      border-color: var(--primary, #6366f1);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.08);
+    }
+    .submit-menu-card.locked {
+      background: var(--bg, #f8fafc);
+      opacity: 0.75;
+      border-color: var(--line, #e2e8f0);
+      cursor: not-allowed;
+    }
+    .smc-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+    .smc-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--primary-tint, rgba(99,102,241,0.1));
+      color: var(--primary, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .smc-icon.locked-icon {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+    .smc-title-wrap {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .smc-title-wrap h4 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text, #0f172a);
+    }
+    .smc-sub {
+      font-size: 12px;
+      color: var(--text-secondary, #64748b);
+      margin-top: 2px;
+    }
+    .smc-badge-locked {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: #e2e8f0;
+      padding: 3px 8px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .smc-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .smc-btn {
+      flex: 1;
+      min-width: 140px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
     /* Submissions Modal & Cards Styles */
     .sub-modal-overlay {
       position: fixed;
@@ -734,13 +826,92 @@
 
     <!-- Submit (native form → JotForm backend) -->
     <section id="submit" class="view">
-      <div class="mobile-panel" id="submitFormWrap" dir="rtl" style="text-align:right;">
+      <!-- Submit Selection Menu Screen -->
+      <div class="mobile-panel" id="submitMenuWrap" dir="rtl" style="text-align:right;">
+        <div class="mobile-panel-header">
+          <h3 style="margin:0;">طلبات وتقارير — وحدة</h3>
+          <span class="hint">اختر نوع الطلب أو التقرير للمتابعة</span>
+        </div>
+
+        <div class="submit-menu-grid">
+          <!-- Item 1: Active -->
+          <div class="submit-menu-card active">
+            <div class="smc-header">
+              <div class="smc-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div class="smc-title-wrap">
+                <h4>ارسال طلب اجتماع اسبوعي</h4>
+                <span class="smc-sub">إعداد وتصديق البرنامج الأسبوعي للوحدة</span>
+              </div>
+            </div>
+            <div class="smc-actions">
+              <button type="button" class="primary-btn smc-btn" onclick="window.__showSubmitForm && window.__showSubmitForm();">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Submit
+              </button>
+              <button type="button" class="secondary-btn smc-btn" onclick="window.__openSubmissionsModal && window.__openSubmissionsModal();">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                View Previous Submissions
+              </button>
+            </div>
+          </div>
+
+          <!-- Item 2: Locked -->
+          <div class="submit-menu-card locked">
+            <div class="smc-header">
+              <div class="smc-icon locked-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div class="smc-title-wrap">
+                <h4>ارسال تقرير اجتماع اسبوعي</h4>
+                <span class="smc-sub">توثيق تقارير الاجتماعات الأسبوعية</span>
+              </div>
+              <span class="smc-badge-locked">🔒 Locked</span>
+            </div>
+          </div>
+
+          <!-- Item 3: Locked -->
+          <div class="submit-menu-card locked">
+            <div class="smc-header">
+              <div class="smc-icon locked-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div class="smc-title-wrap">
+                <h4>ارسال طلب نشاط</h4>
+                <span class="smc-sub">تقديم طلب موافقة على نشاط أو رحلة</span>
+              </div>
+              <span class="smc-badge-locked">🔒 Locked</span>
+            </div>
+          </div>
+
+          <!-- Item 4: Locked -->
+          <div class="submit-menu-card locked">
+            <div class="smc-header">
+              <div class="smc-icon locked-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div class="smc-title-wrap">
+                <h4>ارسال تقرير نشاط</h4>
+                <span class="smc-sub">توثيق وتقييم الأنشطة المنفذة</span>
+              </div>
+              <span class="smc-badge-locked">🔒 Locked</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Program Submit Form View -->
+      <div class="mobile-panel" id="submitFormWrap" dir="rtl" style="text-align:right; display:none;">
         <div class="mobile-panel-header" style="flex-direction:row-reverse; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
           <div>
             <h3 style="margin:0;">برنامج أسبوعي — وحدة</h3>
             <span class="hint" id="submitHint"></span>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="secondary-btn" style="padding:6px 12px; font-size:13px; cursor:pointer;" onclick="window.__hideSubmitForm && window.__hideSubmitForm();">
+              ← Back to Menu
+            </button>
             <button type="button" id="btnCancelEditSubmission" class="secondary-btn" style="display:none; padding:6px 12px; font-size:13px; background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; border-radius:8px; cursor:pointer;" onclick="window.__cancelEditSubmission && window.__cancelEditSubmission();">
               Cancel Edit
             </button>
@@ -847,6 +1018,28 @@
 
         <div id="submissionsList" class="sub-list">
           <!-- Submissions cards will be dynamically rendered here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Submit Modal -->
+    <div id="confirmSubmitModal" class="sub-modal-overlay" style="display:none;" onclick="if(event.target===this) window.__closeConfirmModal();">
+      <div class="sub-modal-card" dir="ltr" style="max-width:440px; text-align:center; padding:24px;">
+        <div style="width:56px; height:56px; background:#fef3c7; color:#d97706; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3 style="margin:0 0 8px; font-size:20px; font-weight:700; color:#0f172a;">Are you sure?</h3>
+        <p style="margin:0 0 20px; font-size:14px; color:#475569; line-height:1.5;">
+          هل أنت تأكد من إرسال طلب البرنامج الأسبوعي؟<br/>
+          <span style="font-size:13px; color:#64748b;">Do you want to proceed with submitting this weekly program?</span>
+        </p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+          <button type="button" class="secondary-btn" style="flex:1; padding:10px; font-size:14px; font-weight:600; cursor:pointer;" onclick="window.__closeConfirmModal();">
+            إلغاء (Cancel)
+          </button>
+          <button type="button" class="primary-btn" style="flex:1; padding:10px; font-size:14px; font-weight:600; background:#10b981; border-color:#10b981; cursor:pointer;" onclick="window.__confirmAndProceedSubmit();">
+            نعم، أكد الإرسال (Confirm)
+          </button>
         </div>
       </div>
     </div>
@@ -4205,6 +4398,15 @@ init();
   function handleNativeFormSubmit(ev){
     if(ev && ev.preventDefault) ev.preventDefault();
     if(ev && ev.stopPropagation) ev.stopPropagation();
+
+    if (!_confirmedSubmit) {
+      _pendingSubmitEvent = ev;
+      var confirmModal = document.getElementById('confirmSubmitModal');
+      if (confirmModal) confirmModal.style.display = 'flex';
+      return false;
+    }
+    _confirmedSubmit = false;
+
     var form = document.getElementById('submitNativeForm');
     if(!form) { console.warn('submitNativeForm not in DOM'); return false; }
     var errBox = document.getElementById('submitError');
@@ -4816,8 +5018,9 @@ init();
       addScheduleRow();
     }
 
-    // Close modal
+    // Close modal & show form view
     window.__closeSubmissionsModal();
+    window.__showSubmitForm();
 
     // Show cancel edit button
     var cancelBtn = document.getElementById('btnCancelEditSubmission');
@@ -4856,6 +5059,38 @@ init();
     try {
       if (window.showToast) window.showToast('Edit cancelled', 'info');
     } catch (_) {}
+  };
+
+  // Submit Menu Navigation Handlers
+  window.__showSubmitForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var formWrap = document.getElementById('submitFormWrap');
+    if (menuWrap) menuWrap.style.display = 'none';
+    if (formWrap) formWrap.style.display = 'block';
+  };
+
+  window.__hideSubmitForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var formWrap = document.getElementById('submitFormWrap');
+    if (formWrap) formWrap.style.display = 'none';
+    if (menuWrap) menuWrap.style.display = 'block';
+  };
+
+  // Submission Confirmation Modal Handlers
+  var _pendingSubmitEvent = null;
+  var _confirmedSubmit = false;
+
+  window.__closeConfirmModal = function() {
+    var modal = document.getElementById('confirmSubmitModal');
+    if (modal) modal.style.display = 'none';
+    _pendingSubmitEvent = null;
+  };
+
+  window.__confirmAndProceedSubmit = function() {
+    var modal = document.getElementById('confirmSubmitModal');
+    if (modal) modal.style.display = 'none';
+    _confirmedSubmit = true;
+    handleNativeFormSubmit(_pendingSubmitEvent);
   };
 
   function renderSettings(){
