@@ -857,17 +857,26 @@
             </div>
           </div>
 
-          <!-- Item 2: Locked -->
-          <div class="submit-menu-card locked">
+          <!-- Item 2: Active (Report Form) -->
+          <div class="submit-menu-card active">
             <div class="smc-header">
-              <div class="smc-icon locked-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <div class="smc-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               </div>
               <div class="smc-title-wrap">
                 <h4>ارسال تقرير اجتماع اسبوعي</h4>
-                <span class="smc-sub">توثيق تقارير الاجتماعات الأسبوعية</span>
+                <span class="smc-sub">توثيق تقارير الاجتماعات الأسبوعية والأنشطة</span>
               </div>
-              <span class="smc-badge-locked">🔒 Locked</span>
+            </div>
+            <div class="smc-actions">
+              <button type="button" class="primary-btn smc-btn" onclick="window.__showReportForm && window.__showReportForm();">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Submit
+              </button>
+              <button type="button" class="secondary-btn smc-btn" onclick="window.__openSubmissionsModal && window.__openSubmissionsModal();">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                View Previous Submissions
+              </button>
             </div>
           </div>
 
@@ -978,6 +987,124 @@
             <button type="submit" class="primary-btn full-width" id="submitFormBtn"
                     onclick="window.__handleNativeFormSubmit && window.__handleNativeFormSubmit(event);">
               <span id="submitBtnLabel">إرسال</span>
+            </button>
+          </div>
+          <div class="nf-footnote">تُرسَل البيانات مباشرةً إلى JotForm.</div>
+        </form>
+      </div>
+
+      <!-- Weekly Meeting Report Submit Form View -->
+      <div class="mobile-panel" id="reportFormWrap" dir="rtl" style="text-align:right; display:none;">
+        <div class="mobile-panel-header" style="flex-direction:row-reverse; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 style="margin:0;">تقرير اجتماع أسبوعي — وحدة</h3>
+            <span class="hint" id="reportHint"></span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="secondary-btn" style="padding:6px 12px; font-size:13px; cursor:pointer;" onclick="window.__hideReportForm && window.__hideReportForm();">
+              ← Back to Menu
+            </button>
+          </div>
+        </div>
+
+        <form id="reportNativeForm" class="native-form" novalidate onsubmit="return window.__handleReportFormSubmit && window.__handleReportFormSubmit(event);">
+          <div class="nf-grid">
+            <label class="nf-field nf-readonly">
+              <span class="nf-label">المفوضية</span>
+              <input type="text" name="commissariat" required readonly value="الجنوب" />
+            </label>
+            <label class="nf-field nf-readonly">
+              <span class="nf-label">الفوج</span>
+              <input type="text" name="group" required readonly value="صيدا الأول" />
+            </label>
+            <label class="nf-field nf-readonly">
+              <span class="nf-label">الوحدة</span>
+              <input type="text" name="unit" required readonly />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">الاسم الأول للقائد</span>
+              <input type="text" name="leaderFirstName" required placeholder="الاسم الأول" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">اسم العائلة للقائد</span>
+              <input type="text" name="leaderLastName" required placeholder="اسم العائلة" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">البريد الإلكتروني لقائد الوحدة</span>
+              <input type="email" name="leaderEmail" required autocapitalize="off" spellcheck="false" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">اسم النشاط / الاجتماع</span>
+              <input type="text" name="activityTitle" required value="اجتماع اسبوعي" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">رقم الصادر</span>
+              <input type="text" name="outgoingNumber" required />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">المكان</span>
+              <input type="text" name="place" required />
+            </label>
+            <label class="nf-field nf-date-field">
+              <span class="nf-label">الزمان (التاريخ)</span>
+              <div class="date-picker-wrap">
+                <input type="text" name="dateDMY" id="reportDateDMYInput" required
+                       inputmode="numeric" pattern="\d{2}-\d{2}-\d{4}"
+                       placeholder="dd-mm-yyyy" maxlength="10" autocomplete="off"
+                       dir="ltr" />
+                <button type="button" class="date-picker-btn" id="reportDateDMYPickerBtn" aria-label="اختر تاريخاً">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <input type="date" id="reportDateDMYNative" aria-hidden="true" tabindex="-1"
+                       style="position:absolute;inset:0 0 0 auto;width:44px;opacity:0;cursor:pointer;pointer-events:auto;" />
+              </div>
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">عدد القادة</span>
+              <select name="leadersCount" required class="nf-select">
+                <option value="">اختر عدد القادة</option>
+              </select>
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">عدد الأفراد</span>
+              <select name="membersCount" required class="nf-select">
+                <option value="">اختر عدد الأفراد</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="nf-section-title nf-required">مضمون التقرير</div>
+          <div class="nf-field" style="margin-bottom:16px;">
+            <textarea name="reportText" rows="6" required placeholder="اكتب تفاصيل التقرير الكشفي والأنشطة المنفذة..." style="width:100%; border-radius:10px; padding:10px; font-size:14px; border:1px solid var(--line, #cbd5e1); font-family:inherit;"></textarea>
+          </div>
+
+          <div class="nf-section-title">صور النشاط / الاجتماع <span class="nf-hint">(تحميل صور بأي صيغة)</span></div>
+          <div class="nf-field" style="margin-bottom:16px;">
+            <label class="nf-upload-box" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; border:2px dashed var(--line, #cbd5e1); border-radius:12px; background:var(--bg, #f8fafc); cursor:pointer; text-align:center; transition:all 0.2s;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span style="font-size:14px; font-weight:600; color:var(--text, #0f172a);">اضغط لاختيار الصور</span>
+              <span style="font-size:12px; color:var(--text-secondary, #64748b);">يدعم جميع صيغ الصور (PNG, JPG, JPEG, WEBP, HEIC, GIF, BMP)</span>
+              <input type="file" id="reportImagesInput" name="q9_input9[]" multiple accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleReportImagesSelect && window.__handleReportImagesSelect(this);" />
+            </label>
+            <div id="reportImagesPreview" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
+          </div>
+
+          <div class="nf-section-title">المرفقات والتقرير المالي <span class="nf-hint">(ملفات وصور - pdf, doc, xls, csv, png, jpg...)</span></div>
+          <div class="nf-field" style="margin-bottom:16px;">
+            <label class="nf-upload-box" style="display:flex; align-items:center; gap:10px; padding:12px 16px; border:1px solid var(--line, #cbd5e1); border-radius:10px; background:#fff; cursor:pointer;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary, #6366f1);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span style="font-size:13px; font-weight:600; color:var(--text, #0f172a);" id="reportFilesStatus">اضغط لاختيار ملفات أو صور المرفقات (عدة ملفات)</span>
+              <input type="file" id="reportFilesInput" name="q37_input37[]" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.webp,.heic,.heif" style="display:none;" onchange="window.__handleReportFilesSelect && window.__handleReportFilesSelect(this);" />
+            </label>
+            <div id="reportFilesList" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;"></div>
+          </div>
+
+          <div id="reportError" class="nf-error" style="display:none;"></div>
+
+          <div class="nf-actions">
+            <button type="submit" class="primary-btn full-width" id="reportFormBtn"
+                    onclick="window.__handleReportFormSubmit && window.__handleReportFormSubmit(event);">
+              <span id="reportBtnLabel">إرسال التقرير</span>
             </button>
           </div>
           <div class="nf-footnote">تُرسَل البيانات مباشرةً إلى JotForm.</div>
@@ -5080,17 +5207,398 @@ init();
   var _pendingSubmitEvent = null;
   var _confirmedSubmit = false;
 
+  var _pendingSubmitType = null;
+
   window.__closeConfirmModal = function() {
     var modal = document.getElementById('confirmSubmitModal');
     if (modal) modal.style.display = 'none';
     _pendingSubmitEvent = null;
+    _pendingSubmitType = null;
   };
 
   window.__confirmAndProceedSubmit = function() {
     var modal = document.getElementById('confirmSubmitModal');
     if (modal) modal.style.display = 'none';
     _confirmedSubmit = true;
-    handleNativeFormSubmit(_pendingSubmitEvent);
+    if (_pendingSubmitType === 'report') {
+      handleReportFormSubmit(_pendingSubmitEvent);
+    } else {
+      handleNativeFormSubmit(_pendingSubmitEvent);
+    }
+    _pendingSubmitType = null;
+  };
+
+  /* ==========================================================================
+     Weekly Meeting Report Form Module (JotForm 71132171557451)
+     ========================================================================== */
+  var JOTFORM_REPORT_ID = '71132171557451';
+  var JOTFORM_SUBMIT_URL_REPORT = 'https://submit.jotform.com/submit/' + JOTFORM_REPORT_ID;
+  var _reportFormRendered = false;
+
+  window.__showReportForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var submitWrap = document.getElementById('submitFormWrap');
+    var reportWrap = document.getElementById('reportFormWrap');
+    if (menuWrap) menuWrap.style.display = 'none';
+    if (submitWrap) submitWrap.style.display = 'none';
+    if (reportWrap) reportWrap.style.display = 'block';
+
+    loadReportForm();
+  };
+
+  window.__hideReportForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var reportWrap = document.getElementById('reportFormWrap');
+    if (reportWrap) reportWrap.style.display = 'none';
+    if (menuWrap) menuWrap.style.display = 'block';
+  };
+
+  function loadReportForm() {
+    var cu = window.currentUser || {};
+    var authEmail = (cu.email || '').trim().toLowerCase();
+    var unit = cu.unit || '';
+
+    var leader = null;
+    if (authEmail && window.state && window.state.leaders) {
+      for (var i = 0; i < window.state.leaders.length; i++) {
+        var le = ((window.state.leaders[i].email) || '').trim().toLowerCase();
+        if (le && le === authEmail) { leader = window.state.leaders[i]; break; }
+      }
+    }
+    var unitAr = (leader && leader.unitArabic) || UNIT_AR[unit] || '';
+    var unitMail = (leader && leader.unitEmail) || authEmail || '';
+
+    var form = document.getElementById('reportNativeForm');
+    if (!form) return;
+
+    form.commissariat.value = 'الجنوب';
+    form.group.value = 'صيدا الأول';
+    if (!form.activityTitle.value || !form.activityTitle.value.trim()) {
+      form.activityTitle.value = 'اجتماع اسبوعي';
+    }
+
+    var fullLeaderName = (leader && leader.name) || (cu.name) || '';
+    var nameParts = fullLeaderName.trim().split(/\s+/);
+    var defaultFirst = nameParts[0] || authEmail.split('@')[0] || '';
+    var defaultLast = nameParts.slice(1).join(' ') || 'صيدا الأول';
+
+    if (form.leaderFirstName && !form.leaderFirstName.value) {
+      form.leaderFirstName.value = defaultFirst;
+    }
+    if (form.leaderLastName && !form.leaderLastName.value) {
+      form.leaderLastName.value = defaultLast;
+    }
+
+    var sig = (authEmail || '') + '|' + (unitAr || '') + '|' + (unitMail || '');
+    if (form.getAttribute('data-signed-in-as') !== sig) {
+      form.setAttribute('data-signed-in-as', sig);
+      if (unitAr) form.unit.value = unitAr;
+      if (unitMail) form.leaderEmail.value = unitMail;
+    }
+
+    if (!_reportFormRendered) {
+      _reportFormRendered = true;
+
+      // Populate leadersCount select (1 to 20)
+      var leadersSel = form.elements['leadersCount'];
+      if (leadersSel && leadersSel.options.length <= 1) {
+        for (var l = 1; l <= 20; l++) {
+          var opt = document.createElement('option');
+          opt.value = String(l);
+          opt.textContent = String(l);
+          leadersSel.appendChild(opt);
+        }
+      }
+
+      // Populate membersCount select (1 to 100)
+      var membersSel = form.elements['membersCount'];
+      if (membersSel && membersSel.options.length <= 1) {
+        for (var m = 1; m <= 100; m++) {
+          var optM = document.createElement('option');
+          optM.value = String(m);
+          optM.textContent = String(m);
+          membersSel.appendChild(optM);
+        }
+      }
+
+      // Hook up date picker
+      var dInput = document.getElementById('reportDateDMYInput');
+      var dNative = document.getElementById('reportDateDMYNative');
+      var dPickerBtn = document.getElementById('reportDateDMYPickerBtn');
+
+      if (dInput && dNative) {
+        var syncFromNative = function() {
+          if (!dNative.value) return;
+          var parts = dNative.value.split('-'); // YYYY-MM-DD
+          if (parts.length === 3) {
+            dInput.value = parts[2] + '-' + parts[1] + '-' + parts[0];
+            var wrap = dInput.closest('.nf-field');
+            if (wrap) wrap.classList.remove('invalid');
+          }
+        };
+        dNative.addEventListener('change', syncFromNative);
+        dNative.addEventListener('input', syncFromNative);
+        if (dPickerBtn) {
+          dPickerBtn.addEventListener('click', function() {
+            try { dNative.showPicker ? dNative.showPicker() : dNative.click(); } catch (_) { dNative.click(); }
+          });
+        }
+      }
+    }
+  }
+
+  window.__handleReportFormSubmit = function(ev) {
+    return handleReportFormSubmit(ev);
+  };
+
+  function handleReportFormSubmit(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+
+    if (!_confirmedSubmit) {
+      _pendingSubmitEvent = ev;
+      _pendingSubmitType = 'report';
+      var confirmModal = document.getElementById('confirmSubmitModal');
+      if (confirmModal) confirmModal.style.display = 'flex';
+      return false;
+    }
+    _confirmedSubmit = false;
+
+    var form = document.getElementById('reportNativeForm');
+    if (!form) return false;
+
+    var errBox = document.getElementById('reportError');
+    var btn = document.getElementById('reportFormBtn');
+    var lbl = document.getElementById('reportBtnLabel');
+    if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+
+    // Validation
+    var required = ['commissariat', 'group', 'unit', 'leaderFirstName', 'leaderLastName', 'leaderEmail', 'activityTitle', 'outgoingNumber', 'place', 'dateDMY', 'leadersCount', 'membersCount', 'reportText'];
+    var missing = [];
+    var firstBadEl = null;
+
+    required.forEach(function(n) {
+      var el = form.elements[n];
+      if (!el) return;
+      var v = String(el.value || '').trim();
+      var wrap = el.closest('.nf-field');
+      if (!v) {
+        missing.push(n);
+        if (wrap) wrap.classList.add('invalid');
+        if (!firstBadEl) firstBadEl = el;
+      } else if (wrap) wrap.classList.remove('invalid');
+    });
+
+    var dateStr = String(form.dateDMY.value || '').trim();
+    var dMatch = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (!dMatch) {
+      missing.push('dateDMY');
+    }
+
+    if (missing.length) {
+      if (errBox) {
+        errBox.style.display = 'block';
+        errBox.innerHTML = '• ' + esc('الرجاء تعبئة جميع الحقول المطلوبة بشكل صحيح.');
+      }
+      if (firstBadEl && firstBadEl.scrollIntoView) firstBadEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    }
+
+    var dateD = dMatch[1], dateM = dMatch[2], dateY = dMatch[3];
+
+    // Build JotForm hidden form POST
+    var jf = document.createElement('form');
+    jf.action = JOTFORM_SUBMIT_URL_REPORT;
+    jf.method = 'POST';
+    jf.target = 'jfSubmitFrame';
+    jf.acceptCharset = 'utf-8';
+    jf.enctype = 'multipart/form-data';
+    jf.style.display = 'none';
+
+    function add(name, value) {
+      var i = document.createElement('input');
+      i.type = 'hidden';
+      i.name = name;
+      i.value = value == null ? '' : String(value);
+      jf.appendChild(i);
+    }
+
+    add('formID', JOTFORM_REPORT_ID);
+    add('website', '');
+    add('simple_spc', JOTFORM_REPORT_ID + '-' + JOTFORM_REPORT_ID);
+    add('submitSource', 'saidaone-mobile');
+    add('event_id', String(Date.now()));
+
+    var cu2 = window.currentUser || {};
+    var leader2 = null;
+    var ae = (cu2.email || '').trim().toLowerCase();
+    if (ae && window.state && window.state.leaders) {
+      for (var xi = 0; xi < window.state.leaders.length; xi++) {
+        var xle = (window.state.leaders[xi].email || '').trim().toLowerCase();
+        if (xle && xle === ae) { leader2 = window.state.leaders[xi]; break; }
+      }
+    }
+    var forcedUnit = (leader2 && leader2.unitArabic) || UNIT_AR[cu2.unit] || form.unit.value;
+    var lFirstName = (form.leaderFirstName ? form.leaderFirstName.value.trim() : '') || (leader2 && leader2.name ? leader2.name.split(' ')[0] : '') || ae.split('@')[0] || 'Leader';
+    var lLastName = (form.leaderLastName ? form.leaderLastName.value.trim() : '') || (leader2 && leader2.name ? leader2.name.split(' ').slice(1).join(' ') : '') || 'صيدا الأول';
+
+    // Map inputs to JotForm 71132171557451 exact names
+    add('q20_input20[first]', lFirstName);
+    add('q20_input20[last]', lLastName);
+    add('q32_input32', form.leaderEmail.value.trim());
+    add('q21_input21', 'صيدا الاول');
+    add('q3_input3', forcedUnit);
+    add('q33_input33', form.activityTitle.value.trim());
+    add('q36_input34', form.outgoingNumber.value.trim());
+    add('q4_input4[day]', dateD);
+    add('q4_input4[month]', dateM);
+    add('q4_input4[year]', dateY);
+    add('q5_input5', form.place.value.trim());
+    add('q7_input7', form.leadersCount.value);
+    add('q8_input8', form.membersCount.value);
+    add('q6_input6', form.reportText.value.trim());
+
+    // Attach uploaded picture inputs
+    var imgInput = document.getElementById('reportImagesInput');
+    if (imgInput && imgInput.files && imgInput.files.length > 0) {
+      for (var f = 0; f < imgInput.files.length; f++) {
+        var fInp = document.createElement('input');
+        fInp.type = 'file';
+        var qName = f === 0 ? 'q9_input9[]' : ('q' + (22 + (f % 7)) + '_input' + (22 + (f % 7)) + '[]');
+        fInp.name = qName;
+        try {
+          var dt = new DataTransfer();
+          dt.items.add(imgInput.files[f]);
+          fInp.files = dt.files;
+        } catch (_) {}
+        jf.appendChild(fInp);
+      }
+    }
+
+    // Attach uploaded file/financial report inputs
+    var docInput = document.getElementById('reportFilesInput');
+    if (docInput && docInput.files && docInput.files.length > 0) {
+      for (var df = 0; df < docInput.files.length; df++) {
+        var dInp = document.createElement('input');
+        dInp.type = 'file';
+        dInp.name = 'q37_input37[]';
+        try {
+          var dt2 = new DataTransfer();
+          dt2.items.add(docInput.files[df]);
+          dInp.files = dt2.files;
+        } catch (_) {}
+        jf.appendChild(dInp);
+      }
+    }
+
+    // Save record to local & Supabase storage
+    try {
+      var repRecord = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('rep_' + Date.now() + '_' + Math.floor(Math.random() * 10000))),
+        type: 'report',
+        commissariat: 'الجنوب',
+        group: 'صيدا الأول',
+        unit: forcedUnit,
+        unitCanonical: canonicalUnit(cu2.unit || (leader2 && leader2.unit)) || canonicalUnit(form.unit.value) || cu2.unit || '',
+        leaderEmail: form.leaderEmail.value.trim(),
+        activityTitle: form.activityTitle.value.trim(),
+        outgoingNumber: form.outgoingNumber.value.trim(),
+        place: form.place.value.trim(),
+        dateDMY: dateStr,
+        leadersCount: form.leadersCount.value,
+        membersCount: form.membersCount.value,
+        reportText: form.reportText.value.trim(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by: cu2.email || form.leaderEmail.value.trim()
+      };
+      if (typeof saveWeeklySubmissionRecord === 'function') {
+        saveWeeklySubmissionRecord(repRecord);
+      }
+    } catch (eRep) {
+      console.warn('[report] Error saving report record:', eRep);
+    }
+
+    document.body.appendChild(jf);
+
+    if (btn) btn.disabled = true;
+    if (lbl) lbl.textContent = 'جارٍ الإرسال…';
+
+    var iframe = document.getElementById('jfSubmitFrame');
+    var _finished = false;
+    var finish = function(source) {
+      if (_finished) return;
+      _finished = true;
+      try { window.showToast && window.showToast('تم إرسال التقرير بنجاح', 'success'); } catch (_) {}
+      if (btn) btn.disabled = false;
+      if (lbl) lbl.textContent = 'إرسال التقرير';
+      var keep = { commissariat: form.commissariat.value, group: form.group.value, unit: form.unit.value, leaderEmail: form.leaderEmail.value };
+      form.reset();
+      form.commissariat.value = keep.commissariat;
+      form.group.value = keep.group;
+      form.unit.value = keep.unit;
+      form.leaderEmail.value = keep.leaderEmail;
+      setTimeout(function() { go('dashboard'); }, 1400);
+    };
+
+    var onLoad = function() {
+      iframe.removeEventListener('load', onLoad);
+      finish('iframe-load');
+    };
+    iframe.addEventListener('load', onLoad);
+
+    try { jf.submit(); } catch (err) { console.error('[report] jf.submit() threw', err); }
+
+    setTimeout(function() { finish('timeout-8s'); }, 8000);
+    setTimeout(function() { if (jf.parentNode) jf.parentNode.removeChild(jf); }, 2000);
+
+    return false;
+  }
+
+  // Image & File Upload UI Handlers
+  window.__handleReportImagesSelect = function(input) {
+    var preview = document.getElementById('reportImagesPreview');
+    if (!preview) return;
+    preview.innerHTML = '';
+    if (!input.files || input.files.length === 0) return;
+
+    Array.prototype.forEach.call(input.files, function(file) {
+      if (!file.type.startsWith('image/')) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.width = '60px';
+        img.style.height = '60px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '8px';
+        img.style.border = '1px solid var(--line, #cbd5e1)';
+        preview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  window.__handleReportFilesSelect = function(input) {
+    var status = document.getElementById('reportFilesStatus');
+    var list = document.getElementById('reportFilesList');
+    if (list) list.innerHTML = '';
+    if (!status) return;
+
+    if (input.files && input.files.length > 0) {
+      status.textContent = 'تم اختيار ' + input.files.length + ' ملف/ملفات (اضغط للتغيير)';
+      if (list) {
+        Array.prototype.forEach.call(input.files, function(file) {
+          var item = document.createElement('div');
+          item.style.cssText = 'display:flex; align-items:center; gap:8px; padding:6px 10px; background:#f1f5f9; border-radius:6px; font-size:12px; color:#334155;';
+          var sz = file.size > 1024 * 1024 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : Math.round(file.size / 1024) + ' KB';
+          item.innerHTML = '<span style="font-weight:600;">📄 ' + esc(file.name) + '</span> <span style="margin-right:auto; opacity:0.7; font-size:11px;">(' + sz + ')</span>';
+          list.appendChild(item);
+        });
+      }
+    } else {
+      status.textContent = 'اضغط لاختيار ملفات المرفقات (يمكنك اختيار عدة ملفات)';
+    }
   };
 
   function renderSettings(){
