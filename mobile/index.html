@@ -1078,15 +1078,88 @@
             <textarea name="reportText" rows="6" required placeholder="اكتب تفاصيل التقرير الكشفي والأنشطة المنفذة..." style="width:100%; border-radius:10px; padding:10px; font-size:14px; border:1px solid var(--line, #cbd5e1); font-family:inherit;"></textarea>
           </div>
 
-          <div class="nf-section-title">صور النشاط / الاجتماع <span class="nf-hint">(تحميل صور بأي صيغة)</span></div>
-          <div class="nf-field" style="margin-bottom:16px;">
-            <label class="nf-upload-box" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; border:2px dashed var(--line, #cbd5e1); border-radius:12px; background:var(--bg, #f8fafc); cursor:pointer; text-align:center; transition:all 0.2s;">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span style="font-size:14px; font-weight:600; color:var(--text, #0f172a);">اضغط لاختيار الصور</span>
-              <span style="font-size:12px; color:var(--text-secondary, #64748b);">يدعم جميع صيغ الصور (PNG, JPG, JPEG, WEBP, HEIC, GIF, BMP)</span>
-              <input type="file" id="reportImagesInput" name="q9_input9[]" multiple accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleReportImagesSelect && window.__handleReportImagesSelect(this);" />
-            </label>
-            <div id="reportImagesPreview" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;"></div>
+          <div class="nf-section-title">صور النشاط / الاجتماع <span class="nf-hint">(8 حقول لرفع صور النشاط — جميع الصيغ)</span></div>
+          <div class="nf-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px;">
+            <!-- Photo Slot 1 (q9_input9[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 1</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg1">اختيار صورة 1</span>
+                <img id="prevImg1" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg1" name="q9_input9[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg1', 'lblImg1');" />
+              </label>
+            </div>
+            <!-- Photo Slot 2 (q23_input23[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 2</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg2">اختيار صورة 2</span>
+                <img id="prevImg2" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg2" name="q23_input23[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg2', 'lblImg2');" />
+              </label>
+            </div>
+            <!-- Photo Slot 3 (q24_input24[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 3</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg3">اختيار صورة 3</span>
+                <img id="prevImg3" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg3" name="q24_input24[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg3', 'lblImg3');" />
+              </label>
+            </div>
+            <!-- Photo Slot 4 (q25_input25[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 4</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg4">اختيار صورة 4</span>
+                <img id="prevImg4" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg4" name="q25_input25[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg4', 'lblImg4');" />
+              </label>
+            </div>
+            <!-- Photo Slot 5 (q26_input26[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 5</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg5">اختيار صورة 5</span>
+                <img id="prevImg5" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg5" name="q26_input26[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg5', 'lblImg5');" />
+              </label>
+            </div>
+            <!-- Photo Slot 6 (q27_input27[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 6</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg6">اختيار صورة 6</span>
+                <img id="prevImg6" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg6" name="q27_input27[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg6', 'lblImg6');" />
+              </label>
+            </div>
+            <!-- Photo Slot 7 (q28_input28[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 7</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg7">اختيار صورة 7</span>
+                <img id="prevImg7" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg7" name="q28_input28[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg7', 'lblImg7');" />
+              </label>
+            </div>
+            <!-- Photo Slot 8 (q29_input29[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة النشاط 8</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblImg8">اختيار صورة 8</span>
+                <img id="prevImg8" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="reportImg8" name="q29_input29[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevImg8', 'lblImg8');" />
+              </label>
+            </div>
           </div>
 
           <div class="nf-section-title">المرفقات والتقرير المالي <span class="nf-hint">(ملفات وصور - pdf, doc, xls, csv, png, jpg...)</span></div>
@@ -4934,16 +5007,23 @@ init();
       try {
         var dbRow = {
           id: subObj.id,
+          type: subObj.type || 'program',
           commissariat: subObj.commissariat || 'الجنوب',
           group_name: subObj.group || 'صيدا الأول',
           unit: subObj.unit || '',
           unit_canonical: subObj.unitCanonical || '',
+          leader_first_name: subObj.leaderFirstName || '',
+          leader_last_name: subObj.leaderLastName || '',
           leader_email: subObj.leaderEmail || '',
+          activity_title: subObj.activityTitle || 'اجتماع اسبوعي',
           outgoing_number: subObj.outgoingNumber || '',
           place: subObj.place || '',
           date_dmy: subObj.dateDMY || '',
           skills: subObj.skills || [],
           schedule: subObj.schedule || [],
+          leaders_count: subObj.leadersCount || null,
+          members_count: subObj.membersCount || null,
+          report_text: subObj.reportText || null,
           updated_at: new Date().toISOString(),
           created_by: subObj.created_by || ''
         };
@@ -5476,22 +5556,32 @@ init();
     add('q8_input8', form.membersCount.value);
     add('q6_input6', form.reportText.value.trim());
 
-    // Attach uploaded picture inputs
-    var imgInput = document.getElementById('reportImagesInput');
-    if (imgInput && imgInput.files && imgInput.files.length > 0) {
-      for (var f = 0; f < imgInput.files.length; f++) {
+    // Attach uploaded picture inputs (8 distinct slots matching JotForm 71132171557451)
+    var slotMap = [
+      { id: 'reportImg1', name: 'q9_input9[]' },
+      { id: 'reportImg2', name: 'q23_input23[]' },
+      { id: 'reportImg3', name: 'q24_input24[]' },
+      { id: 'reportImg4', name: 'q25_input25[]' },
+      { id: 'reportImg5', name: 'q26_input26[]' },
+      { id: 'reportImg6', name: 'q27_input27[]' },
+      { id: 'reportImg7', name: 'q28_input28[]' },
+      { id: 'reportImg8', name: 'q29_input29[]' }
+    ];
+
+    slotMap.forEach(function(slot) {
+      var inp = document.getElementById(slot.id);
+      if (inp && inp.files && inp.files.length > 0) {
         var fInp = document.createElement('input');
         fInp.type = 'file';
-        var qName = f === 0 ? 'q9_input9[]' : ('q' + (22 + (f % 7)) + '_input' + (22 + (f % 7)) + '[]');
-        fInp.name = qName;
+        fInp.name = slot.name;
         try {
           var dt = new DataTransfer();
-          dt.items.add(imgInput.files[f]);
+          dt.items.add(inp.files[0]);
           fInp.files = dt.files;
         } catch (_) {}
         jf.appendChild(fInp);
       }
-    }
+    });
 
     // Attach uploaded file/financial report inputs
     var docInput = document.getElementById('reportFilesInput');
@@ -5518,6 +5608,8 @@ init();
         group: 'صيدا الأول',
         unit: forcedUnit,
         unitCanonical: canonicalUnit(cu2.unit || (leader2 && leader2.unit)) || canonicalUnit(form.unit.value) || cu2.unit || '',
+        leaderFirstName: lFirstName,
+        leaderLastName: lLastName,
         leaderEmail: form.leaderEmail.value.trim(),
         activityTitle: form.activityTitle.value.trim(),
         outgoingNumber: form.outgoingNumber.value.trim(),
@@ -5574,6 +5666,27 @@ init();
   }
 
   // Image & File Upload UI Handlers
+  window.__handleSlotImageSelect = function(input, prevImgId, lblImgId) {
+    var img = document.getElementById(prevImgId);
+    var lbl = document.getElementById(lblImgId);
+    if (!input.files || input.files.length === 0) {
+      if (img) img.style.display = 'none';
+      if (lbl) lbl.style.display = 'inline';
+      return;
+    }
+    var file = input.files[0];
+    if (file && file.type.startsWith('image/')) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        if (img) {
+          img.src = e.target.result;
+          img.style.display = 'block';
+        }
+        if (lbl) lbl.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   window.__handleReportImagesSelect = function(input) {
     var preview = document.getElementById('reportImagesPreview');
     if (!preview) return;
