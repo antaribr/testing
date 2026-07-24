@@ -325,6 +325,198 @@
       .stats-grid{grid-template-columns:1fr}
       .unit-summary-stats{grid-template-columns:repeat(2,1fr)}
     }
+
+    /* Submissions Modal & Cards Styles */
+    .sub-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .sub-modal-card {
+      background: var(--panel, #ffffff);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+    .sub-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line, #e2e8f0);
+    }
+    .sub-modal-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text, #0f172a);
+    }
+    .sub-role-banner {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary, #475569);
+      margin-top: 2px;
+    }
+    .sub-modal-close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      line-height: 1;
+      color: var(--muted, #94a3b8);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+    .sub-modal-close:hover {
+      background: var(--sidebar-hover, #f1f5f9);
+      color: var(--text, #0f172a);
+    }
+    .sub-modal-toolbar {
+      padding: 12px 20px;
+      background: var(--bg, #f8fafc);
+      border-bottom: 1px solid var(--line, #e2e8f0);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sub-unit-filters {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+    .sub-filter-chip {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      border: 1px solid var(--line, #cbd5e1);
+      background: #ffffff;
+      color: var(--text-secondary, #475569);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sub-filter-chip.active {
+      background: var(--primary, #6366f1);
+      color: #ffffff;
+      border-color: var(--primary, #6366f1);
+    }
+    .sub-search-wrap input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--line, #cbd5e1);
+      background: #ffffff;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .sub-search-wrap input:focus {
+      border-color: var(--primary, #6366f1);
+    }
+    .sub-list {
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .sub-card {
+      background: #ffffff;
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .sub-card:hover {
+      border-color: var(--primary, #6366f1);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+    }
+    .sub-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sub-card-date {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text, #0f172a);
+    }
+    .sub-unit-badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: var(--primary-tint, rgba(99,102,241,0.1));
+      color: var(--primary, #6366f1);
+    }
+    .sub-card-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary, #475569);
+      background: var(--bg, #f8fafc);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .sub-card-detail-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .sub-card-detail-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--muted, #94a3b8);
+      font-weight: 600;
+    }
+    .sub-card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 4px;
+    }
+    .sub-btn-edit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--primary, #6366f1);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .sub-btn-edit:hover {
+      opacity: 0.9;
+    }
+    .sub-empty-state {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--muted, #94a3b8);
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -543,9 +735,20 @@
     <!-- Submit (native form → JotForm backend) -->
     <section id="submit" class="view">
       <div class="mobile-panel" id="submitFormWrap" dir="rtl" style="text-align:right;">
-        <div class="mobile-panel-header" style="flex-direction:row-reverse;">
-          <h3>برنامج أسبوعي — وحدة</h3>
-          <span class="hint" id="submitHint"></span>
+        <div class="mobile-panel-header" style="flex-direction:row-reverse; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 style="margin:0;">برنامج أسبوعي — وحدة</h3>
+            <span class="hint" id="submitHint"></span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" id="btnCancelEditSubmission" class="secondary-btn" style="display:none; padding:6px 12px; font-size:13px; background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; border-radius:8px; cursor:pointer;" onclick="window.__cancelEditSubmission && window.__cancelEditSubmission();">
+              Cancel Edit
+            </button>
+            <button type="button" id="btnViewPreviousSubmissions" class="secondary-btn" style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; font-size:13px; font-weight:600; background:var(--primary-tint, rgba(99,102,241,0.08)); color:var(--primary, #6366f1); border:1px solid var(--primary, #6366f1); border-radius:10px; cursor:pointer; transition:all 0.2s;" onclick="window.__openSubmissionsModal && window.__openSubmissionsModal();">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Previous Submissions
+            </button>
+          </div>
         </div>
 
         <form id="submitNativeForm" class="native-form" novalidate onsubmit="return window.__handleNativeFormSubmit && window.__handleNativeFormSubmit(event);">
@@ -613,6 +816,40 @@
       <!-- Hidden iframe for cross-origin form POST (avoids CORS block) -->
       <iframe name="jfSubmitFrame" id="jfSubmitFrame" style="display:none" title="jotform-target"></iframe>
     </section>
+
+    <!-- Submissions History Modal -->
+    <div id="submissionsModal" class="sub-modal-overlay" style="display:none;" onclick="if(event.target===this) window.__closeSubmissionsModal();">
+      <div class="sub-modal-card" dir="ltr">
+        <div class="sub-modal-header">
+          <div>
+            <h3 class="sub-modal-title">Previous Submissions</h3>
+            <div id="subRoleBanner" class="sub-role-banner"></div>
+          </div>
+          <button type="button" class="sub-modal-close" onclick="window.__closeSubmissionsModal();" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="sub-modal-toolbar">
+          <!-- Unit Filter Tabs (Visible for Admin) -->
+          <div id="subUnitFilterWrap" class="sub-unit-filters" style="display:none;">
+            <button type="button" class="sub-filter-chip active" data-unit="ALL" onclick="window.__filterSubmissionsByUnit('ALL');">All Units</button>
+            <button type="button" class="sub-filter-chip" data-unit="Beavers" onclick="window.__filterSubmissionsByUnit('Beavers');">Beavers</button>
+            <button type="button" class="sub-filter-chip" data-unit="Cubs" onclick="window.__filterSubmissionsByUnit('Cubs');">Cubs</button>
+            <button type="button" class="sub-filter-chip" data-unit="Boyscouts" onclick="window.__filterSubmissionsByUnit('Boyscouts');">Boyscouts</button>
+            <button type="button" class="sub-filter-chip" data-unit="Girlscouts" onclick="window.__filterSubmissionsByUnit('Girlscouts');">Girlscouts</button>
+            <button type="button" class="sub-filter-chip" data-unit="Pioneers" onclick="window.__filterSubmissionsByUnit('Pioneers');">Pioneers</button>
+            <button type="button" class="sub-filter-chip" data-unit="Rovers" onclick="window.__filterSubmissionsByUnit('Rovers');">Rovers</button>
+          </div>
+
+          <div class="sub-search-wrap">
+            <input type="text" id="subSearchInput" placeholder="Search by date, outgoing number, or place..." oninput="window.__searchSubmissions(this.value);" />
+          </div>
+        </div>
+
+        <div id="submissionsList" class="sub-list">
+          <!-- Submissions cards will be dynamically rendered here -->
+        </div>
+      </div>
+    </div>
 
     <!-- Profile (member/leader) -->
     <section id="profile" class="view">
@@ -4152,6 +4389,56 @@ init();
       jRow++;
     });
 
+    // Also save submission record to database / local history
+    try {
+      var skillsData = [];
+      SKILL_ROWS.forEach(function(_, i){
+        var el = form.elements['skill_'+i];
+        skillsData.push(el ? String(el.value||'').trim() : '');
+      });
+
+      var scheduleData = [];
+      var sRowsList = (schedWrap ? schedWrap.querySelectorAll('.nf-sched-row') : []);
+      sRowsList.forEach(function(r, i){
+        var idx = r.getAttribute('data-idx');
+        var name = String((r.querySelector('input[name="sched_'+idx+'_name"]')||{}).value||'').trim();
+        var from = String((r.querySelector('input[name="sched_'+idx+'_from"]')||{}).value||'').trim();
+        var to   = String((r.querySelector('input[name="sched_'+idx+'_to"]')||{}).value||'').trim();
+        var ldr  = String((r.querySelector('input[name="sched_'+idx+'_leader"]')||{}).value||'').trim();
+        var desc = String((r.querySelector('textarea[name="sched_'+idx+'_desc"]')||{}).value||'').trim();
+        var nts  = String((r.querySelector('textarea[name="sched_'+idx+'_notes"]')||{}).value||'').trim();
+        if(name || from || to || ldr || desc || nts) {
+          scheduleData.push({ from: from, to: to, name: name, leader: ldr, desc: desc, notes: nts });
+        }
+      });
+
+      var subRecord = {
+        id: _editingSubmissionId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('sub_' + Date.now() + '_' + Math.floor(Math.random()*10000))),
+        commissariat: 'الجنوب',
+        group: 'صيدا الأول',
+        unit: forcedUnit || form.unit.value,
+        unitCanonical: canonicalUnit(cu2.unit || (leader2 && leader2.unit)) || canonicalUnit(form.unit.value) || cu2.unit || '',
+        leaderEmail: form.leaderEmail.value.trim(),
+        outgoingNumber: form.outgoingNumber.value.trim(),
+        place: form.place.value.trim(),
+        dateDMY: dateStr,
+        skills: skillsData,
+        schedule: scheduleData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by: cu2.email || form.leaderEmail.value.trim()
+      };
+
+      if (typeof saveWeeklySubmissionRecord === 'function') {
+        saveWeeklySubmissionRecord(subRecord);
+      }
+      _editingSubmissionId = null;
+      var cancelBtn = document.getElementById('btnCancelEditSubmission');
+      if (cancelBtn) cancelBtn.style.display = 'none';
+    } catch(errSub) {
+      console.warn('[submit] Error saving submission record:', errSub);
+    }
+
     document.body.appendChild(jf);
 
     if(btn) btn.disabled = true;
@@ -4231,6 +4518,345 @@ init();
     setTimeout(function(){ if(jf.parentNode) jf.parentNode.removeChild(jf); }, 2000);
     return false;
   }
+
+  /* ==========================================================================
+     Weekly Submissions History & Editing Module
+     ========================================================================== */
+  var _editingSubmissionId = null;
+  var _submissionsCache = [];
+  var _selectedUnitFilter = 'ALL';
+  var _searchQuery = '';
+
+  // Get current user unit canonical string
+  function getCurrentUserUnitCanonical() {
+    var cu = window.currentUser || {};
+    var email = (cu.email || '').trim().toLowerCase();
+    var leader = null;
+    if (email && window.state && window.state.leaders) {
+      for (var i = 0; i < window.state.leaders.length; i++) {
+        var le = (window.state.leaders[i].email || '').trim().toLowerCase();
+        if (le && le === email) { leader = window.state.leaders[i]; break; }
+      }
+    }
+    var rawUnit = (leader && leader.unit) || cu.unit || '';
+    return canonicalUnit(rawUnit) || rawUnit || '';
+  }
+
+  // Load submissions from localStorage and Supabase
+  async function fetchWeeklySubmissions() {
+    var localData = [];
+    try {
+      var stored = localStorage.getItem('scout_weekly_submissions');
+      if (stored) localData = JSON.parse(stored);
+    } catch (_) {}
+
+    var remoteData = [];
+    var sb = window.supabaseClient;
+    if (sb) {
+      try {
+        var res = await sb.from('weekly_submissions').select('*').order('created_at', { ascending: false });
+        if (res && res.data && !res.error) {
+          remoteData = res.data;
+        }
+      } catch (e) {
+        console.warn('[submissions] Supabase fetch error:', e);
+      }
+    }
+
+    // Merge remote & local data using ID
+    var map = {};
+    localData.forEach(function(item) { if (item.id) map[item.id] = item; });
+    remoteData.forEach(function(item) { if (item.id) map[item.id] = item; });
+
+    var merged = Object.keys(map).map(function(k) { return map[k]; });
+    merged.sort(function(a, b) {
+      var tA = new Date(a.created_at || a.date_dmy || 0).getTime();
+      var tB = new Date(b.created_at || b.date_dmy || 0).getTime();
+      return tB - tA;
+    });
+
+    _submissionsCache = merged;
+    return _submissionsCache;
+  }
+
+  // Save/Upsert a submission locally & in Supabase
+  async function saveWeeklySubmissionRecord(subObj) {
+    // Save locally
+    try {
+      var stored = localStorage.getItem('scout_weekly_submissions');
+      var list = stored ? JSON.parse(stored) : [];
+      var existingIdx = -1;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === subObj.id) { existingIdx = i; break; }
+      }
+      if (existingIdx >= 0) {
+        list[existingIdx] = subObj;
+      } else {
+        list.unshift(subObj);
+      }
+      localStorage.setItem('scout_weekly_submissions', JSON.stringify(list));
+    } catch (e) {
+      console.warn('[submissions] Local storage save error:', e);
+    }
+
+    // Save to Supabase
+    var sb = window.supabaseClient;
+    if (sb) {
+      try {
+        var dbRow = {
+          id: subObj.id,
+          commissariat: subObj.commissariat || 'الجنوب',
+          group_name: subObj.group || 'صيدا الأول',
+          unit: subObj.unit || '',
+          unit_canonical: subObj.unitCanonical || '',
+          leader_email: subObj.leaderEmail || '',
+          outgoing_number: subObj.outgoingNumber || '',
+          place: subObj.place || '',
+          date_dmy: subObj.dateDMY || '',
+          skills: subObj.skills || [],
+          schedule: subObj.schedule || [],
+          updated_at: new Date().toISOString(),
+          created_by: subObj.created_by || ''
+        };
+        if (subObj.created_at) dbRow.created_at = subObj.created_at;
+
+        await sb.from('weekly_submissions').upsert(dbRow);
+      } catch (err) {
+        console.warn('[submissions] Supabase save error:', err);
+      }
+    }
+  }
+
+  // Filter submissions by role and current filter
+  function filterSubmissionsList(submissions) {
+    var cu = window.currentUser || {};
+    var isAdmin = !!cu.isAdmin;
+    var userUnit = getCurrentUserUnitCanonical();
+
+    return submissions.filter(function(item) {
+      // 1. Role-based filtering
+      if (!isAdmin) {
+        // Unit users see only their unit submissions
+        var itemUnit = canonicalUnit(item.unit_canonical || item.unit) || item.unit || '';
+        if (userUnit && itemUnit && userUnit !== itemUnit) {
+          return false;
+        }
+      } else {
+        // Admin user - check selected unit filter tab if active
+        if (_selectedUnitFilter && _selectedUnitFilter !== 'ALL') {
+          var itemUnitCanonical = canonicalUnit(item.unit_canonical || item.unit) || item.unit || '';
+          if (itemUnitCanonical !== _selectedUnitFilter) return false;
+        }
+      }
+
+      // 2. Search query filtering
+      if (_searchQuery) {
+        var q = _searchQuery.toLowerCase().trim();
+        var matchDate = String(item.date_dmy || '').toLowerCase().includes(q);
+        var matchOut = String(item.outgoing_number || '').toLowerCase().includes(q);
+        var matchPlace = String(item.place || '').toLowerCase().includes(q);
+        var matchEmail = String(item.leader_email || item.leaderEmail || '').toLowerCase().includes(q);
+        var matchUnit = String(item.unit || '').toLowerCase().includes(q);
+        if (!matchDate && !matchOut && !matchPlace && !matchEmail && !matchUnit) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }
+
+  // Open modal
+  window.__openSubmissionsModal = async function() {
+    var modal = document.getElementById('submissionsModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    var cu = window.currentUser || {};
+    var roleBanner = document.getElementById('subRoleBanner');
+    var unitFiltersWrap = document.getElementById('subUnitFilterWrap');
+
+    if (roleBanner) {
+      if (cu.isAdmin) {
+        roleBanner.textContent = 'Viewing All Units (Admin Mode)';
+      } else {
+        var uName = getCurrentUserUnitCanonical() || cu.unit || 'My Unit';
+        roleBanner.textContent = 'Viewing Unit: ' + uName;
+      }
+    }
+
+    if (unitFiltersWrap) {
+      unitFiltersWrap.style.display = cu.isAdmin ? 'flex' : 'none';
+    }
+
+    await fetchWeeklySubmissions();
+    renderSubmissionsList();
+  };
+
+  // Close modal
+  window.__closeSubmissionsModal = function() {
+    var modal = document.getElementById('submissionsModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  // Filter tab click
+  window.__filterSubmissionsByUnit = function(unitName) {
+    _selectedUnitFilter = unitName || 'ALL';
+    var chips = document.querySelectorAll('.sub-filter-chip');
+    chips.forEach(function(chip) {
+      chip.classList.toggle('active', chip.getAttribute('data-unit') === _selectedUnitFilter);
+    });
+    renderSubmissionsList();
+  };
+
+  // Search input
+  window.__searchSubmissions = function(query) {
+    _searchQuery = query || '';
+    renderSubmissionsList();
+  };
+
+  // Render list inside modal
+  function renderSubmissionsList() {
+    var container = document.getElementById('submissionsList');
+    if (!container) return;
+
+    var filtered = filterSubmissionsList(_submissionsCache);
+
+    if (!filtered || filtered.length === 0) {
+      container.innerHTML = '<div class="sub-empty-state">No submissions found.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(function(item) {
+      var dateStr = item.date_dmy || item.dateDMY || 'N/A';
+      var unitText = item.unit || item.unit_canonical || 'Unit';
+      var outNum = item.outgoing_number || item.outgoingNumber || '—';
+      var placeStr = item.place || '—';
+      var emailStr = item.leader_email || item.leaderEmail || '—';
+      var schedCount = Array.isArray(item.schedule) ? item.schedule.length : 0;
+
+      return '<div class="sub-card">' +
+        '<div class="sub-card-top">' +
+          '<div class="sub-card-date">Date: ' + esc(dateStr) + '</div>' +
+          '<span class="sub-unit-badge">' + esc(unitText) + '</span>' +
+        '</div>' +
+        '<div class="sub-card-details">' +
+          '<div class="sub-card-detail-item"><span class="sub-card-detail-label">Outgoing No.</span><span>' + esc(outNum) + '</span></div>' +
+          '<div class="sub-card-detail-item"><span class="sub-card-detail-label">Place</span><span>' + esc(placeStr) + '</span></div>' +
+          '<div class="sub-card-detail-item"><span class="sub-card-detail-label">Leader Email</span><span>' + esc(emailStr) + '</span></div>' +
+          '<div class="sub-card-detail-item"><span class="sub-card-detail-label">Schedule Items</span><span>' + schedCount + ' items</span></div>' +
+        '</div>' +
+        '<div class="sub-card-actions">' +
+          '<button type="button" class="sub-btn-edit" onclick="window.__editSubmission(\'' + esc(item.id) + '\');">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+            'Edit & Resubmit' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Edit Submission Handler
+  window.__editSubmission = function(id) {
+    var sub = null;
+    for (var i = 0; i < _submissionsCache.length; i++) {
+      if (_submissionsCache[i].id === id) { sub = _submissionsCache[i]; break; }
+    }
+    if (!sub) return;
+
+    _editingSubmissionId = sub.id;
+
+    var form = document.getElementById('submitNativeForm');
+    if (!form) return;
+
+    // Populate form fields
+    if (sub.outgoing_number || sub.outgoingNumber) form.outgoingNumber.value = sub.outgoing_number || sub.outgoingNumber;
+    if (sub.place) form.place.value = sub.place;
+    if (sub.leader_email || sub.leaderEmail) form.leaderEmail.value = sub.leader_email || sub.leaderEmail;
+    if (sub.unit) form.unit.value = sub.unit;
+    if (sub.date_dmy || sub.dateDMY) {
+      form.dateDMY.value = sub.date_dmy || sub.dateDMY;
+      var dMatch = form.dateDMY.value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+      if (dMatch) {
+        var nativePicker = document.getElementById('dateDMYNative');
+        if (nativePicker) nativePicker.value = dMatch[3] + '-' + dMatch[2] + '-' + dMatch[1];
+      }
+    }
+
+    // Populate skills matrix
+    var skillsArr = sub.skills || [];
+    if (Array.isArray(skillsArr)) {
+      skillsArr.forEach(function(val, idx) {
+        var el = form.elements['skill_' + idx];
+        if (el) el.value = val || '';
+      });
+    }
+
+    // Populate schedule matrix
+    var schedWrap = document.getElementById('nfScheduleWrap');
+    if (schedWrap) schedWrap.innerHTML = '';
+    _scheduleRowCount = 0;
+
+    var schedItems = sub.schedule || [];
+    if (Array.isArray(schedItems) && schedItems.length > 0) {
+      schedItems.forEach(function(item) {
+        addScheduleRow();
+        var curIdx = _scheduleRowCount - 1;
+        var r = schedWrap.querySelector('.nf-sched-row[data-idx="' + curIdx + '"]');
+        if (r) {
+          if (item.from) (r.querySelector('input[name="sched_' + curIdx + '_from"]') || {}).value = item.from;
+          if (item.to) (r.querySelector('input[name="sched_' + curIdx + '_to"]') || {}).value = item.to;
+          if (item.name) (r.querySelector('input[name="sched_' + curIdx + '_name"]') || {}).value = item.name;
+          if (item.leader) (r.querySelector('input[name="sched_' + curIdx + '_leader"]') || {}).value = item.leader;
+          if (item.desc || item.description) (r.querySelector('textarea[name="sched_' + curIdx + '_desc"]') || {}).value = item.desc || item.description;
+          if (item.notes) (r.querySelector('textarea[name="sched_' + curIdx + '_notes"]') || {}).value = item.notes;
+        }
+      });
+    } else {
+      addScheduleRow();
+    }
+
+    // Close modal
+    window.__closeSubmissionsModal();
+
+    // Show cancel edit button
+    var cancelBtn = document.getElementById('btnCancelEditSubmission');
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+    // Update submit button text
+    var btnLbl = document.getElementById('submitBtnLabel');
+    if (btnLbl) btnLbl.textContent = 'تحديث وإعادة إرسال';
+
+    try {
+      if (window.showToast) window.showToast('Submission loaded for editing', 'info');
+    } catch (_) {}
+
+    // Scroll to top of submit form
+    var wrap = document.getElementById('submitFormWrap');
+    if (wrap && wrap.scrollIntoView) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Cancel edit handler
+  window.__cancelEditSubmission = function() {
+    _editingSubmissionId = null;
+    var cancelBtn = document.getElementById('btnCancelEditSubmission');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+
+    var btnLbl = document.getElementById('submitBtnLabel');
+    if (btnLbl) btnLbl.textContent = 'إرسال';
+
+    var form = document.getElementById('submitNativeForm');
+    if (form) form.reset();
+    renderSkillsMatrix();
+    var wrap = document.getElementById('nfScheduleWrap');
+    if (wrap) wrap.innerHTML = '';
+    _scheduleRowCount = 0;
+    addScheduleRow();
+
+    try {
+      if (window.showToast) window.showToast('Edit cancelled', 'info');
+    } catch (_) {}
+  };
 
   function renderSettings(){
     // Render immediately with whatever we have now (may show diagnostics)
