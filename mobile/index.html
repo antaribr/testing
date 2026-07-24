@@ -1228,7 +1228,7 @@
       <div class="mobile-panel" id="groupActivityReportWrap" dir="rtl" style="text-align:right; display:none;">
         <div class="mobile-panel-header" style="flex-direction:row-reverse; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
           <div>
-            <h3 style="margin:0;">تقرير نشاط فوج في مفوضية الجنوب</h3>
+            <h3 style="margin:0;">تقرير نشاط فوج — مفوضية الجنوب</h3>
             <span class="hint" id="groupReportHint">إعداد وتقديم التقرير النهائي لنشاط الفوج</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
@@ -1240,28 +1240,25 @@
 
         <form id="groupReportNativeForm" class="native-form" novalidate onsubmit="return window.__handleGroupReportFormSubmit && window.__handleGroupReportFormSubmit(event);">
           <div class="nf-grid">
+            <label class="nf-field nf-readonly">
+              <span class="nf-label">المفوضية</span>
+              <input type="text" name="commissariat" required readonly value="الجنوب" />
+            </label>
+            <label class="nf-field nf-readonly">
+              <span class="nf-label">الفوج</span>
+              <input type="text" name="group" required readonly value="صيدا الأول" />
+            </label>
             <label class="nf-field">
-              <span class="nf-label">الاسم الأول لقائد الفوج</span>
+              <span class="nf-label">الاسم الأول للقائد</span>
               <input type="text" name="leaderFirstName" required placeholder="الاسم الأول" />
             </label>
             <label class="nf-field">
-              <span class="nf-label">اسم العائلة لقائد الفوج</span>
+              <span class="nf-label">اسم العائلة للقائد</span>
               <input type="text" name="leaderLastName" required placeholder="اسم العائلة" />
             </label>
             <label class="nf-field">
               <span class="nf-label">البريد الإلكتروني لقائد الفوج</span>
               <input type="email" name="leaderEmail" required autocapitalize="off" spellcheck="false" />
-            </label>
-            <label class="nf-field">
-              <span class="nf-label">الفوج</span>
-              <select name="group" required style="width:100%; border-radius:10px; padding:10px; font-size:14px; border:1px solid var(--line, #cbd5e1); font-family:inherit;">
-                <option value="صيدا الاول" selected>صيدا الأول</option>
-                <option value="صيدا الرابع">صيدا الرابع</option>
-                <option value="صيدا الخامس">صيدا الخامس</option>
-                <option value="صيدا السادس">صيدا السادس</option>
-                <option value="حاصبيا الاول">حاصبيا الأول</option>
-                <option value="الفرقة الموسيقية لمفوضية الجنوب">الفرقة الموسيقية لمفوضية الجنوب</option>
-              </select>
             </label>
             <label class="nf-field">
               <span class="nf-label">اسم النشاط</span>
@@ -5508,19 +5505,27 @@ init();
     } catch (_) {}
   };
 
-  // Submit Menu Navigation Handlers
+  // Submit Menu & Panels Navigation Handlers
+  function hideAllSubmitPanels() {
+    ['submitMenuWrap', 'submitFormWrap', 'reportFormWrap', 'groupActivityReportWrap'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
+
   window.__showSubmitForm = function() {
-    var menuWrap = document.getElementById('submitMenuWrap');
+    hideAllSubmitPanels();
     var formWrap = document.getElementById('submitFormWrap');
-    if (menuWrap) menuWrap.style.display = 'none';
     if (formWrap) formWrap.style.display = 'block';
+    try { loadJotForm(); } catch (_) {}
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.__hideSubmitForm = function() {
+    hideAllSubmitPanels();
     var menuWrap = document.getElementById('submitMenuWrap');
-    var formWrap = document.getElementById('submitFormWrap');
-    if (formWrap) formWrap.style.display = 'none';
     if (menuWrap) menuWrap.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Submission Confirmation Modal Handlers
@@ -5558,39 +5563,18 @@ init();
   var _reportFormRendered = false;
 
   window.__showReportForm = function() {
-    var menuWrap = document.getElementById('submitMenuWrap');
-    var submitWrap = document.getElementById('submitFormWrap');
+    hideAllSubmitPanels();
     var reportWrap = document.getElementById('reportFormWrap');
-    if (menuWrap) menuWrap.style.display = 'none';
-    if (submitWrap) submitWrap.style.display = 'none';
     if (reportWrap) reportWrap.style.display = 'block';
-
-    loadReportForm();
+    try { loadReportForm(); } catch (e) { console.error('Error loading report form:', e); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.__hideReportForm = function() {
+    hideAllSubmitPanels();
     var menuWrap = document.getElementById('submitMenuWrap');
-    var reportWrap = document.getElementById('reportFormWrap');
-    if (reportWrap) reportWrap.style.display = 'none';
     if (menuWrap) menuWrap.style.display = 'block';
-  };
-
-  window.__showGroupActivityReportForm = function() {
-    var menuWrap = document.getElementById('submitMenuWrap');
-    var submitWrap = document.getElementById('submitFormWrap');
-    var reportWrap = document.getElementById('reportFormWrap');
-    var groupReportWrap = document.getElementById('groupActivityReportWrap');
-    if (menuWrap) menuWrap.style.display = 'none';
-    if (submitWrap) submitWrap.style.display = 'none';
-    if (reportWrap) reportWrap.style.display = 'none';
-    if (groupReportWrap) groupReportWrap.style.display = 'block';
-  };
-
-  window.__hideGroupActivityReportForm = function() {
-    var menuWrap = document.getElementById('submitMenuWrap');
-    var groupReportWrap = document.getElementById('groupActivityReportWrap');
-    if (groupReportWrap) groupReportWrap.style.display = 'none';
-    if (menuWrap) menuWrap.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.updateAdminSubmitSectionVisibility = function() {
@@ -5608,23 +5592,18 @@ init();
   var _groupReportFormRendered = false;
 
   window.__showGroupActivityReportForm = function() {
-    var menuWrap = document.getElementById('submitMenuWrap');
-    var submitWrap = document.getElementById('submitFormWrap');
-    var reportWrap = document.getElementById('reportFormWrap');
+    hideAllSubmitPanels();
     var groupReportWrap = document.getElementById('groupActivityReportWrap');
-    if (menuWrap) menuWrap.style.display = 'none';
-    if (submitWrap) submitWrap.style.display = 'none';
-    if (reportWrap) reportWrap.style.display = 'none';
     if (groupReportWrap) groupReportWrap.style.display = 'block';
-
-    loadGroupReportForm();
+    try { loadGroupReportForm(); } catch (e) { console.error('Error loading group report form:', e); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.__hideGroupActivityReportForm = function() {
+    hideAllSubmitPanels();
     var menuWrap = document.getElementById('submitMenuWrap');
-    var groupReportWrap = document.getElementById('groupActivityReportWrap');
-    if (groupReportWrap) groupReportWrap.style.display = 'none';
     if (menuWrap) menuWrap.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   function loadGroupReportForm() {
