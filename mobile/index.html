@@ -910,7 +910,7 @@
           <!-- Admin-Only Submissions Section -->
           <div id="adminSubmitSection" style="display:none; margin-top:24px; border-top: 1px solid var(--line, #e2e8f0); padding-top: 18px;">
             <div style="font-size:15px; font-weight:700; color:var(--primary, #6366f1); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-              <span>👑 طلبات وتقارير الفوج (خاص بمسؤولي الإدارة)</span>
+              <span>👑 طلبات وتقارير الفوج</span>
             </div>
             <div class="submit-menu-grid">
               <!-- Admin Card 1: طلب نشاط فوج (Coming Soon) -->
@@ -1400,6 +1400,16 @@
                 <input type="file" id="groupImg8" name="q29_input29[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg8', 'lblGImg8');" />
               </label>
             </div>
+          </div>
+
+          <div class="nf-section-title">المرفقات والتقرير المالي <span class="nf-hint">(ملفات وصور - pdf, doc, xls, csv, png, jpg...)</span></div>
+          <div class="nf-field" style="margin-bottom:16px;">
+            <label class="nf-upload-box" style="display:flex; align-items:center; gap:10px; padding:12px 16px; border:1px solid var(--line, #cbd5e1); border-radius:10px; background:#fff; cursor:pointer;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary, #6366f1);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span style="font-size:13px; font-weight:600; color:var(--text, #0f172a);" id="groupFilesStatus">اضغط لاختيار ملفات أو صور المرفقات (عدة ملفات)</span>
+              <input type="file" id="groupFilesInput" name="q34_clickTo[]" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.webp,.heic,.heif" style="display:none;" onchange="window.__handleGroupFilesSelect && window.__handleGroupFilesSelect(this);" />
+            </label>
+            <div id="groupFilesList" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;"></div>
           </div>
 
           <div id="groupReportError" class="nf-error" style="display:none;"></div>
@@ -5532,6 +5542,8 @@ init();
     _confirmedSubmit = true;
     if (_pendingSubmitType === 'report') {
       handleReportFormSubmit(_pendingSubmitEvent);
+    } else if (_pendingSubmitType === 'group_report') {
+      handleGroupReportFormSubmit(_pendingSubmitEvent);
     } else {
       handleNativeFormSubmit(_pendingSubmitEvent);
     }
@@ -5704,9 +5716,40 @@ init();
     return handleGroupReportFormSubmit(ev);
   };
 
+  window.__handleGroupFilesSelect = function(input) {
+    var status = document.getElementById('groupFilesStatus');
+    var list = document.getElementById('groupFilesList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!input.files || input.files.length === 0) {
+      if (status) status.textContent = 'اضغط لاختيار ملفات أو صور المرفقات (عدة ملفات)';
+      return;
+    }
+    if (status) status.textContent = 'تم اختيار ' + input.files.length + ' ملفات/صور';
+    Array.prototype.forEach.call(input.files, function(file) {
+      var item = document.createElement('div');
+      item.style.fontSize = '12px';
+      item.style.color = '#334155';
+      item.style.background = '#f1f5f9';
+      item.style.padding = '4px 8px';
+      item.style.borderRadius = '6px';
+      item.textContent = '📄 ' + file.name + ' (' + Math.round(file.size / 1024) + ' KB)';
+      list.appendChild(item);
+    });
+  };
+
   function handleGroupReportFormSubmit(ev) {
     if (ev && ev.preventDefault) ev.preventDefault();
     if (ev && ev.stopPropagation) ev.stopPropagation();
+
+    if (!_confirmedSubmit) {
+      _pendingSubmitEvent = ev;
+      _pendingSubmitType = 'group_report';
+      var confirmModal = document.getElementById('confirmSubmitModal');
+      if (confirmModal) confirmModal.style.display = 'flex';
+      return false;
+    }
+    _confirmedSubmit = false;
 
     var form = document.getElementById('groupReportNativeForm');
     if (!form) return false;
@@ -5816,6 +5859,22 @@ init();
         jf.appendChild(fInp);
       }
     });
+
+    // Attach uploaded file/financial report inputs
+    var docInput = document.getElementById('groupFilesInput');
+    if (docInput && docInput.files && docInput.files.length > 0) {
+      for (var df = 0; df < docInput.files.length; df++) {
+        var dInp = document.createElement('input');
+        dInp.type = 'file';
+        dInp.name = 'q34_clickTo[]';
+        try {
+          var dt2 = new DataTransfer();
+          dt2.items.add(docInput.files[df]);
+          dInp.files = dt2.files;
+        } catch (_) {}
+        jf.appendChild(dInp);
+      }
+    }
 
     // Save record to local & Supabase storage
     try {
