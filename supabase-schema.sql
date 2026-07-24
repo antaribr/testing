@@ -177,32 +177,55 @@ create policy "authenticated users can insert meeting leaders" on public.meeting
 create policy "authenticated users can update meeting leaders" on public.meeting_leaders for update to authenticated using (true);
 create policy "authenticated users can delete meeting leaders" on public.meeting_leaders for delete to authenticated using (true);
 
--- Weekly Submissions table for Mobile submit section
-create table if not exists public.weekly_submissions (
+-- 1. Table for "طلب اجتماع أسبوعي" (Weekly Meeting Request / Program)
+create table if not exists public.weekly_program_requests (
   id uuid primary key default gen_random_uuid(),
   commissariat text default 'الجنوب',
   group_name text default 'صيدا الأول',
   unit text not null,
   unit_canonical text,
-  leader_email text,
-  outgoing_number text,
-  place text,
-  date_dmy text,
-  skills jsonb,
-  schedule jsonb,
+  leader_first_name text,
+  leader_last_name text,
+  leader_email text not null,
+  outgoing_number text not null,
+  place text not null,
+  date_dmy text not null,
+  skills jsonb default '[]'::jsonb,
+  schedule jsonb default '[]'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   created_by text
 );
 
-alter table public.weekly_submissions enable row level security;
+alter table public.weekly_program_requests enable row level security;
+create policy "allow select weekly_program_requests" on public.weekly_program_requests for select using (true);
+create policy "allow insert weekly_program_requests" on public.weekly_program_requests for insert with check (true);
+create policy "allow update weekly_program_requests" on public.weekly_program_requests for update using (true);
 
-create policy "authenticated users can read weekly submissions" on public.weekly_submissions for select to authenticated using (true);
-create policy "authenticated users can insert weekly submissions" on public.weekly_submissions for insert to authenticated with check (true);
-create policy "authenticated users can update weekly submissions" on public.weekly_submissions for update to authenticated using (true);
-create policy "authenticated users can delete weekly submissions" on public.weekly_submissions for delete to authenticated using (true);
+-- 2. Table for "تقرير اجتماع أسبوعي" (Weekly Meeting Report)
+create table if not exists public.weekly_meeting_reports (
+  id uuid primary key default gen_random_uuid(),
+  commissariat text default 'الجنوب',
+  group_name text default 'صيدا الأول',
+  unit text not null,
+  unit_canonical text,
+  leader_first_name text,
+  leader_last_name text,
+  leader_email text not null,
+  activity_title text default 'اجتماع اسبوعي',
+  outgoing_number text not null,
+  place text not null,
+  date_dmy text not null,
+  leaders_count text not null,
+  members_count text not null,
+  report_text text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  created_by text
+);
 
-create policy "anon users can read weekly submissions" on public.weekly_submissions for select to anon using (true);
-create policy "anon users can insert weekly submissions" on public.weekly_submissions for insert to anon with check (true);
-create policy "anon users can update weekly submissions" on public.weekly_submissions for update to anon using (true);
+alter table public.weekly_meeting_reports enable row level security;
+create policy "allow select weekly_meeting_reports" on public.weekly_meeting_reports for select using (true);
+create policy "allow insert weekly_meeting_reports" on public.weekly_meeting_reports for insert with check (true);
+create policy "allow update weekly_meeting_reports" on public.weekly_meeting_reports for update using (true);
 

@@ -5277,16 +5277,34 @@ init();
       form.activityTitle.value = 'اجتماع اسبوعي';
     }
 
-    var fullLeaderName = (leader && leader.name) || (cu.name) || '';
-    var nameParts = fullLeaderName.trim().split(/\s+/);
-    var defaultFirst = nameParts[0] || authEmail.split('@')[0] || '';
-    var defaultLast = nameParts.slice(1).join(' ') || 'صيدا الأول';
+    var fName = (leader && (leader.first_name || leader.firstName)) || (cu && (cu.first_name || cu.firstName)) || '';
+    var lName = (leader && (leader.last_name || leader.lastName)) || (cu && (cu.last_name || cu.lastName)) || '';
 
-    if (form.leaderFirstName && !form.leaderFirstName.value) {
-      form.leaderFirstName.value = defaultFirst;
+    if (!fName || !lName) {
+      var fullLeaderName = (leader && leader.name) || (cu && cu.name) || '';
+      var nameParts = fullLeaderName.trim().split(/\s+/);
+      if (!fName) fName = nameParts[0] || authEmail.split('@')[0] || '';
+      if (!lName) lName = nameParts.slice(1).join(' ') || 'صيدا الأول';
     }
-    if (form.leaderLastName && !form.leaderLastName.value) {
-      form.leaderLastName.value = defaultLast;
+
+    if (form.leaderFirstName) form.leaderFirstName.value = fName;
+    if (form.leaderLastName) form.leaderLastName.value = lName;
+
+    // Direct Supabase query to public.leaders as additional safety guarantee
+    if (authEmail && window.supabaseClient && (!fName || !lName)) {
+      window.supabaseClient.from('leaders')
+        .select('first_name, last_name, name')
+        .eq('email', authEmail)
+        .maybeSingle()
+        .then(function(res) {
+          if (res && res.data) {
+            var ld = res.data;
+            var fn = ld.first_name || (ld.name ? ld.name.split(' ')[0] : '');
+            var ln = ld.last_name || (ld.name ? ld.name.split(' ').slice(1).join(' ') : '');
+            if (fn && form.leaderFirstName) form.leaderFirstName.value = fn;
+            if (ln && form.leaderLastName) form.leaderLastName.value = ln;
+          }
+        }).catch(function(_) {});
     }
 
     var sig = (authEmail || '') + '|' + (unitAr || '') + '|' + (unitMail || '');
