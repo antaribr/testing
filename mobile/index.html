@@ -905,6 +905,46 @@
                 <span class="smc-sub">توثيق وتقييم الأنشطة المنفذة</span>
               </div>
               <span class="smc-badge-locked">🔒 Locked</span>
+          </div>
+
+          <!-- Admin-Only Submissions Section -->
+          <div id="adminSubmitSection" style="display:none; margin-top:24px; border-top: 1px solid var(--line, #e2e8f0); padding-top: 18px;">
+            <div style="font-size:15px; font-weight:700; color:var(--primary, #6366f1); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              <span>👑 طلبات وتقارير الفوج (خاص بمسؤولي الإدارة)</span>
+            </div>
+            <div class="submit-menu-grid">
+              <!-- Admin Card 1: طلب نشاط فوج (Coming Soon) -->
+              <div class="submit-menu-card locked" style="border-right: 4px solid #f59e0b;">
+                <div class="smc-header">
+                  <div class="smc-icon" style="background:#fffbeb; color:#d97706;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </div>
+                  <div class="smc-title-wrap">
+                    <h4>طلب نشاط فوج في مفوضية الجنوب</h4>
+                    <span class="smc-sub">تقديم طلب موافقة على نشاط الفوج لمفوضية الجنوب</span>
+                  </div>
+                  <span class="smc-badge-locked" style="background:#fef3c7; color:#b45309; border:1px solid #fcd34d;">⏳ قريباً</span>
+                </div>
+              </div>
+
+              <!-- Admin Card 2: تقرير نشاط فوج (JotForm 220265741817456) -->
+              <div class="submit-menu-card active" style="border-right: 4px solid var(--primary, #6366f1);">
+                <div class="smc-header">
+                  <div class="smc-icon" style="background:var(--primary-tint, rgba(99,102,241,0.1)); color:var(--primary, #6366f1);">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  </div>
+                  <div class="smc-title-wrap">
+                    <h4>تقرير نشاط فوج في مفوضية الجنوب</h4>
+                    <span class="smc-sub">توثيق وتقييم نشاط الفوج وإرساله لمفوضية الجنوب</span>
+                  </div>
+                </div>
+                <div class="smc-actions">
+                  <button type="button" class="primary-btn smc-btn" onclick="window.__showGroupActivityReportForm && window.__showGroupActivityReportForm();">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    تعبئة التقرير
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1181,6 +1221,195 @@
             </button>
           </div>
           <div class="nf-footnote">تُرسَل البيانات مباشرةً إلى JotForm.</div>
+        </form>
+      </div>
+
+      <!-- Group Activity Report Submit View (Native Form POSTing to JotForm 220265741817456) -->
+      <div class="mobile-panel" id="groupActivityReportWrap" dir="rtl" style="text-align:right; display:none;">
+        <div class="mobile-panel-header" style="flex-direction:row-reverse; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 style="margin:0;">تقرير نشاط فوج في مفوضية الجنوب</h3>
+            <span class="hint" id="groupReportHint">إعداد وتقديم التقرير النهائي لنشاط الفوج</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="secondary-btn" style="padding:6px 12px; font-size:13px; cursor:pointer;" onclick="window.__hideGroupActivityReportForm && window.__hideGroupActivityReportForm();">
+              ← Back to Menu
+            </button>
+          </div>
+        </div>
+
+        <form id="groupReportNativeForm" class="native-form" novalidate onsubmit="return window.__handleGroupReportFormSubmit && window.__handleGroupReportFormSubmit(event);">
+          <div class="nf-grid">
+            <label class="nf-field">
+              <span class="nf-label">الاسم الأول لقائد الفوج</span>
+              <input type="text" name="leaderFirstName" required placeholder="الاسم الأول" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">اسم العائلة لقائد الفوج</span>
+              <input type="text" name="leaderLastName" required placeholder="اسم العائلة" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">البريد الإلكتروني لقائد الفوج</span>
+              <input type="email" name="leaderEmail" required autocapitalize="off" spellcheck="false" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">الفوج</span>
+              <select name="group" required style="width:100%; border-radius:10px; padding:10px; font-size:14px; border:1px solid var(--line, #cbd5e1); font-family:inherit;">
+                <option value="صيدا الاول" selected>صيدا الأول</option>
+                <option value="صيدا الرابع">صيدا الرابع</option>
+                <option value="صيدا الخامس">صيدا الخامس</option>
+                <option value="صيدا السادس">صيدا السادس</option>
+                <option value="حاصبيا الاول">حاصبيا الأول</option>
+                <option value="الفرقة الموسيقية لمفوضية الجنوب">الفرقة الموسيقية لمفوضية الجنوب</option>
+              </select>
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">اسم النشاط</span>
+              <input type="text" name="activityTitle" required placeholder="مثال: رحلة الفوج السنوية" />
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">المكان</span>
+              <input type="text" name="place" required placeholder="مكان النشاط" />
+            </label>
+            <label class="nf-field nf-date-field">
+              <span class="nf-label">من تاريخ</span>
+              <div class="date-picker-wrap">
+                <input type="text" name="fromDateDMY" id="groupFromDateDMYInput" required
+                       inputmode="numeric" pattern="\d{2}-\d{2}-\d{4}"
+                       placeholder="dd-mm-yyyy" maxlength="10" autocomplete="off"
+                       dir="ltr" />
+                <button type="button" class="date-picker-btn" id="groupFromDatePickerBtn" aria-label="اختر تاريخاً">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <input type="date" id="groupFromDateNative" aria-hidden="true" tabindex="-1"
+                       style="position:absolute;inset:0 0 0 auto;width:44px;opacity:0;cursor:pointer;pointer-events:auto;" />
+              </div>
+            </label>
+            <label class="nf-field nf-date-field">
+              <span class="nf-label">إلى تاريخ</span>
+              <div class="date-picker-wrap">
+                <input type="text" name="toDateDMY" id="groupToDateDMYInput" required
+                       inputmode="numeric" pattern="\d{2}-\d{2}-\d{4}"
+                       placeholder="dd-mm-yyyy" maxlength="10" autocomplete="off"
+                       dir="ltr" />
+                <button type="button" class="date-picker-btn" id="groupToDatePickerBtn" aria-label="اختر تاريخاً">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </button>
+                <input type="date" id="groupToDateNative" aria-hidden="true" tabindex="-1"
+                       style="position:absolute;inset:0 0 0 auto;width:44px;opacity:0;cursor:pointer;pointer-events:auto;" />
+              </div>
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">عدد القادة</span>
+              <select name="leadersCount" required style="width:100%; border-radius:10px; padding:10px; font-size:14px; border:1px solid var(--line, #cbd5e1); font-family:inherit;">
+                <!-- Populated dynamically 1 to 20 -->
+              </select>
+            </label>
+            <label class="nf-field">
+              <span class="nf-label">عدد الأفراد</span>
+              <select name="membersCount" required style="width:100%; border-radius:10px; padding:10px; font-size:14px; border:1px solid var(--line, #cbd5e1); font-family:inherit;">
+                <!-- Populated dynamically 1 to 200 -->
+              </select>
+            </label>
+          </div>
+
+          <div class="nf-section-title nf-required">مضمون تقرير النشاط</div>
+          <div class="nf-field" style="margin-bottom:16px;">
+            <textarea name="reportText" rows="6" required placeholder="اكتب تفاصيل تقرير نشاط الفوج والنتائج..." style="width:100%; border-radius:10px; padding:10px; font-size:14px; border:1px solid var(--line, #cbd5e1); font-family:inherit;"></textarea>
+          </div>
+
+          <div class="nf-section-title">صور النشاط <span class="nf-hint">(8 حقول لرفع صور نشاط الفوج)</span></div>
+          <div class="nf-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px;">
+            <!-- Photo Slot 1 (q9_input9[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 1</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg1">صورة 1</span>
+                <img id="prevGImg1" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg1" name="q9_input9[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg1', 'lblGImg1');" />
+              </label>
+            </div>
+            <!-- Photo Slot 2 (q23_input23[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 2</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg2">صورة 2</span>
+                <img id="prevGImg2" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg2" name="q23_input23[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg2', 'lblGImg2');" />
+              </label>
+            </div>
+            <!-- Photo Slot 3 (q24_input24[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 3</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg3">صورة 3</span>
+                <img id="prevGImg3" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg3" name="q24_input24[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg3', 'lblGImg3');" />
+              </label>
+            </div>
+            <!-- Photo Slot 4 (q25_input25[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 4</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg4">صورة 4</span>
+                <img id="prevGImg4" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg4" name="q25_input25[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg4', 'lblGImg4');" />
+              </label>
+            </div>
+            <!-- Photo Slot 5 (q26_input26[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 5</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg5">صورة 5</span>
+                <img id="prevGImg5" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg5" name="q26_input26[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg5', 'lblGImg5');" />
+              </label>
+            </div>
+            <!-- Photo Slot 6 (q27_input27[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 6</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg6">صورة 6</span>
+                <img id="prevGImg6" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg6" name="q27_input27[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg6', 'lblGImg6');" />
+              </label>
+            </div>
+            <!-- Photo Slot 7 (q28_input28[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 7</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg7">صورة 7</span>
+                <img id="prevGImg7" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg7" name="q28_input28[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg7', 'lblGImg7');" />
+              </label>
+            </div>
+            <!-- Photo Slot 8 (q29_input29[]) -->
+            <div class="nf-field">
+              <span class="nf-label" style="font-size:12px;">صورة 8</span>
+              <label class="nf-upload-box-slot" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:90px; border:1px dashed var(--line, #cbd5e1); border-radius:8px; background:#fff; cursor:pointer; overflow:hidden; position:relative;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary, #6366f1);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style="font-size:11px; color:var(--text-secondary, #64748b);" id="lblGImg8">صورة 8</span>
+                <img id="prevGImg8" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;" />
+                <input type="file" id="groupImg8" name="q29_input29[]" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.gif,.bmp" style="display:none;" onchange="window.__handleSlotImageSelect && window.__handleSlotImageSelect(this, 'prevGImg8', 'lblGImg8');" />
+              </label>
+            </div>
+          </div>
+
+          <div id="groupReportError" class="nf-error" style="display:none;"></div>
+
+          <div class="nf-actions">
+            <button type="submit" class="primary-btn full-width" id="groupReportFormBtn">
+              <span id="groupReportBtnLabel">إرسال تقرير نشاط الفوج</span>
+            </button>
+          </div>
+          <div class="nf-footnote">تُرسَل البيانات مباشرةً إلى JotForm (مفوضية الجنوب).</div>
         </form>
       </div>
 
@@ -4461,6 +4690,7 @@ init();
   }
 
   function loadJotForm(){
+    if (typeof window.updateAdminSubmitSectionVisibility === 'function') window.updateAdminSubmitSectionVisibility();
     var hint = document.getElementById('submitHint');
     var cu   = window.currentUser || {};
     var authEmail = (cu.email||'').trim().toLowerCase();
@@ -5332,6 +5562,318 @@ init();
     if (reportWrap) reportWrap.style.display = 'none';
     if (menuWrap) menuWrap.style.display = 'block';
   };
+
+  window.__showGroupActivityReportForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var submitWrap = document.getElementById('submitFormWrap');
+    var reportWrap = document.getElementById('reportFormWrap');
+    var groupReportWrap = document.getElementById('groupActivityReportWrap');
+    if (menuWrap) menuWrap.style.display = 'none';
+    if (submitWrap) submitWrap.style.display = 'none';
+    if (reportWrap) reportWrap.style.display = 'none';
+    if (groupReportWrap) groupReportWrap.style.display = 'block';
+  };
+
+  window.__hideGroupActivityReportForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var groupReportWrap = document.getElementById('groupActivityReportWrap');
+    if (groupReportWrap) groupReportWrap.style.display = 'none';
+    if (menuWrap) menuWrap.style.display = 'block';
+  };
+
+  window.updateAdminSubmitSectionVisibility = function() {
+    var adminSec = document.getElementById('adminSubmitSection');
+    if (!adminSec) return;
+    var cu = window.currentUser || {};
+    var isAdmin = !!(cu.isAdmin || cu.role === 'admin' || cu.role === 'Admin');
+    adminSec.style.display = isAdmin ? 'block' : 'none';
+  };
+
+  /* ==========================================================================
+     Group Activity Report Form Module (JotForm 220265741817456)
+     ========================================================================== */
+  var JOTFORM_GROUP_REPORT_ID = '220265741817456';
+  var _groupReportFormRendered = false;
+
+  window.__showGroupActivityReportForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var submitWrap = document.getElementById('submitFormWrap');
+    var reportWrap = document.getElementById('reportFormWrap');
+    var groupReportWrap = document.getElementById('groupActivityReportWrap');
+    if (menuWrap) menuWrap.style.display = 'none';
+    if (submitWrap) submitWrap.style.display = 'none';
+    if (reportWrap) reportWrap.style.display = 'none';
+    if (groupReportWrap) groupReportWrap.style.display = 'block';
+
+    loadGroupReportForm();
+  };
+
+  window.__hideGroupActivityReportForm = function() {
+    var menuWrap = document.getElementById('submitMenuWrap');
+    var groupReportWrap = document.getElementById('groupActivityReportWrap');
+    if (groupReportWrap) groupReportWrap.style.display = 'none';
+    if (menuWrap) menuWrap.style.display = 'block';
+  };
+
+  function loadGroupReportForm() {
+    var cu = window.currentUser || {};
+    var authEmail = (cu.email || '').trim().toLowerCase();
+
+    var leader = null;
+    if (authEmail && window.state && window.state.leaders) {
+      for (var i = 0; i < window.state.leaders.length; i++) {
+        var le = ((window.state.leaders[i].email) || '').trim().toLowerCase();
+        if (le && le === authEmail) { leader = window.state.leaders[i]; break; }
+      }
+    }
+
+    var form = document.getElementById('groupReportNativeForm');
+    if (!form) return;
+
+    var fName = (leader && (leader.first_name || leader.firstName)) || (cu && (cu.first_name || cu.firstName)) || '';
+    var lName = (leader && (leader.last_name || leader.lastName)) || (cu && (cu.last_name || cu.lastName)) || '';
+
+    if (!fName || !lName) {
+      var fullLeaderName = (leader && leader.name) || (cu && cu.name) || '';
+      var nameParts = fullLeaderName.trim().split(/\s+/);
+      if (!fName) fName = nameParts[0] || authEmail.split('@')[0] || '';
+      if (!lName) lName = nameParts.slice(1).join(' ') || 'صيدا الأول';
+    }
+
+    if (form.leaderFirstName) form.leaderFirstName.value = fName;
+    if (form.leaderLastName) form.leaderLastName.value = lName;
+    if (form.leaderEmail) form.leaderEmail.value = authEmail || '';
+
+    if (!_groupReportFormRendered) {
+      _groupReportFormRendered = true;
+
+      // Populate leadersCount select (1 to 20)
+      var leadersSel = form.elements['leadersCount'];
+      if (leadersSel && leadersSel.options.length <= 1) {
+        for (var l = 1; l <= 20; l++) {
+          var opt = document.createElement('option');
+          opt.value = String(l);
+          opt.textContent = String(l);
+          leadersSel.appendChild(opt);
+        }
+      }
+
+      // Populate membersCount select (1 to 200)
+      var membersSel = form.elements['membersCount'];
+      if (membersSel && membersSel.options.length <= 1) {
+        for (var m = 1; m <= 200; m++) {
+          var optM = document.createElement('option');
+          optM.value = String(m);
+          optM.textContent = String(m);
+          membersSel.appendChild(optM);
+        }
+      }
+
+      // Hook up date pickers
+      setupGroupReportDatePicker('groupFromDateDMYInput', 'groupFromDateNative', 'groupFromDatePickerBtn');
+      setupGroupReportDatePicker('groupToDateDMYInput', 'groupToDateNative', 'groupToDatePickerBtn');
+    }
+  }
+
+  function setupGroupReportDatePicker(inputId, nativeId, btnId) {
+    var dInput = document.getElementById(inputId);
+    var dNative = document.getElementById(nativeId);
+    var dPickerBtn = document.getElementById(btnId);
+
+    if (dInput && dNative) {
+      var syncFromNative = function() {
+        if (!dNative.value) return;
+        var parts = dNative.value.split('-');
+        if (parts.length === 3) {
+          dInput.value = parts[2] + '-' + parts[1] + '-' + parts[0];
+          var wrap = dInput.closest('.nf-field');
+          if (wrap) wrap.classList.remove('invalid');
+        }
+      };
+      dNative.addEventListener('change', syncFromNative);
+      dNative.addEventListener('input', syncFromNative);
+      if (dPickerBtn) {
+        dPickerBtn.addEventListener('click', function() {
+          try { dNative.showPicker ? dNative.showPicker() : dNative.click(); } catch (_) { dNative.click(); }
+        });
+      }
+    }
+  }
+
+  window.__handleGroupReportFormSubmit = function(ev) {
+    return handleGroupReportFormSubmit(ev);
+  };
+
+  function handleGroupReportFormSubmit(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+
+    var form = document.getElementById('groupReportNativeForm');
+    if (!form) return false;
+    var errBox = document.getElementById('groupReportError');
+    var btn = document.getElementById('groupReportFormBtn');
+    var lbl = document.getElementById('groupReportBtnLabel');
+    if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+
+    // Required fields validation
+    var required = ['leaderFirstName', 'leaderLastName', 'leaderEmail', 'group', 'activityTitle', 'place', 'fromDateDMY', 'toDateDMY', 'leadersCount', 'membersCount', 'reportText'];
+    var missing = [];
+    var firstBadEl = null;
+
+    required.forEach(function(n) {
+      var el = form.elements[n];
+      if (!el) return;
+      var v = String(el.value || '').trim();
+      var wrap = el.closest('.nf-field');
+      if (!v) {
+        missing.push(n);
+        if (wrap) wrap.classList.add('invalid');
+        if (!firstBadEl) firstBadEl = el;
+      } else {
+        if (wrap) wrap.classList.remove('invalid');
+      }
+    });
+
+    if (missing.length > 0) {
+      if (errBox) {
+        errBox.textContent = 'يرجى تعبئة جميع الحقول المطلوبة بشكل صحيح.';
+        errBox.style.display = 'block';
+      }
+      if (firstBadEl && firstBadEl.focus) firstBadEl.focus();
+      return false;
+    }
+
+    var fromMatch = form.fromDateDMY.value.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    var toMatch = form.toDateDMY.value.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+    if (!fromMatch || !toMatch) {
+      if (errBox) {
+        errBox.textContent = 'صيغة التاريخ غير صحيحة. يرجى التحديد بتنسيق يوم-شهر-سنة (مثال: 25-07-2026)';
+        errBox.style.display = 'block';
+      }
+      return false;
+    }
+
+    // Build hidden form for JotForm POST submission
+    var jf = document.createElement('form');
+    jf.method = 'POST';
+    jf.action = 'https://submit.jotform.com/submit/220265741817456';
+    jf.target = 'jfSubmitFrame';
+    jf.enctype = 'multipart/form-data';
+    jf.style.display = 'none';
+
+    function add(name, value) {
+      var i = document.createElement('input');
+      i.type = 'hidden';
+      i.name = name;
+      i.value = value == null ? '' : String(value);
+      jf.appendChild(i);
+    }
+
+    add('formID', '220265741817456');
+    add('submitSource', 'saidaone-mobile-admin');
+    add('event_id', String(Date.now()));
+
+    add('q20_input20[first]', form.leaderFirstName.value.trim());
+    add('q20_input20[last]', form.leaderLastName.value.trim());
+    add('q32_input32', form.leaderEmail.value.trim());
+    add('q21_input21', form.group.value);
+    add('q33_input33', form.activityTitle.value.trim());
+    add('q4_input4[day]', fromMatch[1]);
+    add('q4_input4[month]', fromMatch[2]);
+    add('q4_input4[year]', fromMatch[3]);
+    add('q19_input19[day]', toMatch[1]);
+    add('q19_input19[month]', toMatch[2]);
+    add('q19_input19[year]', toMatch[3]);
+    add('q5_input5', form.place.value.trim());
+    add('q7_input7', form.leadersCount.value);
+    add('q8_input8', form.membersCount.value);
+    add('q6_input6', form.reportText.value.trim());
+
+    // Attach uploaded picture inputs (8 slots)
+    var groupSlotMap = [
+      { id: 'groupImg1', name: 'q9_input9[]' },
+      { id: 'groupImg2', name: 'q23_input23[]' },
+      { id: 'groupImg3', name: 'q24_input24[]' },
+      { id: 'groupImg4', name: 'q25_input25[]' },
+      { id: 'groupImg5', name: 'q26_input26[]' },
+      { id: 'groupImg6', name: 'q27_input27[]' },
+      { id: 'groupImg7', name: 'q28_input28[]' },
+      { id: 'groupImg8', name: 'q29_input29[]' }
+    ];
+
+    groupSlotMap.forEach(function(slot) {
+      var inp = document.getElementById(slot.id);
+      if (inp && inp.files && inp.files.length > 0) {
+        var fInp = document.createElement('input');
+        fInp.type = 'file';
+        fInp.name = slot.name;
+        try {
+          var dt = new DataTransfer();
+          dt.items.add(inp.files[0]);
+          fInp.files = dt.files;
+        } catch (_) {}
+        jf.appendChild(fInp);
+      }
+    });
+
+    // Save record to local & Supabase storage
+    try {
+      var gRecord = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : ('g_rep_' + Date.now() + '_' + Math.floor(Math.random() * 10000))),
+        type: 'group_report',
+        commissariat: 'الجنوب',
+        group: form.group.value,
+        leaderFirstName: form.leaderFirstName.value.trim(),
+        leaderLastName: form.leaderLastName.value.trim(),
+        leaderEmail: form.leaderEmail.value.trim(),
+        activityTitle: form.activityTitle.value.trim(),
+        place: form.place.value.trim(),
+        dateDMY: form.fromDateDMY.value.trim() + ' -> ' + form.toDateDMY.value.trim(),
+        leadersCount: form.leadersCount.value,
+        membersCount: form.membersCount.value,
+        reportText: form.reportText.value.trim(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by: form.leaderEmail.value.trim()
+      };
+      if (typeof saveWeeklySubmissionRecord === 'function') {
+        saveWeeklySubmissionRecord(gRecord);
+      }
+    } catch (eG) {
+      console.warn('[groupReport] Error saving record:', eG);
+    }
+
+    document.body.appendChild(jf);
+
+    if (btn) btn.disabled = true;
+    if (lbl) lbl.textContent = 'جارٍ الإرسال…';
+
+    var iframe = document.getElementById('jfSubmitFrame');
+    var _finished = false;
+    var finish = function() {
+      if (_finished) return;
+      _finished = true;
+      try { window.showToast && window.showToast('تم إرسال تقرير نشاط الفوج بنجاح', 'success'); } catch (_) {}
+      if (btn) btn.disabled = false;
+      if (lbl) lbl.textContent = 'إرسال تقرير نشاط الفوج';
+      form.reset();
+      setTimeout(function() { window.__hideGroupActivityReportForm(); }, 1400);
+    };
+
+    var onLoad = function() {
+      iframe.removeEventListener('load', onLoad);
+      finish();
+    };
+    iframe.addEventListener('load', onLoad);
+
+    try { jf.submit(); } catch (err) { console.error('[groupReport] jf.submit() threw', err); }
+
+    setTimeout(function() { finish(); }, 8000);
+    setTimeout(function() { if (jf.parentNode) jf.parentNode.removeChild(jf); }, 2000);
+
+    return false;
+  }
 
   function loadReportForm() {
     var cu = window.currentUser || {};
