@@ -3980,16 +3980,17 @@ async function handleApplyBadges() {
 }
 
 function openLeaderProfile(leaderId) {
-  const l = state.leaders.find(x => x.id === leaderId);
+  const l = (state.leaders || []).find(x => x.id === leaderId);
   if (!l) {
     showToast('Leader not found', 'error');
     return;
   }
 
-  const nameEl = $('#profileLeaderName');
-  if (nameEl) nameEl.textContent = l.fullName || 'Leader Profile';
+  if (typeof renderProfile === 'function') renderProfile(leaderId, 'leader');
+  else if (typeof window.__renderProfile === 'function') window.__renderProfile(leaderId, 'leader');
 
-  switchView('leaderProfile');
+  if (typeof switchView === 'function') switchView('profile');
+  else if (typeof go === 'function') go('profile');
 }
 
 /* ======================================================================
@@ -4307,6 +4308,176 @@ init();
     return html;
   }
 
+  function buildLeaderMilestonesHtml(leaderId) {
+    var leaderMss = ((window.state && window.state.leaderMilestones) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
+    var memberMs = ((window.state && window.state.memberMilestones) || []).find(function(r){ return r.member_id === leaderId || r.memberId === leaderId; });
+    var lRanks = ((window.state && window.state.leaderRanks) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
+
+    // Parse leader_milestones entries
+    var curRankRow = leaderMss.find(function(r){ return r.title === 'leader_current_rank'; });
+    var curRankName = curRankRow ? curRankRow.notes : null;
+    var curRankDate = curRankRow ? (curRankRow.effectiveDate || curRankRow.effective_date) : null;
+
+    var titleRow = leaderMss.find(function(r){ return r.title === 'leader_scout_title'; });
+    var scoutTitle = null;
+    if (titleRow && titleRow.notes) {
+      try { scoutTitle = typeof titleRow.notes === 'string' ? JSON.parse(titleRow.notes) : titleRow.notes; } catch(_) {}
+    }
+
+    var customRanksRow = leaderMss.find(function(r){ return r.title === 'leader_custom_ranks_list'; });
+    var customRanks = [];
+    if (customRanksRow && customRanksRow.notes) {
+      try { customRanks = typeof customRanksRow.notes === 'string' ? JSON.parse(customRanksRow.notes) : customRanksRow.notes; } catch(_) {}
+    }
+
+    var consecrationRow = leaderMss.find(function(r){ return r.title === 'leader_consecration'; });
+    var consecrationDate = consecrationRow ? (consecrationRow.effectiveDate || consecrationRow.effective_date) : null;
+
+    var youthJourneyRow = leaderMss.find(function(r){ return r.title === 'leader_youth_journey'; });
+    var youthJourney = null;
+    if (youthJourneyRow && youthJourneyRow.notes) {
+      try { youthJourney = typeof youthJourneyRow.notes === 'string' ? JSON.parse(youthJourneyRow.notes) : youthJourneyRow.notes; } catch(_) {}
+    }
+    var finalYouth = youthJourney || memberMs;
+
+    var html = '<div style="display:flex;flex-direction:column;gap:12px;">';
+    var hasAnyData = false;
+
+    // 1. Leader Ranks & Title Section
+    var leaderRanksHtml = '';
+    if (curRankName || (scoutTitle && (scoutTitle.title || scoutTitle.godfather || scoutTitle.location)) || consecrationDate || (customRanks && customRanks.length) || (lRanks && lRanks.length)) {
+      hasAnyData = true;
+      leaderRanksHtml += '<div style="padding:14px;background:#fbfbfd;border:1px solid var(--line);border-inline-start:4px solid var(--primary);border-radius:12px;">';
+      leaderRanksHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+      leaderRanksHtml += '<span style="width:10px;height:10px;border-radius:50%;background:var(--primary);display:inline-block"></span>';
+      leaderRanksHtml += '<h4 style="margin:0;font-size:14px;font-weight:800;color:var(--text)">الرتب والصفات الكشفية للقائد</h4>';
+      leaderRanksHtml += '</div>';
+
+      if (curRankName) {
+        leaderRanksHtml += '<div style="margin-bottom:8px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:8px;">';
+        leaderRanksHtml += '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">الرتبة الكشفية الحالية</div>';
+        leaderRanksHtml += '<div style="font-size:14px;font-weight:800;color:var(--primary-dark);">' + esc(curRankName) + (curRankDate ? ' <span style="font-size:12px;font-weight:500;color:var(--muted);">(' + esc(curRankDate) + ')</span>' : '') + '</div>';
+        leaderRanksHtml += '</div>';
+      }
+
+      if (scoutTitle && (scoutTitle.title || scoutTitle.location || scoutTitle.godfather || scoutTitle.date)) {
+        leaderRanksHtml += '<div style="margin-bottom:8px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:8px;">';
+        leaderRanksHtml += '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">التلقيب الكشفي</div>';
+        if (scoutTitle.title) leaderRanksHtml += '<div style="font-size:13px;font-weight:800;color:var(--text);">اللقب: ' + esc(scoutTitle.title) + '</div>';
+        if (scoutTitle.location) leaderRanksHtml += '<div style="font-size:12px;color:var(--text-secondary);">مكان التلقيب: ' + esc(scoutTitle.location) + '</div>';
+        if (scoutTitle.godfather) leaderRanksHtml += '<div style="font-size:12px;color:var(--text-secondary);">العراب (Godfather): ' + esc(scoutTitle.godfather) + '</div>';
+        if (scoutTitle.date) leaderRanksHtml += '<div style="font-size:12px;color:var(--muted);">تاريخ التلقيب: ' + esc(scoutTitle.date) + '</div>';
+        leaderRanksHtml += '</div>';
+      }
+
+      if (consecrationDate) {
+        leaderRanksHtml += '<div style="margin-bottom:8px;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--text-secondary);"><strong style="color:var(--text);">تاريخ التكريس الكشفي:</strong> ' + esc(consecrationDate) + '</div>';
+      }
+
+      if (customRanks && customRanks.length) {
+        leaderRanksHtml += '<div style="margin-top:8px;"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">الرتب والمهام السابقة</div>';
+        customRanks.forEach(function(r) {
+          if (!r || !r.name) return;
+          var dates = [r.start_date || r.startDate, r.end_date || r.endDate].filter(Boolean).join(' → ');
+          leaderRanksHtml += '<div style="padding:6px 10px;background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:4px;font-size:13px;font-weight:700;">' +
+                             esc(r.name) + (dates ? ' <span style="font-size:11px;font-weight:500;color:var(--muted);">(' + esc(dates) + ')</span>' : '') +
+                             '</div>';
+        });
+        leaderRanksHtml += '</div>';
+      }
+
+      if (lRanks && lRanks.length) {
+        leaderRanksHtml += '<div style="margin-top:8px;"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">سجل الرتب المسجلة</div>';
+        lRanks.forEach(function(r) {
+          if (!r || !r.rankName) return;
+          var dates = [r.dateFrom, r.dateTo].filter(Boolean).join(' → ');
+          leaderRanksHtml += '<div style="padding:6px 10px;background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:4px;font-size:13px;font-weight:700;">' +
+                             esc(r.rankName) + (dates ? ' <span style="font-size:11px;font-weight:500;color:var(--muted);">(' + esc(dates) + ')</span>' : '') +
+                             '</div>';
+        });
+        leaderRanksHtml += '</div>';
+      }
+
+      leaderRanksHtml += '</div>';
+      html += leaderRanksHtml;
+    }
+
+    // 2. Youth Scouting Journey Sections
+    if (finalYouth) {
+      function renderBranch(color, title, isPassed, ranksArr, consecrationYear, departureYear, leadershipArr, rankDatesMap) {
+        var hasContent = isPassed || (ranksArr && ranksArr.length) || consecrationYear || departureYear || (leadershipArr && leadershipArr.length);
+        if (!hasContent) return '';
+        hasAnyData = true;
+
+        var chips = '';
+        if (ranksArr && ranksArr.length) {
+          chips = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">' +
+            ranksArr.map(function(rk) {
+              var d = (rankDatesMap && rankDatesMap[rk]) ? ' (' + rankDatesMap[rk] + ')' : '';
+              return '<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--text);">' + esc(rk) + esc(d) + '</span>';
+            }).join('') +
+          '</div>';
+        }
+
+        var years = '';
+        if (consecrationYear || departureYear) {
+          var parts = [];
+          if (consecrationYear) parts.push('التكريس: ' + consecrationYear);
+          if (departureYear) parts.push('الرحيل: ' + departureYear);
+          years = '<div style="font-size:11.5px;color:var(--muted);margin-top:6px;font-weight:600;">' + esc(parts.join(' • ')) + '</div>';
+        }
+
+        var leadHtml = '';
+        if (leadershipArr && leadershipArr.length) {
+          leadHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">' +
+            leadershipArr.map(function(item) {
+              if (typeof item === 'string') {
+                return '<div style="font-size:12px;font-weight:700;color:var(--text);background:#fff;padding:6px 10px;border-radius:8px;border:1px solid var(--line);">' + esc(item) + '</div>';
+              }
+              var roleName = item.role || item.title || item.name || '';
+              var startD = item.startDate || item.start_date || '';
+              var endD = item.endDate || item.end_date || '';
+              var dateStr = [startD, endD].filter(Boolean).join(' → ');
+              var c = item.camp || {};
+              var campStr = '';
+              if (c && c.organized) {
+                var cLines = [c.type, c.place, c.theme, c.date].filter(Boolean).join(' - ');
+                if (cLines) campStr = '<div style="font-size:11px;color:var(--muted);margin-top:2px;">مخيم: ' + esc(cLines) + '</div>';
+              }
+              return '<div style="font-size:12px;background:#fff;padding:6px 10px;border-radius:8px;border:1px solid var(--line);">' +
+                       '<div style="font-weight:700;color:var(--text);">' + esc(roleName) + (dateStr ? ' <span style="font-size:11px;font-weight:500;color:var(--muted);">(' + esc(dateStr) + ')</span>' : '') + '</div>' +
+                       campStr +
+                     '</div>';
+            }).join('') +
+          '</div>';
+        }
+
+        return '<div style="padding:14px;background:#fbfbfd;border:1px solid var(--line);border-inline-start:4px solid ' + color + ';border-radius:12px;">' +
+                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">' +
+                   '<span style="width:10px;height:10px;border-radius:50%;background:' + color + ';display:inline-block"></span>' +
+                   '<h4 style="margin:0;font-size:14px;font-weight:800;color:var(--text)">' + esc(title) + '</h4>' +
+                 '</div>' +
+                 chips + years + leadHtml +
+               '</div>';
+      }
+
+      html += renderBranch('#eab308', 'الفرع الأصفر (الأشبال)',
+        finalYouth.yellow_passed, finalYouth.yellow_ranks || [], null, null, null, finalYouth.yellow_rank_dates || {});
+      html += renderBranch('#10b981', 'الفرع الأخضر (الكشاف / المرشدات)',
+        finalYouth.green_passed, finalYouth.green_ranks || [], finalYouth.green_consecration_year, null, finalYouth.green_leadership || [], finalYouth.green_rank_dates || {});
+      html += renderBranch('#ef4444', 'الفرع الأحمر (الجوالة / المتقدمات)',
+        finalYouth.red_passed, finalYouth.red_ranks || [], finalYouth.red_consecration_year, finalYouth.red_departure_year, finalYouth.red_leadership || [], finalYouth.red_rank_dates || {});
+    }
+
+    html += '</div>';
+
+    if (!hasAnyData) {
+      return '<div class="empty-state" style="padding:16px 8px;"><div class="icon">🧭</div><h4>لا يوجد بيانات مسيرة</h4><p>لم يتم تسجيل بيانات المسيرة الكشفية لهذا القائد بعد.</p></div>';
+    }
+
+    return html;
+  }
+
   function renderProfile(id, type){
     var person=null;
     if(type==='leader'){person=((window.state&&window.state.leaders)||[]).find(function(x){return x.id===id;});}
@@ -4317,35 +4488,96 @@ init();
       return;
     }
 
-    // Refetch this member's milestones on demand so newly-saved rank
-    // dates / camps / leadership from /mobile/register/ show up without
-    // requiring a full app reload. Fires and forgets — the current
-    // (cached) render happens immediately below; the refreshed row
-    // replaces it a moment later if anything changed.
-    if(type !== 'leader' && window.supabaseClient){
-      window.supabaseClient
-        .from('member_milestones')
-        .select('*')
-        .eq('member_id', id)
-        .maybeSingle()
-        .then(function(res){
-          if(res && res.data && window.state && Array.isArray(window.state.memberMilestones)){
-            var arr = window.state.memberMilestones;
-            var i = arr.findIndex(function(r){ return r.member_id === id; });
-            var fresh = res.data;
-            // Only re-render if something actually changed
-            var stale = i>=0 ? JSON.stringify(arr[i]) : null;
-            if(i>=0) arr[i] = fresh; else arr.push(fresh);
-            if(stale !== JSON.stringify(fresh)){
-              var msEl = document.getElementById('profileMilestonesEl');
-              if(msEl) msEl.innerHTML = buildMemberMilestonesHtml(id);
+    // Refetch data on demand so newly saved details/milestones from /mobile/register show up immediately
+    if(window.supabaseClient){
+      if(type === 'leader'){
+        Promise.all([
+          window.supabaseClient.from('leaders').select('*').eq('id', id).maybeSingle(),
+          window.supabaseClient.from('leader_milestones').select('*').eq('leader_id', id),
+          window.supabaseClient.from('member_milestones').select('*').eq('member_id', id),
+          window.supabaseClient.from('leader_ranks').select('*').eq('leader_id', id),
+          window.supabaseClient.from('leader_badges').select('*').eq('leader_id', id)
+        ]).then(function(results){
+          var lRes = results[0];
+          var lmRes = results[1];
+          var mmRes = results[2];
+          var lrRes = results[3];
+          var lbRes = results[4];
+
+          if(window.state){
+            if(lRes && lRes.data && Array.isArray(window.state.leaders)){
+              var idxL = window.state.leaders.findIndex(function(x){ return x.id === id; });
+              var freshL = window.mapLeader ? window.mapLeader(lRes.data) : lRes.data;
+              if(idxL >= 0) window.state.leaders[idxL] = Object.assign({}, window.state.leaders[idxL], freshL);
             }
-          } else if(res && res.error){
-            console.warn('[profile] refetch milestones error:', res.error.message);
+            if(lmRes && lmRes.data && Array.isArray(window.state.leaderMilestones)){
+              window.state.leaderMilestones = window.state.leaderMilestones.filter(function(r){ return r.leaderId !== id && r.leader_id !== id; });
+              (lmRes.data || []).forEach(function(r){ window.state.leaderMilestones.push(window.mapLeaderMilestone ? window.mapLeaderMilestone(r) : r); });
+            }
+            if(mmRes && mmRes.data && Array.isArray(window.state.memberMilestones)){
+              var idxM = window.state.memberMilestones.findIndex(function(r){ return r.member_id === id; });
+              if(idxM >= 0) window.state.memberMilestones[idxM] = mmRes.data;
+              else if(mmRes.data) window.state.memberMilestones.push(mmRes.data);
+            }
+            if(lrRes && lrRes.data && Array.isArray(window.state.leaderRanks)){
+              window.state.leaderRanks = window.state.leaderRanks.filter(function(r){ return r.leaderId !== id && r.leader_id !== id; });
+              (lrRes.data || []).forEach(function(r){ window.state.leaderRanks.push(window.mapLeaderRank ? window.mapLeaderRank(r) : r); });
+            }
+            if(lbRes && lbRes.data && Array.isArray(window.state.leaderBadges)){
+              window.state.leaderBadges = window.state.leaderBadges.filter(function(r){ return r.leaderId !== id; });
+              (lbRes.data || []).forEach(function(r){ window.state.leaderBadges.push(window.mapLeaderBadge ? window.mapLeaderBadge(r) : r); });
+            }
+
+            // Re-render milestones & details
+            var msEl = document.getElementById('profileMilestonesEl');
+            if(msEl) msEl.innerHTML = buildLeaderMilestonesHtml(id);
+
+            var detailsEl = document.getElementById('profileDetails');
+            if(detailsEl && lRes && lRes.data){
+              var pL = window.state.leaders.find(function(x){ return x.id === id; }) || person;
+              var ageL = window.ageDecimal ? window.ageDecimal(pL.dob) : null;
+              var rowsL = [
+                ['Gender', pL.gender || '—'],
+                ['Age', ageL != null ? ageL.toFixed(1) : '—'],
+                ['Birth date', pL.dob || '—'],
+                ['Blood', pL.bloodType || '—'],
+                ['Phone', pL.phone || '—'],
+                ['Emergency Phone', pL.parentPhone || '—'],
+                ['Nationality', pL.nationality || '—'],
+                ['Role', pL.role || '—']
+              ];
+              if(pL.joinDate) rowsL.push(['Joined', pL.joinDate]);
+              if(pL.email) rowsL.push(['Email', pL.email, true]);
+              detailsEl.innerHTML = rowsL.map(function(r){
+                var span = r[2] ? ' span-2' : '';
+                return '<div class="profile-detail' + span + '"><div class="label">' + esc(r[0]) + '</div><div class="value">' + esc(r[1]) + '</div></div>';
+              }).join('');
+            }
           }
-        })
-        .catch(function(e){ console.warn('[profile] refetch milestones threw:', e); });
+        }).catch(function(e){ console.warn('[profile] refetch leader data threw:', e); });
+      } else {
+        window.supabaseClient
+          .from('member_milestones')
+          .select('*')
+          .eq('member_id', id)
+          .maybeSingle()
+          .then(function(res){
+            if(res && res.data && window.state && Array.isArray(window.state.memberMilestones)){
+              var arr = window.state.memberMilestones;
+              var i = arr.findIndex(function(r){ return r.member_id === id; });
+              var fresh = res.data;
+              var stale = i>=0 ? JSON.stringify(arr[i]) : null;
+              if(i>=0) arr[i] = fresh; else arr.push(fresh);
+              if(stale !== JSON.stringify(fresh)){
+                var msEl = document.getElementById('profileMilestonesEl');
+                if(msEl) msEl.innerHTML = buildMemberMilestonesHtml(id);
+              }
+            }
+          })
+          .catch(function(e){ console.warn('[profile] refetch milestones threw:', e); });
+      }
     }
+
     // Header
     var headerEl=document.getElementById('profileHeader');
     if(headerEl){
@@ -4380,6 +4612,7 @@ init();
         rows.push(['Parent',person.parentType||'—']);
         rows.push(['Parent phone',person.parentPhone||'—']);
       }else{
+        if(person.parentPhone) rows.push(['Emergency Phone',person.parentPhone]);
         rows.push(['Role',person.role||'—']);
         if(person.joinDate)rows.push(['Joined',person.joinDate]);
       }
@@ -4407,14 +4640,14 @@ init();
         }).join('');
       }
     }
-    // Milestones (members only)
+    // Milestones (members & leaders)
     var milestonesEl=document.getElementById('profileMilestonesEl');
     var milestonesPanel=document.getElementById('profileMilestonesPanel');
     if(milestonesEl && milestonesPanel){
+      milestonesPanel.style.display='';
       if(type==='leader'){
-        milestonesPanel.style.display='none';
+        milestonesEl.innerHTML = buildLeaderMilestonesHtml(id);
       }else{
-        milestonesPanel.style.display='';
         milestonesEl.innerHTML = buildMemberMilestonesHtml(id);
       }
     }
@@ -4696,37 +4929,52 @@ init();
     });
   }
 
-  function loadJotForm(){
-    if (typeof window.updateAdminSubmitSectionVisibility === 'function') window.updateAdminSubmitSectionVisibility();
-    var hint = document.getElementById('submitHint');
-    var cu   = window.currentUser || {};
-    var authEmail = (cu.email||'').trim().toLowerCase();
-    var unit  = cu.unit || '';
-
-    // Prefer values from the signed-in leader's DB row.
-    var leader = null;
-    if(authEmail && window.state && window.state.leaders){
-      for(var i=0;i<window.state.leaders.length;i++){
-        var le = ((window.state.leaders[i].email)||'').trim().toLowerCase();
-        if(le && le === authEmail){ leader = window.state.leaders[i]; break; }
+  function safeSetInputValue(form, name, val) {
+    if (!form || !name) return;
+    try {
+      var el = form.elements ? form.elements[name] : null;
+      if (!el && form.querySelector) el = form.querySelector('[name="' + name + '"]');
+      if (el && typeof el.value !== 'undefined') {
+        el.value = (val == null ? '' : String(val));
       }
-    }
-    var unitAr    = (leader && leader.unitArabic) || UNIT_AR[unit] || '';
-    var unitMail  = (leader && leader.unitEmail)  || authEmail || '';
+    } catch (_) {}
+  }
 
-    var form = document.getElementById('submitNativeForm');
-    if(!form) return;
+  function loadJotForm(){
+    try {
+      if (typeof window.updateAdminSubmitSectionVisibility === 'function') window.updateAdminSubmitSectionVisibility();
+      var hint = document.getElementById('submitHint');
+      var cu   = window.currentUser || {};
+      var authEmail = (cu.email||'').trim().toLowerCase();
+      var unit  = cu.unit || '';
 
-    // ALWAYS force the read-only constants — user can't change them.
-    form.commissariat.value = 'الجنوب';
-    form.group.value        = 'صيدا الأول';
+      // Prefer values from the signed-in leader's DB row.
+      var leader = null;
+      if(authEmail && window.state && window.state.leaders){
+        for(var i=0;i<window.state.leaders.length;i++){
+          var le = ((window.state.leaders[i].email)||'').trim().toLowerCase();
+          if(le && le === authEmail){ leader = window.state.leaders[i]; break; }
+        }
+      }
+      var unitAr    = (leader && leader.unitArabic) || UNIT_AR[unit] || '';
+      var unitMail  = (leader && leader.unitEmail)  || authEmail || '';
 
-    // Prefill unit & email if we have them (still editable)
-    var sig = (authEmail||'') + '|' + (unitAr||'') + '|' + (unitMail||'');
-    if(form.getAttribute('data-signed-in-as') !== sig){
-      form.setAttribute('data-signed-in-as', sig);
-      if(unitAr)   form.unit.value = unitAr;
-      if(unitMail) form.leaderEmail.value = unitMail;
+      var form = document.getElementById('submitNativeForm');
+      if(!form) return;
+
+      // ALWAYS force the read-only constants — user can't change them.
+      safeSetInputValue(form, 'commissariat', 'الجنوب');
+      safeSetInputValue(form, 'group', 'صيدا الأول');
+
+      // Prefill unit & email if we have them (still editable)
+      var sig = (authEmail||'') + '|' + (unitAr||'') + '|' + (unitMail||'');
+      if(form.getAttribute('data-signed-in-as') !== sig){
+        form.setAttribute('data-signed-in-as', sig);
+        if(unitAr)   safeSetInputValue(form, 'unit', unitAr);
+        if(unitMail) safeSetInputValue(form, 'leaderEmail', unitMail);
+      }
+    } catch (eJ) {
+      console.warn('loadJotForm error:', eJ);
     }
 
     // Render the matrix + initial 3 schedule rows on first open
@@ -5607,62 +5855,68 @@ init();
   };
 
   function loadGroupReportForm() {
-    var cu = window.currentUser || {};
-    var authEmail = (cu.email || '').trim().toLowerCase();
+    try {
+      var cu = window.currentUser || {};
+      var authEmail = (cu.email || '').trim().toLowerCase();
 
-    var leader = null;
-    if (authEmail && window.state && window.state.leaders) {
-      for (var i = 0; i < window.state.leaders.length; i++) {
-        var le = ((window.state.leaders[i].email) || '').trim().toLowerCase();
-        if (le && le === authEmail) { leader = window.state.leaders[i]; break; }
-      }
-    }
-
-    var form = document.getElementById('groupReportNativeForm');
-    if (!form) return;
-
-    var fName = (leader && (leader.first_name || leader.firstName)) || (cu && (cu.first_name || cu.firstName)) || '';
-    var lName = (leader && (leader.last_name || leader.lastName)) || (cu && (cu.last_name || cu.lastName)) || '';
-
-    if (!fName || !lName) {
-      var fullLeaderName = (leader && leader.name) || (cu && cu.name) || '';
-      var nameParts = fullLeaderName.trim().split(/\s+/);
-      if (!fName) fName = nameParts[0] || authEmail.split('@')[0] || '';
-      if (!lName) lName = nameParts.slice(1).join(' ') || 'صيدا الأول';
-    }
-
-    if (form.leaderFirstName) form.leaderFirstName.value = fName;
-    if (form.leaderLastName) form.leaderLastName.value = lName;
-    if (form.leaderEmail) form.leaderEmail.value = authEmail || '';
-
-    if (!_groupReportFormRendered) {
-      _groupReportFormRendered = true;
-
-      // Populate leadersCount select (1 to 20)
-      var leadersSel = form.elements['leadersCount'];
-      if (leadersSel && leadersSel.options.length <= 1) {
-        for (var l = 1; l <= 20; l++) {
-          var opt = document.createElement('option');
-          opt.value = String(l);
-          opt.textContent = String(l);
-          leadersSel.appendChild(opt);
+      var leader = null;
+      if (authEmail && window.state && window.state.leaders) {
+        for (var i = 0; i < window.state.leaders.length; i++) {
+          var le = ((window.state.leaders[i].email) || '').trim().toLowerCase();
+          if (le && le === authEmail) { leader = window.state.leaders[i]; break; }
         }
       }
 
-      // Populate membersCount select (1 to 200)
-      var membersSel = form.elements['membersCount'];
-      if (membersSel && membersSel.options.length <= 1) {
-        for (var m = 1; m <= 200; m++) {
-          var optM = document.createElement('option');
-          optM.value = String(m);
-          optM.textContent = String(m);
-          membersSel.appendChild(optM);
-        }
+      var form = document.getElementById('groupReportNativeForm');
+      if (!form) return;
+
+      safeSetInputValue(form, 'commissariat', 'الجنوب');
+      safeSetInputValue(form, 'group', 'صيدا الأول');
+
+      var fName = (leader && (leader.first_name || leader.firstName)) || (cu && (cu.first_name || cu.firstName)) || '';
+      var lName = (leader && (leader.last_name || leader.lastName)) || (cu && (cu.last_name || cu.lastName)) || '';
+
+      if (!fName || !lName) {
+        var fullLeaderName = (leader && leader.name) || (cu && cu.name) || '';
+        var nameParts = fullLeaderName.trim().split(/\s+/);
+        if (!fName) fName = nameParts[0] || authEmail.split('@')[0] || '';
+        if (!lName) lName = nameParts.slice(1).join(' ') || 'صيدا الأول';
       }
 
-      // Hook up date pickers
-      setupGroupReportDatePicker('groupFromDateDMYInput', 'groupFromDateNative', 'groupFromDatePickerBtn');
-      setupGroupReportDatePicker('groupToDateDMYInput', 'groupToDateNative', 'groupToDatePickerBtn');
+      safeSetInputValue(form, 'leaderFirstName', fName);
+      safeSetInputValue(form, 'leaderLastName', lName);
+      safeSetInputValue(form, 'leaderEmail', authEmail || '');
+
+      if (!_groupReportFormRendered) {
+        _groupReportFormRendered = true;
+
+        // Populate leadersCount select (1 to 20)
+        var leadersSel = form.elements ? form.elements['leadersCount'] : null;
+        if (leadersSel && leadersSel.options.length <= 1) {
+          for (var l = 1; l <= 20; l++) {
+            var opt = document.createElement('option');
+            opt.value = String(l);
+            opt.textContent = String(l);
+            leadersSel.appendChild(opt);
+          }
+        }
+
+        // Populate membersCount select (1 to 200)
+        var membersSel = form.elements ? form.elements['membersCount'] : null;
+        if (membersSel && membersSel.options.length <= 1) {
+          for (var m = 1; m <= 200; m++) {
+            var optM = document.createElement('option');
+            optM.value = String(m);
+            optM.textContent = String(m);
+            membersSel.appendChild(optM);
+          }
+        }
+
+        // Hook up date pickers
+        setupGroupReportDatePicker('groupFromDateDMYInput', 'groupFromDateNative', 'groupFromDatePickerBtn');
+      }
+    } catch (eG) {
+      console.warn('loadGroupReportForm error:', eG);
     }
   }
 
@@ -5914,64 +6168,69 @@ init();
   }
 
   function loadReportForm() {
-    var cu = window.currentUser || {};
-    var authEmail = (cu.email || '').trim().toLowerCase();
-    var unit = cu.unit || '';
+    try {
+      var cu = window.currentUser || {};
+      var authEmail = (cu.email || '').trim().toLowerCase();
+      var unit = cu.unit || '';
 
-    var leader = null;
-    if (authEmail && window.state && window.state.leaders) {
-      for (var i = 0; i < window.state.leaders.length; i++) {
-        var le = ((window.state.leaders[i].email) || '').trim().toLowerCase();
-        if (le && le === authEmail) { leader = window.state.leaders[i]; break; }
+      var leader = null;
+      if (authEmail && window.state && window.state.leaders) {
+        for (var i = 0; i < window.state.leaders.length; i++) {
+          var le = ((window.state.leaders[i].email) || '').trim().toLowerCase();
+          if (le && le === authEmail) { leader = window.state.leaders[i]; break; }
+        }
       }
-    }
-    var unitAr = (leader && leader.unitArabic) || UNIT_AR[unit] || '';
-    var unitMail = (leader && leader.unitEmail) || authEmail || '';
+      var unitAr = (leader && leader.unitArabic) || UNIT_AR[unit] || '';
+      var unitMail = (leader && leader.unitEmail) || authEmail || '';
 
-    var form = document.getElementById('reportNativeForm');
-    if (!form) return;
+      var form = document.getElementById('reportNativeForm');
+      if (!form) return;
 
-    form.commissariat.value = 'الجنوب';
-    form.group.value = 'صيدا الأول';
-    if (!form.activityTitle.value || !form.activityTitle.value.trim()) {
-      form.activityTitle.value = 'اجتماع اسبوعي';
-    }
+      safeSetInputValue(form, 'commissariat', 'الجنوب');
+      safeSetInputValue(form, 'group', 'صيدا الأول');
+      var actEl = form.elements ? form.elements['activityTitle'] : null;
+      if (actEl && (!actEl.value || !actEl.value.trim())) {
+        actEl.value = 'اجتماع اسبوعي';
+      }
 
-    var fName = (leader && (leader.first_name || leader.firstName)) || (cu && (cu.first_name || cu.firstName)) || '';
-    var lName = (leader && (leader.last_name || leader.lastName)) || (cu && (cu.last_name || cu.lastName)) || '';
+      var fName = (leader && (leader.first_name || leader.firstName)) || (cu && (cu.first_name || cu.firstName)) || '';
+      var lName = (leader && (leader.last_name || leader.lastName)) || (cu && (cu.last_name || cu.lastName)) || '';
 
-    if (!fName || !lName) {
-      var fullLeaderName = (leader && leader.name) || (cu && cu.name) || '';
-      var nameParts = fullLeaderName.trim().split(/\s+/);
-      if (!fName) fName = nameParts[0] || authEmail.split('@')[0] || '';
-      if (!lName) lName = nameParts.slice(1).join(' ') || 'صيدا الأول';
-    }
+      if (!fName || !lName) {
+        var fullLeaderName = (leader && leader.name) || (cu && cu.name) || '';
+        var nameParts = fullLeaderName.trim().split(/\s+/);
+        if (!fName) fName = nameParts[0] || authEmail.split('@')[0] || '';
+        if (!lName) lName = nameParts.slice(1).join(' ') || 'صيدا الأول';
+      }
 
-    if (form.leaderFirstName) form.leaderFirstName.value = fName;
-    if (form.leaderLastName) form.leaderLastName.value = lName;
+      safeSetInputValue(form, 'leaderFirstName', fName);
+      safeSetInputValue(form, 'leaderLastName', lName);
 
-    // Direct Supabase query to public.leaders as additional safety guarantee
-    if (authEmail && window.supabaseClient && (!fName || !lName)) {
-      window.supabaseClient.from('leaders')
-        .select('first_name, last_name, name')
-        .eq('email', authEmail)
-        .maybeSingle()
-        .then(function(res) {
-          if (res && res.data) {
-            var ld = res.data;
-            var fn = ld.first_name || (ld.name ? ld.name.split(' ')[0] : '');
-            var ln = ld.last_name || (ld.name ? ld.name.split(' ').slice(1).join(' ') : '');
-            if (fn && form.leaderFirstName) form.leaderFirstName.value = fn;
-            if (ln && form.leaderLastName) form.leaderLastName.value = ln;
-          }
-        }).catch(function(_) {});
-    }
+      // Direct Supabase query to public.leaders as additional safety guarantee
+      if (authEmail && window.supabaseClient && (!fName || !lName)) {
+        window.supabaseClient.from('leaders')
+          .select('first_name, last_name, name')
+          .eq('email', authEmail)
+          .maybeSingle()
+          .then(function(res) {
+            if (res && res.data) {
+              var ld = res.data;
+              var fn = ld.first_name || (ld.name ? ld.name.split(' ')[0] : '');
+              var ln = ld.last_name || (ld.name ? ld.name.split(' ').slice(1).join(' ') : '');
+              if (fn) safeSetInputValue(form, 'leaderFirstName', fn);
+              if (ln) safeSetInputValue(form, 'leaderLastName', ln);
+            }
+          }).catch(function(_) {});
+      }
 
-    var sig = (authEmail || '') + '|' + (unitAr || '') + '|' + (unitMail || '');
-    if (form.getAttribute('data-signed-in-as') !== sig) {
-      form.setAttribute('data-signed-in-as', sig);
-      if (unitAr) form.unit.value = unitAr;
-      if (unitMail) form.leaderEmail.value = unitMail;
+      var sig = (authEmail || '') + '|' + (unitAr || '') + '|' + (unitMail || '');
+      if (form.getAttribute('data-signed-in-as') !== sig) {
+        form.setAttribute('data-signed-in-as', sig);
+        if (unitAr) safeSetInputValue(form, 'unit', unitAr);
+        if (unitMail) safeSetInputValue(form, 'leaderEmail', unitMail);
+      }
+    } catch (eR) {
+      console.warn('loadReportForm error:', eR);
     }
 
     if (!_reportFormRendered) {
@@ -6689,9 +6948,141 @@ init();
         )+
       '</div>'+
 
-      /* Milestones — new format (from member_milestones) + legacy ranks */
+      function buildLeaderPdfMilestonesHtml(leaderId) {
+        var leaderMss = ((window.state && window.state.leaderMilestones) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
+        var memberMs = ((window.state && window.state.memberMilestones) || []).find(function(r){ return r.member_id === leaderId || r.memberId === leaderId; });
+        var lRanks = ((window.state && window.state.leaderRanks) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
+
+        var curRankRow = leaderMss.find(function(r){ return r.title === 'leader_current_rank'; });
+        var curRankName = curRankRow ? curRankRow.notes : null;
+        var curRankDate = curRankRow ? (curRankRow.effectiveDate || curRankRow.effective_date) : null;
+
+        var titleRow = leaderMss.find(function(r){ return r.title === 'leader_scout_title'; });
+        var scoutTitle = null;
+        if (titleRow && titleRow.notes) {
+          try { scoutTitle = typeof titleRow.notes === 'string' ? JSON.parse(titleRow.notes) : titleRow.notes; } catch(_) {}
+        }
+
+        var customRanksRow = leaderMss.find(function(r){ return r.title === 'leader_custom_ranks_list'; });
+        var customRanks = [];
+        if (customRanksRow && customRanksRow.notes) {
+          try { customRanks = typeof customRanksRow.notes === 'string' ? JSON.parse(customRanksRow.notes) : customRanksRow.notes; } catch(_) {}
+        }
+
+        var consecrationRow = leaderMss.find(function(r){ return r.title === 'leader_consecration'; });
+        var consecrationDate = consecrationRow ? (consecrationRow.effectiveDate || consecrationRow.effective_date) : null;
+
+        var youthJourneyRow = leaderMss.find(function(r){ return r.title === 'leader_youth_journey'; });
+        var youthJourney = null;
+        if (youthJourneyRow && youthJourneyRow.notes) {
+          try { youthJourney = typeof youthJourneyRow.notes === 'string' ? JSON.parse(youthJourneyRow.notes) : youthJourneyRow.notes; } catch(_) {}
+        }
+        var finalYouth = youthJourney || memberMs;
+
+        var pdfBody = '';
+
+        if (curRankName || (scoutTitle && (scoutTitle.title || scoutTitle.godfather || scoutTitle.location)) || consecrationDate || (customRanks && customRanks.length) || (lRanks && lRanks.length)) {
+          pdfBody += '<div class="pdf-avoid-break" style="padding:14px;background:#fbfbfd;border:1px solid #e2e8f0;border-inline-start:4px solid #6366f1;border-radius:12px;margin-bottom:12px;">';
+          pdfBody += '<div class="__pdfArabic" style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:8px;text-align:right;">الرتب والصفات الكشفية للقائد</div>';
+
+          if (curRankName) {
+            pdfBody += '<div class="__pdfArabic" style="font-size:12.5px;color:#0f172a;margin-bottom:4px;text-align:right;"><strong>الرتبة الكشفية الحالية:</strong> ' + esc(curRankName) + (curRankDate ? ' (' + esc(curRankDate) + ')' : '') + '</div>';
+          }
+          if (scoutTitle && (scoutTitle.title || scoutTitle.location || scoutTitle.godfather || scoutTitle.date)) {
+            if (scoutTitle.title) pdfBody += '<div class="__pdfArabic" style="font-size:12px;color:#334155;text-align:right;"><strong>اللقب الكشفي:</strong> ' + esc(scoutTitle.title) + '</div>';
+            if (scoutTitle.location) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>مكان التلقيب:</strong> ' + esc(scoutTitle.location) + '</div>';
+            if (scoutTitle.godfather) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>العراب (Godfather):</strong> ' + esc(scoutTitle.godfather) + '</div>';
+            if (scoutTitle.date) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>تاريخ التلقيب:</strong> ' + esc(scoutTitle.date) + '</div>';
+          }
+          if (consecrationDate) {
+            pdfBody += '<div class="__pdfArabic" style="font-size:12px;color:#334155;margin-top:4px;text-align:right;"><strong>تاريخ التكريس الكشفي:</strong> ' + esc(consecrationDate) + '</div>';
+          }
+          if (customRanks && customRanks.length) {
+            pdfBody += '<div class="__pdfArabic" style="font-size:12px;font-weight:800;color:#475569;margin-top:8px;text-align:right;">الرتب والمهام السابقة</div>';
+            customRanks.forEach(function(r) {
+              if (!r || !r.name) return;
+              var dates = [r.start_date || r.startDate, r.end_date || r.endDate].filter(Boolean).join(' → ');
+              pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:3px;text-align:right;">' + esc(r.name) + (dates ? ' (' + esc(dates) + ')' : '') + '</div>';
+            });
+          }
+          if (lRanks && lRanks.length) {
+            pdfBody += '<div class="__pdfArabic" style="font-size:12px;font-weight:800;color:#475569;margin-top:8px;text-align:right;">سجل الرتب المسجلة</div>';
+            lRanks.forEach(function(r) {
+              if (!r || !r.rankName) return;
+              var dates = [r.dateFrom, r.dateTo].filter(Boolean).join(' → ');
+              pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:3px;text-align:right;">' + esc(r.rankName) + (dates ? ' (' + esc(dates) + ')' : '') + '</div>';
+            });
+          }
+
+          pdfBody += '</div>';
+        }
+
+        if (finalYouth) {
+          function branchPdfLeader(color, titleAr, isPassed, ranksArr, consecrationYear, departureYear, leadershipArr, rankDatesMap) {
+            var hasLead  = !!(leadershipArr && leadershipArr.length);
+            var hasRanks = !!(ranksArr && ranksArr.length);
+            if (!isPassed && !hasRanks && !consecrationYear && !departureYear && !hasLead) return '';
+
+            var dates = (rankDatesMap && typeof rankDatesMap === 'object') ? rankDatesMap : {};
+            var chipsHtml = hasRanks
+              ? '<div class="__pdfArabic" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:flex-end;">' +
+                  ranksArr.map(function(r){
+                    var d = dates[r];
+                    var dHtml = d ? '<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.45);">' + esc(d) + '</span>' : '';
+                    return '<span style="font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px;background:' + color + ';color:#fff;display:inline-flex;align-items:center;">' + esc(r) + dHtml + '</span>';
+                  }).join('') +
+                '</div>'
+              : '';
+
+            var years = '';
+            if (consecrationYear) years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:6px;text-align:right;"><strong>التكريس:</strong> ' + esc(consecrationYear) + '</div>';
+            if (departureYear)    years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:3px;text-align:right;"><strong>الرحيل:</strong> ' + esc(departureYear) + '</div>';
+
+            var leadHtml = '';
+            if (hasLead) {
+              leadHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px;">' +
+                leadershipArr.map(function(item) {
+                  if (typeof item === 'string') return '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;text-align:right;">' + esc(item) + '</div>';
+                  var roleName = item.role || item.title || item.name || '';
+                  var startD = item.startDate || item.start_date || '';
+                  var endD = item.endDate || item.end_date || '';
+                  var dateStr = [startD, endD].filter(Boolean).join(' → ');
+                  var c = item.camp || {};
+                  var campStr = '';
+                  if (c && c.organized) {
+                    var cLines = [c.type, c.place, c.theme, c.date].filter(Boolean).join(' - ');
+                    if (cLines) campStr = '<div class="__pdfArabic" style="font-size:10.5px;color:#64748b;margin-top:2px;text-align:right;">مخيم: ' + esc(cLines) + '</div>';
+                  }
+                  return '<div style="padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">' +
+                           '<div class="__pdfArabic" style="font-size:12px;font-weight:700;color:#0f172a;text-align:right;">' + esc(roleName) + (dateStr ? ' (' + esc(dateStr) + ')' : '') + '</div>' +
+                           campStr +
+                         '</div>';
+                }).join('') +
+              '</div>';
+            }
+
+            return '<div class="pdf-avoid-break" style="padding:14px;background:#fbfbfd;border:1px solid #e2e8f0;border-inline-start:4px solid ' + color + ';border-radius:12px;margin-bottom:12px;">' +
+                     '<div class="__pdfArabic" style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:4px;text-align:right;">' + esc(titleAr) + '</div>' +
+                     chipsHtml + years + leadHtml +
+                   '</div>';
+          }
+
+          pdfBody += branchPdfLeader('#eab308', 'الفرع الأصفر (الأشبال)', finalYouth.yellow_passed, finalYouth.yellow_ranks || [], null, null, null, finalYouth.yellow_rank_dates || {});
+          pdfBody += branchPdfLeader('#10b981', 'الفرع الأخضر (الكشاف / المرشدات)', finalYouth.green_passed, finalYouth.green_ranks || [], finalYouth.green_consecration_year, null, finalYouth.green_leadership || [], finalYouth.green_rank_dates || {});
+          pdfBody += branchPdfLeader('#ef4444', 'الفرع الأحمر (الجوالة / المتقدمات)', finalYouth.red_passed, finalYouth.red_ranks || [], finalYouth.red_consecration_year, finalYouth.red_departure_year, finalYouth.red_leadership || [], finalYouth.red_rank_dates || {});
+        }
+
+        if (!pdfBody) return '';
+
+        return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px;box-sizing:border-box;width:100%;">' +
+                 '<div class="__pdfArabic" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:10px;text-align:right;">المسيرة الكشفية للقائد</div>' +
+                 pdfBody +
+               '</div>';
+      }
+
+      /* Milestones — new format (from member_milestones / leader_milestones) + legacy ranks */
       (function(){
-        if(type==='leader') return '';
+        if(type==='leader') return buildLeaderPdfMilestonesHtml(id);
         if(!hasMilestones && !ranks.length) return '';
 
         // Same signature growth as branchBlock — rankDatesMap comes last.
