@@ -169,7 +169,7 @@ function bindAuth() {
       });
 
       if (error) {
-        setAuthMessage('Invalid email or password. Please try again.');
+        setAuthMessage('Login failed: ' + error.message);
         if (submitBtn) submitBtn.disabled = false;
         return;
       }
@@ -254,11 +254,19 @@ function showApp() {
 }
 
 async function afterLogin() {
-  showApp();
-  await loadAllData();
-  await resolveCurrentUser();
-  applyRoleUI();
-  renderAll();
+  const submitBtn = $('#loginSubmitBtn');
+  try {
+    showApp();
+    await loadAllData();
+    await resolveCurrentUser();
+    applyRoleUI();
+    renderAll();
+  } catch (err) {
+    console.error('Post-login initialization failed:', err);
+    showToast('App initialization error: ' + (err.message || err), 'error');
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
 
 /* ======================================================================
@@ -764,53 +772,63 @@ function bindForms() {
    ====================================================================== */
 
 async function loadAllData() {
-  const [
-    membersRes, leadersRes, paymentsRes, badgesRes, ranksRes,
-    memberAttendanceRes, leaderAttendanceRes,
-    meetingsRes, meetingLeadersRes, meetingLeaderAttendanceRes,
-    badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes
-  ] = await Promise.all([
-    supabaseClient.from('members').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('leaders').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('payments').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('badges').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('ranks').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('member_attendance').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('leader_attendance').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('meetings').select('*').order('meeting_date', { ascending: false }),
-    supabaseClient.from('meeting_leaders').select('*').order('created_at', { ascending: true }),
-    supabaseClient.from('meeting_leader_attendance').select('*'),
-    supabaseClient.from('badge_definitions').select('*').order('created_at', { ascending: false }),
-    supabaseClient.from('leader_badges').select('*').then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_milestones').select('*').then(r => r, e => ({ data: [], error: e })),
-    supabaseClient.from('leader_ranks').select('*').then(r => r, e => ({ data: [], error: e }))
-  ]);
+  const fetchTable = (table, orderCol, asc = false) => {
+    let q = supabaseClient.from(table).select('*');
+    if (orderCol) q = q.order(orderCol, { ascending: asc });
+    return q.then(r => r, e => ({ data: [], error: e }));
+  };
 
-  state.members = (membersRes.data || []).map(mapMember);
-  state.leaders = (leadersRes.data || []).map(mapLeader);
-  state.payments = (paymentsRes.data || []).map(mapPayment);
-  state.badges = (badgesRes.data || []).map(mapBadge);
-  state.ranks = (ranksRes.data || []).map(mapRank);
-  state.memberAttendance = (memberAttendanceRes.data || []).map(mapMemberAttendance);
-  state.leaderAttendance = (leaderAttendanceRes.data || []).map(mapLeaderAttendance);
-  state.badgeDefs = (badgeDefsRes.data || []).map(mapBadgeDef);
-  state.leaderBadges = (leaderBadgesRes.data || []).map(mapLeaderBadge);
-  state.leaderMilestones = (leaderMilestonesRes.data || []).map(mapLeaderMilestone);
-  state.leaderRanks = (leaderRanksRes.data || []).map(mapLeaderRank);
+  try {
+    const [
+      membersRes, leadersRes, paymentsRes, badgesRes, ranksRes,
+      memberAttendanceRes, leaderAttendanceRes,
+      meetingsRes, meetingLeadersRes, meetingLeaderAttendanceRes,
+      badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes
+    ] = await Promise.all([
+      fetchTable('members', 'created_at'),
+      fetchTable('leaders', 'created_at'),
+      fetchTable('payments', 'created_at'),
+      fetchTable('badges', 'created_at'),
+      fetchTable('ranks', 'created_at'),
+      fetchTable('member_attendance', 'created_at'),
+      fetchTable('leader_attendance', 'created_at'),
+      fetchTable('meetings', 'meeting_date'),
+      fetchTable('meeting_leaders', 'created_at', true),
+      fetchTable('meeting_leader_attendance'),
+      fetchTable('badge_definitions', 'created_at'),
+      fetchTable('leader_badges'),
+      fetchTable('leader_milestones'),
+      fetchTable('leader_ranks')
+    ]);
 
-  const leadersByMeeting = groupBy((meetingLeadersRes.data || []).map(mapMeetingLeader), 'meetingId');
-  const leaderAttendanceByMeeting = groupBy((meetingLeaderAttendanceRes.data || []).map(mapMeetingLeaderAttendance), 'meetingId');
+    state.members = (membersRes.data || []).map(mapMember);
+    state.leaders = (leadersRes.data || []).map(mapLeader);
+    state.payments = (paymentsRes.data || []).map(mapPayment);
+    state.badges = (badgesRes.data || []).map(mapBadge);
+    state.ranks = (ranksRes.data || []).map(mapRank);
+    state.memberAttendance = (memberAttendanceRes.data || []).map(mapMemberAttendance);
+    state.leaderAttendance = (leaderAttendanceRes.data || []).map(mapLeaderAttendance);
+    state.badgeDefs = (badgeDefsRes.data || []).map(mapBadgeDef);
+    state.leaderBadges = (leaderBadgesRes.data || []).map(mapLeaderBadge);
+    state.leaderMilestones = (leaderMilestonesRes.data || []).map(mapLeaderMilestone);
+    state.leaderRanks = (leaderRanksRes.data || []).map(mapLeaderRank);
 
-  state.meetings = (meetingsRes.data || []).map(row => ({
-    id: row.id, title: row.title, unit: row.unit,
-    meetingDate: row.meeting_date, startTime: row.start_time, endTime: row.end_time,
-    location: row.location, createdBy: row.created_by,
-    description: row.description, minutes: row.minutes || '',
-    leaders: leadersByMeeting[row.id] || [],
-    leaderAttendance: leaderAttendanceByMeeting[row.id] || []
-  }));
+    const leadersByMeeting = groupBy((meetingLeadersRes.data || []).map(mapMeetingLeader), 'meetingId');
+    const leaderAttendanceByMeeting = groupBy((meetingLeaderAttendanceRes.data || []).map(mapMeetingLeaderAttendance), 'meetingId');
 
-  if (!meetingLeaderRows.length) resetMeetingLeaderRows();
+    state.meetings = (meetingsRes.data || []).map(row => ({
+      id: row.id, title: row.title, unit: row.unit,
+      meetingDate: row.meeting_date, startTime: row.start_time, endTime: row.end_time,
+      location: row.location, createdBy: row.created_by,
+      description: row.description, minutes: row.minutes || '',
+      leaders: leadersByMeeting[row.id] || [],
+      leaderAttendance: leaderAttendanceByMeeting[row.id] || []
+    }));
+
+    if (!meetingLeaderRows.length) resetMeetingLeaderRows();
+  } catch (err) {
+    console.error('[Data Loading Error]', err);
+  }
 }
 
 function groupBy(items, key) {
