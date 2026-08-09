@@ -3,7 +3,7 @@
  * - HTML uses network-first so users always get the latest shell
  * - Bump CACHE_VERSION on every deploy
  */
-const CACHE_VERSION = 'saida-mobile-2026-08-09-v34';
+const CACHE_VERSION = 'saida-mobile-2026-08-09-v35';
 const APP_SHELL = [
   './',
   './index.html',

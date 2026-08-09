@@ -6877,6 +6877,228 @@ init();
     // Segoe UI's Naskh substitution.
     var PDF_FONT = "'Cairo','Segoe UI','Tahoma','Arial Unicode MS',Arial,sans-serif";
 
+    function buildLeaderPdfMilestonesHtml(leaderId) {
+      var leaderMss = ((window.state && window.state.leaderMilestones) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
+      var memberMs = ((window.state && window.state.memberMilestones) || []).find(function(r){ return r.member_id === leaderId || r.memberId === leaderId; });
+      var lRanks = ((window.state && window.state.leaderRanks) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
+
+      var curRankRow = leaderMss.find(function(r){ return r.title === 'leader_current_rank'; });
+      var curRankName = curRankRow ? curRankRow.notes : null;
+      var curRankDate = curRankRow ? (curRankRow.effectiveDate || curRankRow.effective_date) : null;
+
+      var titleRow = leaderMss.find(function(r){ return r.title === 'leader_scout_title'; });
+      var scoutTitle = null;
+      if (titleRow && titleRow.notes) {
+        try { scoutTitle = typeof titleRow.notes === 'string' ? JSON.parse(titleRow.notes) : titleRow.notes; } catch(_) {}
+      }
+
+      var customRanksRow = leaderMss.find(function(r){ return r.title === 'leader_custom_ranks_list'; });
+      var customRanks = [];
+      if (customRanksRow && customRanksRow.notes) {
+        try { customRanks = typeof customRanksRow.notes === 'string' ? JSON.parse(customRanksRow.notes) : customRanksRow.notes; } catch(_) {}
+      }
+
+      var consecrationRow = leaderMss.find(function(r){ return r.title === 'leader_consecration'; });
+      var consecrationDate = consecrationRow ? (consecrationRow.effectiveDate || consecrationRow.effective_date) : null;
+
+      var youthJourneyRow = leaderMss.find(function(r){ return r.title === 'leader_youth_journey'; });
+      var youthJourney = null;
+      if (youthJourneyRow && youthJourneyRow.notes) {
+        try { youthJourney = typeof youthJourneyRow.notes === 'string' ? JSON.parse(youthJourneyRow.notes) : youthJourneyRow.notes; } catch(_) {}
+      }
+      var finalYouth = youthJourney || memberMs;
+
+      var pdfBody = '';
+
+      if (curRankName || (scoutTitle && (scoutTitle.title || scoutTitle.godfather || scoutTitle.location)) || consecrationDate || (customRanks && customRanks.length) || (lRanks && lRanks.length)) {
+        pdfBody += '<div class="pdf-avoid-break" style="padding:14px;background:#fbfbfd;border:1px solid #e2e8f0;border-inline-start:4px solid #6366f1;border-radius:12px;margin-bottom:12px;">';
+        pdfBody += '<div class="__pdfArabic" style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:8px;text-align:right;">الرتب والصفات الكشفية للقائد</div>';
+
+        if (curRankName) {
+          pdfBody += '<div class="__pdfArabic" style="font-size:12.5px;color:#0f172a;margin-bottom:4px;text-align:right;"><strong>الرتبة الكشفية الحالية:</strong> ' + esc(curRankName) + (curRankDate ? ' (' + esc(curRankDate) + ')' : '') + '</div>';
+        }
+        if (scoutTitle && (scoutTitle.title || scoutTitle.location || scoutTitle.godfather || scoutTitle.date)) {
+          if (scoutTitle.title) pdfBody += '<div class="__pdfArabic" style="font-size:12px;color:#334155;text-align:right;"><strong>اللقب الكشفي:</strong> ' + esc(scoutTitle.title) + '</div>';
+          if (scoutTitle.location) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>مكان التلقيب:</strong> ' + esc(scoutTitle.location) + '</div>';
+          if (scoutTitle.godfather) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>العراب (Godfather):</strong> ' + esc(scoutTitle.godfather) + '</div>';
+          if (scoutTitle.date) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>تاريخ التلقيب:</strong> ' + esc(scoutTitle.date) + '</div>';
+        }
+        if (consecrationDate) {
+          pdfBody += '<div class="__pdfArabic" style="font-size:12px;color:#334155;margin-top:4px;text-align:right;"><strong>تاريخ التكريس الكشفي:</strong> ' + esc(consecrationDate) + '</div>';
+        }
+        if (customRanks && customRanks.length) {
+          pdfBody += '<div class="__pdfArabic" style="font-size:12px;font-weight:800;color:#475569;margin-top:8px;text-align:right;">الرتب والمهام السابقة</div>';
+          customRanks.forEach(function(r) {
+            if (!r || !r.name) return;
+            var dates = [r.start_date || r.startDate, r.end_date || r.endDate].filter(Boolean).join(' → ');
+            pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:3px;text-align:right;">' + esc(r.name) + (dates ? ' (' + esc(dates) + ')' : '') + '</div>';
+          });
+        }
+        if (lRanks && lRanks.length) {
+          pdfBody += '<div class="__pdfArabic" style="font-size:12px;font-weight:800;color:#475569;margin-top:8px;text-align:right;">سجل الرتب المسجلة</div>';
+          lRanks.forEach(function(r) {
+            if (!r || !r.rankName) return;
+            var dates = [r.dateFrom, r.dateTo].filter(Boolean).join(' → ');
+            pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:3px;text-align:right;">' + esc(r.rankName) + (dates ? ' (' + esc(dates) + ')' : '') + '</div>';
+          });
+        }
+
+        pdfBody += '</div>';
+      }
+
+      if (finalYouth) {
+        function branchPdfLeader(color, titleAr, isPassed, ranksArr, consecrationYear, departureYear, leadershipArr, rankDatesMap) {
+          var hasLead  = !!(leadershipArr && leadershipArr.length);
+          var hasRanks = !!(ranksArr && ranksArr.length);
+          if (!isPassed && !hasRanks && !consecrationYear && !departureYear && !hasLead) return '';
+
+          var dates = (rankDatesMap && typeof rankDatesMap === 'object') ? rankDatesMap : {};
+          var chipsHtml = hasRanks
+            ? '<div class="__pdfArabic" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:flex-end;">' +
+                ranksArr.map(function(r){
+                  var d = dates[r];
+                  var dHtml = d ? '<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.45);">' + esc(d) + '</span>' : '';
+                  return '<span style="font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px;background:' + color + ';color:#fff;display:inline-flex;align-items:center;">' + esc(r) + dHtml + '</span>';
+                }).join('') +
+              '</div>'
+            : '';
+
+          var years = '';
+          if (consecrationYear) years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:6px;text-align:right;"><strong>التكريس:</strong> ' + esc(consecrationYear) + '</div>';
+          if (departureYear)    years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:3px;text-align:right;"><strong>الرحيل:</strong> ' + esc(departureYear) + '</div>';
+
+          var leadHtml = '';
+          if (hasLead) {
+            leadHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px;">' +
+              leadershipArr.map(function(item) {
+                if (typeof item === 'string') return '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;text-align:right;">' + esc(item) + '</div>';
+                var roleName = item.role || item.title || item.name || '';
+                var startD = item.startDate || item.start_date || '';
+                var endD = item.endDate || item.end_date || '';
+                var dateStr = [startD, endD].filter(Boolean).join(' → ');
+                var c = item.camp || {};
+                var campStr = '';
+                if (c && c.organized) {
+                  var cLines = [c.type, c.place, c.theme, c.date].filter(Boolean).join(' - ');
+                  if (cLines) campStr = '<div class="__pdfArabic" style="font-size:10.5px;color:#64748b;margin-top:2px;text-align:right;">مخيم: ' + esc(cLines) + '</div>';
+                }
+                return '<div style="padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">' +
+                         '<div class="__pdfArabic" style="font-size:12px;font-weight:700;color:#0f172a;text-align:right;">' + esc(roleName) + (dateStr ? ' (' + esc(dateStr) + ')' : '') + '</div>' +
+                         campStr +
+                       '</div>';
+              }).join('') +
+            '</div>';
+          }
+
+          return '<div class="pdf-avoid-break" style="padding:14px;background:#fbfbfd;border:1px solid #e2e8f0;border-inline-start:4px solid ' + color + ';border-radius:12px;margin-bottom:12px;">' +
+                   '<div class="__pdfArabic" style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:4px;text-align:right;">' + esc(titleAr) + '</div>' +
+                   chipsHtml + years + leadHtml +
+                 '</div>';
+        }
+
+        pdfBody += branchPdfLeader('#eab308', 'الفرع الأصفر (الأشبال)', finalYouth.yellow_passed, finalYouth.yellow_ranks || [], null, null, null, finalYouth.yellow_rank_dates || {});
+        pdfBody += branchPdfLeader('#10b981', 'الفرع الأخضر (الكشاف / المرشدات)', finalYouth.green_passed, finalYouth.green_ranks || [], finalYouth.green_consecration_year, null, finalYouth.green_leadership || [], finalYouth.green_rank_dates || {});
+        pdfBody += branchPdfLeader('#ef4444', 'الفرع الأحمر (الجوالة / المتقدمات)', finalYouth.red_passed, finalYouth.red_ranks || [], finalYouth.red_consecration_year, finalYouth.red_departure_year, finalYouth.red_leadership || [], finalYouth.red_rank_dates || {});
+      }
+
+      if (!pdfBody) return '';
+
+      return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px;box-sizing:border-box;width:100%;">' +
+               '<div class="__pdfArabic" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:10px;text-align:right;">المسيرة الكشفية للقائد</div>' +
+               pdfBody +
+             '</div>';
+    }
+
+    function buildMemberPdfMilestonesHtml() {
+      if(!hasMilestones && !ranks.length) return '';
+      function branchPdf(color, titleAr, titleEn, passed, ranksArr, consecrationYear, departureYear, leadershipArr, rankDatesMap){
+        var hasLead  = !!(leadershipArr && leadershipArr.length);
+        var hasRanks = !!(ranksArr && ranksArr.length);
+        if(!passed && !hasRanks && !consecrationYear && !departureYear && !hasLead) return '';
+        var dates = (rankDatesMap && typeof rankDatesMap === 'object') ? rankDatesMap : {};
+        var chipsHtml = hasRanks
+          ? '<div class="__pdfArabic" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:flex-end;">'+ranksArr.map(function(r){
+              var d = dates[r];
+              var dHtml = d
+                ? '<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.45);">'+esc(d)+'</span>'
+                : '';
+              return '<span style="font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px;background:'+color+';color:#fff;display:inline-flex;align-items:center;">'+esc(r)+dHtml+'</span>';
+            }).join('')+'</div>'
+          : '';
+
+        var years = '';
+        if(consecrationYear) years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:6px;text-align:right;"><strong>التكريس:</strong> '+esc(consecrationYear)+'</div>';
+        if(departureYear)    years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:3px;text-align:right;"><strong>الرحيل:</strong> '+esc(departureYear)+'</div>';
+
+        var leadHtml = '';
+        if(hasLead){
+          leadHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px;">'+
+            leadershipArr.map(function(l){
+              if(typeof l === 'string') return '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;text-align:right;">'+esc(l)+'</div>';
+              var roleName = l.role || l.title || l.name || '';
+              var startD = l.startDate || l.start_date || '';
+              var endD = l.endDate || l.end_date || '';
+              var dateStr = [startD, endD].filter(Boolean).join(' → ');
+              var c = l.camp || {};
+              var campHtml = '';
+              if (c && c.organized) {
+                var cLines = [c.type, c.place, c.theme, c.date].filter(Boolean).join(' - ');
+                if (cLines) campHtml = '<div class="__pdfArabic" style="font-size:10.5px;color:#64748b;margin-top:2px;text-align:right;">مخيم: ' + esc(cLines) + '</div>';
+              }
+              return '<div style="padding:7px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:5px;">'+
+                       '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-direction:row-reverse;">'+
+                         '<strong class="__pdfArabic" style="font-size:12.5px;color:#0f172a;">'+esc(l.role)+'</strong>'+
+                         (dateStr ? '<span style="font-size:11px;color:#64748b;">(' + esc(dateStr) + ')</span>' : '') +
+                       '</div>'+
+                       campHtml +
+                     '</div>';
+            }).join('')+
+          '</div>';
+        }
+        return '<div style="padding:12px 14px;background:#fbfbfd;border:1px solid #e2e8f0;border-right:4px solid '+color+';border-radius:10px;box-sizing:border-box;margin-bottom:8px;">'+
+                 '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;justify-content:flex-end;">'+
+                   '<strong class="__pdfArabic" style="font-size:13px;color:#0f172a;">'+esc(titleAr)+'</strong>'+
+                   '<span style="width:10px;height:10px;border-radius:50%;background:'+color+';display:inline-block"></span>'+
+                 '</div>'+
+                 chipsHtml + years + leadHtml +
+               '</div>';
+      }
+
+      var body = '';
+      if(hasMilestones){
+        if(milestones.join_year){
+          body += '<div style="padding:10px 14px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-direction:row-reverse;">'+
+                    '<span class="__pdfArabic" style="font-size:12px;font-weight:700;color:#475569;">سنة الانضمام إلى الجمعية</span>'+
+                    '<strong class="__pdfArabic" style="font-size:15px;color:#4f46e5;">'+esc(milestones.join_year)+'</strong>'+
+                  '</div>';
+        }
+        body += branchPdf('#eab308','الفرع الأصفر','Yellow', milestones.yellow_passed, milestones.yellow_ranks||[], null, null, null,
+                          milestones.yellow_rank_dates||{});
+        body += branchPdf('#10b981','الفرع الأخضر','Green',  milestones.green_passed,  milestones.green_ranks||[],  milestones.green_consecration_year, null,
+                          milestones.green_leadership||[], milestones.green_rank_dates||{});
+        if(showRedBranch){
+          body += branchPdf('#ef4444','الفرع الأحمر','Red',    milestones.red_passed,    milestones.red_ranks||[],    milestones.red_consecration_year,  milestones.red_departure_year,
+                            milestones.red_leadership||[], milestones.red_rank_dates||{});
+        }
+      }
+      if(ranks.length){
+        body += '<div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-top:8px;margin-bottom:4px;">Legacy records</div>';
+        body += ranks.map(function(r){
+          return '<div style="padding:8px 12px;background:#fbfbfd;border:1px solid #e2e8f0;border-left:3px solid #6366f1;border-radius:10px;margin-bottom:5px;">'+
+            '<div style="font-size:12px;font-weight:800;color:#0f172a;">'+esc(r.rankName||'')+'</div>'+
+            '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">'+esc(r.effectiveDate||'—')+'</div>'+
+            (r.notes?'<div style="font-size:11px;color:#475569;margin-top:4px;">'+esc(r.notes)+'</div>':'')+
+            '</div>';
+        }).join('');
+      }
+      return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px;box-sizing:border-box;width:100%;">'+
+               '<div class="__pdfArabic" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:10px;text-align:right;">المسيرة</div>'+
+               body +
+             '</div>';
+    }
+
+    var milestonesHtml = type === 'leader' ? buildLeaderPdfMilestonesHtml(id) : buildMemberPdfMilestonesHtml();
+
     var pdfHtml = ''+
       '<style>'+
         // Google Fonts @import removed: it silently failed to load inside
@@ -6949,248 +7171,7 @@ init();
         )+
       '</div>'+
 
-      function buildLeaderPdfMilestonesHtml(leaderId) {
-        var leaderMss = ((window.state && window.state.leaderMilestones) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
-        var memberMs = ((window.state && window.state.memberMilestones) || []).find(function(r){ return r.member_id === leaderId || r.memberId === leaderId; });
-        var lRanks = ((window.state && window.state.leaderRanks) || []).filter(function(r){ return r.leaderId === leaderId || r.leader_id === leaderId; });
-
-        var curRankRow = leaderMss.find(function(r){ return r.title === 'leader_current_rank'; });
-        var curRankName = curRankRow ? curRankRow.notes : null;
-        var curRankDate = curRankRow ? (curRankRow.effectiveDate || curRankRow.effective_date) : null;
-
-        var titleRow = leaderMss.find(function(r){ return r.title === 'leader_scout_title'; });
-        var scoutTitle = null;
-        if (titleRow && titleRow.notes) {
-          try { scoutTitle = typeof titleRow.notes === 'string' ? JSON.parse(titleRow.notes) : titleRow.notes; } catch(_) {}
-        }
-
-        var customRanksRow = leaderMss.find(function(r){ return r.title === 'leader_custom_ranks_list'; });
-        var customRanks = [];
-        if (customRanksRow && customRanksRow.notes) {
-          try { customRanks = typeof customRanksRow.notes === 'string' ? JSON.parse(customRanksRow.notes) : customRanksRow.notes; } catch(_) {}
-        }
-
-        var consecrationRow = leaderMss.find(function(r){ return r.title === 'leader_consecration'; });
-        var consecrationDate = consecrationRow ? (consecrationRow.effectiveDate || consecrationRow.effective_date) : null;
-
-        var youthJourneyRow = leaderMss.find(function(r){ return r.title === 'leader_youth_journey'; });
-        var youthJourney = null;
-        if (youthJourneyRow && youthJourneyRow.notes) {
-          try { youthJourney = typeof youthJourneyRow.notes === 'string' ? JSON.parse(youthJourneyRow.notes) : youthJourneyRow.notes; } catch(_) {}
-        }
-        var finalYouth = youthJourney || memberMs;
-
-        var pdfBody = '';
-
-        if (curRankName || (scoutTitle && (scoutTitle.title || scoutTitle.godfather || scoutTitle.location)) || consecrationDate || (customRanks && customRanks.length) || (lRanks && lRanks.length)) {
-          pdfBody += '<div class="pdf-avoid-break" style="padding:14px;background:#fbfbfd;border:1px solid #e2e8f0;border-inline-start:4px solid #6366f1;border-radius:12px;margin-bottom:12px;">';
-          pdfBody += '<div class="__pdfArabic" style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:8px;text-align:right;">الرتب والصفات الكشفية للقائد</div>';
-
-          if (curRankName) {
-            pdfBody += '<div class="__pdfArabic" style="font-size:12.5px;color:#0f172a;margin-bottom:4px;text-align:right;"><strong>الرتبة الكشفية الحالية:</strong> ' + esc(curRankName) + (curRankDate ? ' (' + esc(curRankDate) + ')' : '') + '</div>';
-          }
-          if (scoutTitle && (scoutTitle.title || scoutTitle.location || scoutTitle.godfather || scoutTitle.date)) {
-            if (scoutTitle.title) pdfBody += '<div class="__pdfArabic" style="font-size:12px;color:#334155;text-align:right;"><strong>اللقب الكشفي:</strong> ' + esc(scoutTitle.title) + '</div>';
-            if (scoutTitle.location) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>مكان التلقيب:</strong> ' + esc(scoutTitle.location) + '</div>';
-            if (scoutTitle.godfather) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>العراب (Godfather):</strong> ' + esc(scoutTitle.godfather) + '</div>';
-            if (scoutTitle.date) pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;color:#64748b;text-align:right;"><strong>تاريخ التلقيب:</strong> ' + esc(scoutTitle.date) + '</div>';
-          }
-          if (consecrationDate) {
-            pdfBody += '<div class="__pdfArabic" style="font-size:12px;color:#334155;margin-top:4px;text-align:right;"><strong>تاريخ التكريس الكشفي:</strong> ' + esc(consecrationDate) + '</div>';
-          }
-          if (customRanks && customRanks.length) {
-            pdfBody += '<div class="__pdfArabic" style="font-size:12px;font-weight:800;color:#475569;margin-top:8px;text-align:right;">الرتب والمهام السابقة</div>';
-            customRanks.forEach(function(r) {
-              if (!r || !r.name) return;
-              var dates = [r.start_date || r.startDate, r.end_date || r.endDate].filter(Boolean).join(' → ');
-              pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:3px;text-align:right;">' + esc(r.name) + (dates ? ' (' + esc(dates) + ')' : '') + '</div>';
-            });
-          }
-          if (lRanks && lRanks.length) {
-            pdfBody += '<div class="__pdfArabic" style="font-size:12px;font-weight:800;color:#475569;margin-top:8px;text-align:right;">سجل الرتب المسجلة</div>';
-            lRanks.forEach(function(r) {
-              if (!r || !r.rankName) return;
-              var dates = [r.dateFrom, r.dateTo].filter(Boolean).join(' → ');
-              pdfBody += '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-top:3px;text-align:right;">' + esc(r.rankName) + (dates ? ' (' + esc(dates) + ')' : '') + '</div>';
-            });
-          }
-
-          pdfBody += '</div>';
-        }
-
-        if (finalYouth) {
-          function branchPdfLeader(color, titleAr, isPassed, ranksArr, consecrationYear, departureYear, leadershipArr, rankDatesMap) {
-            var hasLead  = !!(leadershipArr && leadershipArr.length);
-            var hasRanks = !!(ranksArr && ranksArr.length);
-            if (!isPassed && !hasRanks && !consecrationYear && !departureYear && !hasLead) return '';
-
-            var dates = (rankDatesMap && typeof rankDatesMap === 'object') ? rankDatesMap : {};
-            var chipsHtml = hasRanks
-              ? '<div class="__pdfArabic" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:flex-end;">' +
-                  ranksArr.map(function(r){
-                    var d = dates[r];
-                    var dHtml = d ? '<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.45);">' + esc(d) + '</span>' : '';
-                    return '<span style="font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px;background:' + color + ';color:#fff;display:inline-flex;align-items:center;">' + esc(r) + dHtml + '</span>';
-                  }).join('') +
-                '</div>'
-              : '';
-
-            var years = '';
-            if (consecrationYear) years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:6px;text-align:right;"><strong>التكريس:</strong> ' + esc(consecrationYear) + '</div>';
-            if (departureYear)    years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:3px;text-align:right;"><strong>الرحيل:</strong> ' + esc(departureYear) + '</div>';
-
-            var leadHtml = '';
-            if (hasLead) {
-              leadHtml = '<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px;">' +
-                leadershipArr.map(function(item) {
-                  if (typeof item === 'string') return '<div class="__pdfArabic" style="font-size:11.5px;padding:4px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;text-align:right;">' + esc(item) + '</div>';
-                  var roleName = item.role || item.title || item.name || '';
-                  var startD = item.startDate || item.start_date || '';
-                  var endD = item.endDate || item.end_date || '';
-                  var dateStr = [startD, endD].filter(Boolean).join(' → ');
-                  var c = item.camp || {};
-                  var campStr = '';
-                  if (c && c.organized) {
-                    var cLines = [c.type, c.place, c.theme, c.date].filter(Boolean).join(' - ');
-                    if (cLines) campStr = '<div class="__pdfArabic" style="font-size:10.5px;color:#64748b;margin-top:2px;text-align:right;">مخيم: ' + esc(cLines) + '</div>';
-                  }
-                  return '<div style="padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">' +
-                           '<div class="__pdfArabic" style="font-size:12px;font-weight:700;color:#0f172a;text-align:right;">' + esc(roleName) + (dateStr ? ' (' + esc(dateStr) + ')' : '') + '</div>' +
-                           campStr +
-                         '</div>';
-                }).join('') +
-              '</div>';
-            }
-
-            return '<div class="pdf-avoid-break" style="padding:14px;background:#fbfbfd;border:1px solid #e2e8f0;border-inline-start:4px solid ' + color + ';border-radius:12px;margin-bottom:12px;">' +
-                     '<div class="__pdfArabic" style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:4px;text-align:right;">' + esc(titleAr) + '</div>' +
-                     chipsHtml + years + leadHtml +
-                   '</div>';
-          }
-
-          pdfBody += branchPdfLeader('#eab308', 'الفرع الأصفر (الأشبال)', finalYouth.yellow_passed, finalYouth.yellow_ranks || [], null, null, null, finalYouth.yellow_rank_dates || {});
-          pdfBody += branchPdfLeader('#10b981', 'الفرع الأخضر (الكشاف / المرشدات)', finalYouth.green_passed, finalYouth.green_ranks || [], finalYouth.green_consecration_year, null, finalYouth.green_leadership || [], finalYouth.green_rank_dates || {});
-          pdfBody += branchPdfLeader('#ef4444', 'الفرع الأحمر (الجوالة / المتقدمات)', finalYouth.red_passed, finalYouth.red_ranks || [], finalYouth.red_consecration_year, finalYouth.red_departure_year, finalYouth.red_leadership || [], finalYouth.red_rank_dates || {});
-        }
-
-        if (!pdfBody) return '';
-
-        return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px;box-sizing:border-box;width:100%;">' +
-                 '<div class="__pdfArabic" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:10px;text-align:right;">المسيرة الكشفية للقائد</div>' +
-                 pdfBody +
-               '</div>';
-      }
-
-      /* Milestones — new format (from member_milestones / leader_milestones) + legacy ranks */
-      (function(){
-        if(type==='leader') return buildLeaderPdfMilestonesHtml(id);
-        if(!hasMilestones && !ranks.length) return '';
-
-        // Same signature growth as branchBlock — rankDatesMap comes last.
-        function branchPdf(color, titleAr, titleEn, passed, ranksArr, consecrationYear, departureYear, leadershipArr, rankDatesMap){
-          var hasLead  = !!(leadershipArr && leadershipArr.length);
-          var hasRanks = !!(ranksArr && ranksArr.length);
-          if(!passed && !hasRanks && !consecrationYear && !departureYear && !hasLead) return '';
-          var dates = (rankDatesMap && typeof rankDatesMap === 'object') ? rankDatesMap : {};
-          var chipsHtml = hasRanks
-            ? '<div class="__pdfArabic" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:flex-end;">'+ranksArr.map(function(r){
-                var d = dates[r];
-                var dHtml = d
-                  ? '<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.45);">'+esc(d)+'</span>'
-                  : '';
-                return '<span style="font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px;background:'+color+';color:#fff;display:inline-flex;align-items:center;">'+esc(r)+dHtml+'</span>';
-              }).join('')+'</div>'
-            : '';
-          var years = '';
-          if(consecrationYear) years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:6px;text-align:right;"><strong>التكريس:</strong> '+esc(consecrationYear)+'</div>';
-          if(departureYear)    years += '<div class="__pdfArabic" style="font-size:11.5px;color:#475569;margin-top:3px;text-align:right;"><strong>الرحيل:</strong> '+esc(departureYear)+'</div>';
-          var leadHtml = '';
-          if(hasLead){
-            leadHtml =
-              '<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;">'+
-                '<div class="__pdfArabic" style="font-size:12px;font-weight:800;color:#475569;margin-bottom:6px;text-align:right;">المراكز</div>'+
-                leadershipArr.map(function(l){
-                  if(!l || !l.role) return '';
-                  var metaParts = [];
-                  if(l.name) metaParts.push('<span class="__pdfArabic" style="color:#334155;font-weight:700;">'+esc(l.name)+'</span>');
-                  if(l.year) metaParts.push('<span class="__pdfArabic" style="color:#64748b;font-weight:700;">'+esc(l.year)+'</span>');
-                  var metaHtml = metaParts.length
-                    ? '<span style="font-size:11.5px;">'+
-                        metaParts.join(' <span class="__pdfArabic" style="color:#cbd5e1;margin:0 2px;">·</span> ')+
-                      '</span>'
-                    : '';
-                  // Camp sub-block (only if the user answered "yes" to organizing)
-                  var campHtml = '';
-                  if(l.camp && l.camp.organized){
-                    var lines = [];
-                    if(l.camp.name)  lines.push({label:'اسم المخيم',  value:l.camp.name});
-                    if(l.camp.place) lines.push({label:'مكان المخيم', value:l.camp.place});
-                    if(l.camp.date)  lines.push({label:'تاريخ المخيم',value:l.camp.date});
-                    campHtml =
-                      '<div style="margin-top:6px;padding:7px 10px;background:#fbfbfd;border:1px dashed #cbd5e1;border-radius:6px;">'+
-                        '<div class="__pdfArabic" style="font-size:12px;font-weight:900;color:#0f172a;margin-bottom:4px;text-align:right;">نظّم مخيماً</div>'+
-                        (lines.length
-                          ? lines.map(function(x){
-                              return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:2px;flex-direction:row-reverse;">'+
-                                       '<span class="__pdfArabic" style="color:#94a3b8;font-weight:700;">'+esc(x.label)+'</span>'+
-                                       '<span class="__pdfArabic" style="color:#0f172a;font-weight:700;">'+esc(x.value)+'</span>'+
-                                     '</div>';
-                            }).join('')
-                          : '<div class="__pdfArabic" style="font-size:10.5px;color:#94a3b8;text-align:right;">نعم (بدون تفاصيل)</div>')+
-                      '</div>';
-                  }
-                  return '<div style="padding:7px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:5px;">'+
-                           '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-direction:row-reverse;">'+
-                             '<strong class="__pdfArabic" style="font-size:12.5px;color:#0f172a;">'+esc(l.role)+'</strong>'+
-                             metaHtml +
-                           '</div>'+
-                           campHtml +
-                         '</div>';
-                }).join('')+
-              '</div>';
-          }
-          return '<div style="padding:12px 14px;background:#fbfbfd;border:1px solid #e2e8f0;border-right:4px solid '+color+';border-radius:10px;box-sizing:border-box;margin-bottom:8px;">'+
-                   '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;justify-content:flex-end;">'+
-                     '<strong class="__pdfArabic" style="font-size:13px;color:#0f172a;">'+esc(titleAr)+'</strong>'+
-                     '<span style="width:10px;height:10px;border-radius:50%;background:'+color+';display:inline-block"></span>'+
-                   '</div>'+
-                   chipsHtml + years + leadHtml +
-                 '</div>';
-        }
-
-        var body = '';
-        if(hasMilestones){
-          if(milestones.join_year){
-            body += '<div style="padding:10px 14px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-direction:row-reverse;">'+
-                      '<span class="__pdfArabic" style="font-size:12px;font-weight:700;color:#475569;">سنة الانضمام إلى الجمعية</span>'+
-                      '<strong class="__pdfArabic" style="font-size:15px;color:#4f46e5;">'+esc(milestones.join_year)+'</strong>'+
-                    '</div>';
-          }
-          body += branchPdf('#eab308','الفرع الأصفر','Yellow', milestones.yellow_passed, milestones.yellow_ranks||[], null, null, null,
-                            milestones.yellow_rank_dates||{});
-          body += branchPdf('#10b981','الفرع الأخضر','Green',  milestones.green_passed,  milestones.green_ranks||[],  milestones.green_consecration_year, null,
-                            milestones.green_leadership||[], milestones.green_rank_dates||{});
-          if(showRedBranch){
-            body += branchPdf('#ef4444','الفرع الأحمر','Red',    milestones.red_passed,    milestones.red_ranks||[],    milestones.red_consecration_year,  milestones.red_departure_year,
-                              milestones.red_leadership||[], milestones.red_rank_dates||{});
-          }
-        }
-        if(ranks.length){
-          body += '<div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-top:8px;margin-bottom:4px;">Legacy records</div>';
-          body += ranks.map(function(r){
-            return '<div style="padding:8px 12px;background:#fbfbfd;border:1px solid #e2e8f0;border-left:3px solid #6366f1;border-radius:10px;margin-bottom:5px;">'+
-              '<div style="font-size:12px;font-weight:800;color:#0f172a;">'+esc(r.rankName||'')+'</div>'+
-              '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">'+esc(r.effectiveDate||'—')+'</div>'+
-              (r.notes?'<div style="font-size:11px;color:#475569;margin-top:4px;">'+esc(r.notes)+'</div>':'')+
-              '</div>';
-          }).join('');
-        }
-        return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px;box-sizing:border-box;width:100%;">'+
-                 // Arabic-only header, RTL, right-aligned to match the section content
-                 '<div class="__pdfArabic" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:10px;text-align:right;">المسيرة</div>'+
-                 body +
-               '</div>';
-      })() +
+      milestonesHtml +
 
       /* Footer */
       '<div style="margin-top:20px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:9.5px;color:#94a3b8;">'+
