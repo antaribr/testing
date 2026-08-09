@@ -2941,8 +2941,8 @@ function escapeHtml(value) {
 
 function sanitizeCsvField(value) {
   const str = String(value ?? '');
-  if (/^[=+\\-@\\t\\r]/.test(str)) return "'" + str;
-  if (str.includes(',') || str.includes('"') || str.includes('\\n')) {
+  if (/^[\=\+\-\@\t\r]/.test(str)) return "'" + str;
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
     return '"' + str.replace(/"/g, '""') + '"';
   }
   return str;
