@@ -169,7 +169,7 @@ function bindAuth() {
       });
 
       if (error) {
-        setAuthMessage('Login failed: ' + error.message);
+        setAuthMessage('Invalid email or password. Please try again.');
         if (submitBtn) submitBtn.disabled = false;
         return;
       }
@@ -221,6 +221,16 @@ function bindAuth() {
     console.error(err);
     showAuth();
     setAuthMessage('Could not check login session: ' + err.message);
+  });
+
+  // Listen for auth state changes (token refresh failures, sign-out from other tabs)
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT') {
+      showAuth();
+    } else if (event === 'TOKEN_REFRESHED' && !session) {
+      showToast('Session expired. Please sign in again.', 'warning');
+      showAuth();
+    }
   });
 }
 
@@ -1417,7 +1427,7 @@ function renderPayments() {
   const el = $('#paymentsTable');
   if (el) {
     el.innerHTML = state.payments.map(p =>
-      `<tr><td>${escapeHtml(memberName(p.memberId))}</td><td>${p.year}</td><td>${p.amount}</td><td>${escapeHtml(p.status)}</td><td>${escapeHtml(p.paymentDate || '—')}</td></tr>`
+      `<tr><td>${escapeHtml(memberName(p.memberId))}</td><td>${escapeHtml(p.year)}</td><td>${escapeHtml(p.amount)}</td><td>${escapeHtml(p.status)}</td><td>${escapeHtml(p.paymentDate || '—')}</td></tr>`
     ).join('') || '<tr><td colspan="5">No payments recorded.</td></tr>';
   }
 }
@@ -2533,8 +2543,91 @@ function openLeaderProfile(leaderId) {
     return;
   }
 
-  const nameEl = $('#profileLeaderName');
-  if (nameEl) nameEl.textContent = l.fullName || 'Leader Profile';
+  const nameEl = $('#profileLeaderName'); if (nameEl) nameEl.textContent = l.fullName || 'Leader Profile';
+  const roleTitleEl = $('#profileLeaderRole'); if (roleTitleEl) roleTitleEl.textContent = l.role || '—';
+
+  const fnEl = $('#leaderProfileFullName'); if (fnEl) fnEl.textContent = l.fullName || '—';
+  const gEl = $('#leaderProfileGender'); if (gEl) gEl.textContent = l.gender || '—';
+  const dobEl = $('#leaderProfileDob'); if (dobEl) dobEl.textContent = l.dob || '—';
+
+  const age = ageDecimal(l.dob);
+  const ageEl = $('#leaderProfileAge'); if (ageEl) ageEl.textContent = age !== null ? age.toFixed(2) : '—';
+
+  const jdEl = $('#leaderProfileJoinDate'); if (jdEl) jdEl.textContent = l.joinDate || '—';
+  const rEl = $('#leaderProfileRole'); if (rEl) rEl.textContent = l.role || '—';
+  const pEl = $('#leaderProfilePhone'); if (pEl) pEl.textContent = l.phone || '—';
+  const btEl = $('#leaderProfileBloodType'); if (btEl) btEl.textContent = l.bloodType || '—';
+  const natEl = $('#leaderProfileNationality'); if (natEl) natEl.textContent = l.nationality || '—';
+  const emEl = $('#leaderProfileEmail'); if (emEl) emEl.textContent = l.email || '—';
+
+  const dlBtn = $('#downloadLeaderPdfBtn');
+  if (dlBtn) dlBtn.dataset.leaderId = leaderId;
+
+  const badgesContainer = $('#leaderProfileBadgesContainer');
+  if (badgesContainer) {
+    const badges = (state.leaderBadges || []).filter(b => b.leaderId === leaderId);
+    if (!badges.length) {
+      badgesContainer.innerHTML = `
+        <div class="empty-placeholder" style="grid-column: 1 / -1; padding: 24px 16px;">
+          <div class="placeholder-icon">🏅</div>
+          <h4>No badges earned yet</h4>
+          <p class="muted">This leader has not been awarded any badges yet.</p>
+        </div>
+      `;
+    } else {
+      badgesContainer.innerHTML = badges.map(b => {
+        const logo = badgeDefLogo(b.badgeName);
+        const logoImg = logo
+          ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(b.badgeName)}" onerror="this.onerror=null;this.src=window.DEFAULT_BADGE_ICON||'';" />`
+          : `<div class="fallback-icon">🏅</div>`;
+        return `
+          <div class="profile-badge-item">
+            ${logoImg}
+            <div class="badge-name">${escapeHtml(b.badgeName)}</div>
+            <div class="badge-date">${escapeHtml(b.awardedDate || '—')}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  const ranksTable = $('#leaderProfileRanksTable');
+  if (ranksTable) {
+    const ranks = (state.leaderRanks || []).filter(r => r.leaderId === leaderId);
+    if (!ranks.length) {
+      ranksTable.innerHTML = `<tr><td colspan="3" class="text-center text-muted" style="padding: 16px;">No rank history recorded</td></tr>`;
+    } else {
+      ranksTable.innerHTML = ranks.map(r => `
+        <tr>
+          <td>${escapeHtml(r.rankName || '—')}</td>
+          <td>${escapeHtml(r.dateFrom || '—')}</td>
+          <td>${escapeHtml(r.dateTo || '—')}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  const milestonesContainer = $('#leaderProfileMilestonesContainer');
+  if (milestonesContainer) {
+    const milestones = (state.leaderMilestones || []).filter(m => m.leaderId === leaderId);
+    if (!milestones.length) {
+      milestonesContainer.innerHTML = `
+        <div class="empty-placeholder" style="padding: 24px 16px;">
+          <div class="placeholder-icon">🧭</div>
+          <h4>No milestones recorded yet</h4>
+          <p class="muted">No milestones or updates are recorded for this leader yet.</p>
+        </div>
+      `;
+    } else {
+      milestonesContainer.innerHTML = milestones.map(m => `
+        <div class="profile-milestone-item">
+          <div class="profile-milestone-title">${escapeHtml(m.title)}</div>
+          <div class="profile-milestone-date">Date: ${escapeHtml(m.date)}</div>
+          ${m.notes ? `<div class="profile-milestone-notes">Notes: ${escapeHtml(m.notes)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+  }
 
   switchView('leaderProfile');
 }
@@ -2547,6 +2640,15 @@ function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function sanitizeCsvField(value) {
+  const str = String(value ?? '');
+  if (/^[=+\\-@\\t\\r]/.test(str)) return "'" + str;
+  if (str.includes(',') || str.includes('"') || str.includes('\\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
 }
 
 function formatLongDate(date) {

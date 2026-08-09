@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
+  <a href="#main-content" class="skip-to-content">Skip to main content</a>
   <!-- =============== AUTH SCREEN =============== -->
   <div id="authScreen" class="auth-screen">
     <div class="auth-card">
@@ -72,7 +73,7 @@
     </aside>
 
     <!-- ============ MAIN CONTENT ============ -->
-    <main class="content">
+    <main class="content" id="main-content">
 
       <!-- ====== DASHBOARD ====== -->
       <section id="dashboard" class="view active">
@@ -581,7 +582,7 @@
   </div>
 
   <!-- Toast notification container -->
-  <div class="toast-container" id="toastContainer"></div>
+  <div class="toast-container" id="toastContainer" aria-live="polite" role="status"></div>
 
   <!-- =============== SCRIPTS =============== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -592,5 +593,11 @@
   <script src="logo-base64.js"></script>
   <script src="badge-icon.js"></script>
   <script src="app.js?v=29"></script>
+  <noscript>
+    <div style="padding:40px;text-align:center;font-family:sans-serif;">
+      <h2>JavaScript Required</h2>
+      <p>This dashboard requires JavaScript to function. Please enable JavaScript in your browser settings.</p>
+    </div>
+  </noscript>
 </body>
 </html>
