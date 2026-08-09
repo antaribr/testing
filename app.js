@@ -1903,14 +1903,19 @@ function downloadMemberProfilePdf(memberId) {
   const ranks = state.ranks.filter(r => r.memberId === memberId);
 
   const container = document.createElement('div');
-  container.style.padding = '24px';
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '794px';
+  container.style.padding = '32px';
   container.style.fontFamily = 'Inter, sans-serif';
   container.style.color = '#0f172a';
   container.style.background = '#ffffff';
+  container.style.boxSizing = 'border-box';
 
   const logoHtml = window.LOGO_BASE64
     ? `<img src="${window.LOGO_BASE64}" style="max-height: 50px; max-width: 180px; object-fit: contain;" />`
-    : '<h2>Lebanese Scout Association</h2>';
+    : '<h2 style="margin:0; font-size:18px;">Lebanese Scout Association</h2>';
 
   const badgesHtml = badges.length
     ? badges.map(b => `
@@ -1919,7 +1924,7 @@ function downloadMemberProfilePdf(memberId) {
           <div style="font-size: 10px; color: #64748b;">${escapeHtml(b.awardedDate || '—')}</div>
         </div>
       `).join('')
-    : '<p style="color: #64748b; font-size: 13px;">No badges earned yet.</p>';
+    : '<p style="color: #64748b; font-size: 13px; margin: 4px 0;">No badges earned yet.</p>';
 
   const ranksHtml = ranks.length
     ? ranks.map(r => `
@@ -1986,19 +1991,30 @@ function downloadMemberProfilePdf(memberId) {
   document.body.appendChild(container);
 
   const opt = {
-    margin: 10,
+    margin: [10, 10, 10, 10],
     filename: `${m.fullName ? m.fullName.replace(/\s+/g, '_') : 'member'}_profile.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(container).save().then(() => {
-    container.remove();
+  const imgs = container.querySelectorAll('img');
+  const imgPromises = Array.from(imgs).map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+  });
+
+  Promise.all(imgPromises).then(() => {
+    return html2pdf().from(container).set(opt).save();
+  }).then(() => {
+    try { container.remove(); } catch (_) {}
     showToast('PDF downloaded successfully!', 'success');
   }).catch(err => {
-    container.remove();
-    console.error(err);
+    try { container.remove(); } catch (_) {}
+    console.error('[PDF Generation Error]', err);
     showToast('Failed to generate PDF', 'error');
   });
 }
@@ -2020,14 +2036,19 @@ function downloadLeaderProfilePdf(leaderId) {
   const ranks = (state.leaderRanks || []).filter(r => r.leaderId === leaderId);
 
   const container = document.createElement('div');
-  container.style.padding = '24px';
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '794px';
+  container.style.padding = '32px';
   container.style.fontFamily = 'Inter, sans-serif';
   container.style.color = '#0f172a';
   container.style.background = '#ffffff';
+  container.style.boxSizing = 'border-box';
 
   const logoHtml = window.LOGO_BASE64
     ? `<img src="${window.LOGO_BASE64}" style="max-height: 50px; max-width: 180px; object-fit: contain;" />`
-    : '<h2>Lebanese Scout Association</h2>';
+    : '<h2 style="margin:0; font-size:18px;">Lebanese Scout Association</h2>';
 
   const badgesHtml = badges.length
     ? badges.map(b => `
@@ -2036,7 +2057,7 @@ function downloadLeaderProfilePdf(leaderId) {
           <div style="font-size: 10px; color: #64748b;">${escapeHtml(b.awardedDate || '—')}</div>
         </div>
       `).join('')
-    : '<p style="color: #64748b; font-size: 13px;">No badges earned yet.</p>';
+    : '<p style="color: #64748b; font-size: 13px; margin: 4px 0;">No badges earned yet.</p>';
 
   const ranksHtml = ranks.length
     ? ranks.map(r => `
@@ -2105,19 +2126,30 @@ function downloadLeaderProfilePdf(leaderId) {
   document.body.appendChild(container);
 
   const opt = {
-    margin: 10,
+    margin: [10, 10, 10, 10],
     filename: `${l.fullName ? l.fullName.replace(/\s+/g, '_') : 'leader'}_profile.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(container).save().then(() => {
-    container.remove();
+  const imgs = container.querySelectorAll('img');
+  const imgPromises = Array.from(imgs).map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+  });
+
+  Promise.all(imgPromises).then(() => {
+    return html2pdf().from(container).set(opt).save();
+  }).then(() => {
+    try { container.remove(); } catch (_) {}
     showToast('PDF downloaded successfully!', 'success');
   }).catch(err => {
-    container.remove();
-    console.error(err);
+    try { container.remove(); } catch (_) {}
+    console.error('[PDF Generation Error]', err);
     showToast('Failed to generate PDF', 'error');
   });
 }
