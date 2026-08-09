@@ -1886,13 +1886,240 @@ function openMemberProfile(memberId) {
   switchView('memberProfile');
 }
 
-/* Placeholder functions for PDF generation - implement as needed */
 function downloadMemberProfilePdf(memberId) {
-  showToast('PDF download not yet configured', 'info');
+  const m = state.members.find(x => x.id === memberId);
+  if (!m) {
+    showToast('Member not found', 'error');
+    return;
+  }
+  if (typeof html2pdf === 'undefined') {
+    showToast('PDF generator library not loaded', 'error');
+    return;
+  }
+
+  showToast('Generating PDF...', 'info');
+
+  const badges = state.badges.filter(b => b.memberId === memberId);
+  const ranks = state.ranks.filter(r => r.memberId === memberId);
+
+  const container = document.createElement('div');
+  container.style.padding = '24px';
+  container.style.fontFamily = 'Inter, sans-serif';
+  container.style.color = '#0f172a';
+  container.style.background = '#ffffff';
+
+  const logoHtml = window.LOGO_BASE64
+    ? `<img src="${window.LOGO_BASE64}" style="max-height: 50px; max-width: 180px; object-fit: contain;" />`
+    : '<h2>Lebanese Scout Association</h2>';
+
+  const badgesHtml = badges.length
+    ? badges.map(b => `
+        <div style="display:inline-block; margin: 4px 6px; padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; background: #f8fafc;">
+          <div style="font-weight: 600; font-size: 12px; color: #0f172a;">${escapeHtml(b.badgeName)}</div>
+          <div style="font-size: 10px; color: #64748b;">${escapeHtml(b.awardedDate || '—')}</div>
+        </div>
+      `).join('')
+    : '<p style="color: #64748b; font-size: 13px;">No badges earned yet.</p>';
+
+  const ranksHtml = ranks.length
+    ? ranks.map(r => `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.rankName)}</td>
+          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.effectiveDate || '—')}</td>
+          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.notes || '—')}</td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="3" style="padding: 8px; font-size: 12px; color: #64748b;">No milestones recorded.</td></tr>';
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 12px; margin-bottom: 16px;">
+      <div>${logoHtml}</div>
+      <div style="text-align:right;">
+        <h2 style="margin:0; font-size: 18px; color: #6366f1;">Scout Member Profile</h2>
+        <div style="font-size: 11px; color: #64748b;">Generated: ${new Date().toLocaleDateString()}</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:0; margin-bottom: 12px; font-size: 16px; color: #0f172a;">${escapeHtml(m.fullName || 'Member Profile')} (${escapeHtml(m.unit || '—')})</h3>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
+      <tr>
+        <td style="padding: 6px; font-weight: 600; width: 28%; background: #f8fafc; border: 1px solid #e2e8f0;">Full Name</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.fullName || '—')}</td>
+        <td style="padding: 6px; font-weight: 600; width: 20%; background: #f8fafc; border: 1px solid #e2e8f0;">Gender</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.gender || '—')}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Birth Date</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.dob || '—')} (${ageDecimal(m.dob) !== null ? ageDecimal(m.dob).toFixed(1) + ' yrs' : '—'})</td>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Phone</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.phone || '—')}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Parent Contact</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.parentType || 'Parent')}: ${escapeHtml(m.parentPhone || '—')}</td>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Blood / Nat.</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.bloodType || '—')} / ${escapeHtml(m.nationality || '—')}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Email</td>
+        <td colspan="3" style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.email || '—')}</td>
+      </tr>
+    </table>
+
+    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Badges Earned</h4>
+    <div style="margin-bottom: 20px;">${badgesHtml}</div>
+
+    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Milestone History</h4>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f1f5f9; text-align: left;">
+          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Rank / Milestone</th>
+          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Effective Date</th>
+          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>${ranksHtml}</tbody>
+    </table>
+  `;
+
+  document.body.appendChild(container);
+
+  const opt = {
+    margin: 10,
+    filename: `${m.fullName ? m.fullName.replace(/\s+/g, '_') : 'member'}_profile.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(container).save().then(() => {
+    container.remove();
+    showToast('PDF downloaded successfully!', 'success');
+  }).catch(err => {
+    container.remove();
+    console.error(err);
+    showToast('Failed to generate PDF', 'error');
+  });
 }
 
 function downloadLeaderProfilePdf(leaderId) {
-  showToast('PDF download not yet configured', 'info');
+  const l = state.leaders.find(x => x.id === leaderId);
+  if (!l) {
+    showToast('Leader not found', 'error');
+    return;
+  }
+  if (typeof html2pdf === 'undefined') {
+    showToast('PDF generator library not loaded', 'error');
+    return;
+  }
+
+  showToast('Generating PDF...', 'info');
+
+  const badges = (state.leaderBadges || []).filter(b => b.leaderId === leaderId);
+  const ranks = (state.leaderRanks || []).filter(r => r.leaderId === leaderId);
+
+  const container = document.createElement('div');
+  container.style.padding = '24px';
+  container.style.fontFamily = 'Inter, sans-serif';
+  container.style.color = '#0f172a';
+  container.style.background = '#ffffff';
+
+  const logoHtml = window.LOGO_BASE64
+    ? `<img src="${window.LOGO_BASE64}" style="max-height: 50px; max-width: 180px; object-fit: contain;" />`
+    : '<h2>Lebanese Scout Association</h2>';
+
+  const badgesHtml = badges.length
+    ? badges.map(b => `
+        <div style="display:inline-block; margin: 4px 6px; padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; background: #f8fafc;">
+          <div style="font-weight: 600; font-size: 12px; color: #0f172a;">${escapeHtml(b.badgeName)}</div>
+          <div style="font-size: 10px; color: #64748b;">${escapeHtml(b.awardedDate || '—')}</div>
+        </div>
+      `).join('')
+    : '<p style="color: #64748b; font-size: 13px;">No badges earned yet.</p>';
+
+  const ranksHtml = ranks.length
+    ? ranks.map(r => `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.rankName)}</td>
+          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.dateFrom || '—')}</td>
+          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.dateTo || 'Present')}</td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="3" style="padding: 8px; font-size: 12px; color: #64748b;">No rank history recorded.</td></tr>';
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 12px; margin-bottom: 16px;">
+      <div>${logoHtml}</div>
+      <div style="text-align:right;">
+        <h2 style="margin:0; font-size: 18px; color: #6366f1;">Scout Leader Profile</h2>
+        <div style="font-size: 11px; color: #64748b;">Generated: ${new Date().toLocaleDateString()}</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:0; margin-bottom: 12px; font-size: 16px; color: #0f172a;">${escapeHtml(l.fullName || 'Leader Profile')} (${escapeHtml(l.role || 'Leader')})</h3>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
+      <tr>
+        <td style="padding: 6px; font-weight: 600; width: 28%; background: #f8fafc; border: 1px solid #e2e8f0;">Full Name</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.fullName || '—')}</td>
+        <td style="padding: 6px; font-weight: 600; width: 20%; background: #f8fafc; border: 1px solid #e2e8f0;">Gender</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.gender || '—')}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Birth Date</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.dob || '—')} (${ageDecimal(l.dob) !== null ? ageDecimal(l.dob).toFixed(1) + ' yrs' : '—'})</td>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Phone</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.phone || '—')}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Join Date</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.joinDate || '—')}</td>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Role / Rank</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.role || '—')}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Blood / Nat.</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.bloodType || '—')} / ${escapeHtml(l.nationality || '—')}</td>
+        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Email</td>
+        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.email || '—')}</td>
+      </tr>
+    </table>
+
+    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Badges Earned</h4>
+    <div style="margin-bottom: 20px;">${badgesHtml}</div>
+
+    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Ranks History</h4>
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #f1f5f9; text-align: left;">
+          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Rank</th>
+          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Date From</th>
+          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Date To</th>
+        </tr>
+      </thead>
+      <tbody>${ranksHtml}</tbody>
+    </table>
+  `;
+
+  document.body.appendChild(container);
+
+  const opt = {
+    margin: 10,
+    filename: `${l.fullName ? l.fullName.replace(/\s+/g, '_') : 'leader'}_profile.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(container).save().then(() => {
+    container.remove();
+    showToast('PDF downloaded successfully!', 'success');
+  }).catch(err => {
+    container.remove();
+    console.error(err);
+    showToast('Failed to generate PDF', 'error');
+  });
 }
 
 /* ======================================================================

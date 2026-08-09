@@ -2973,7 +2973,7 @@ function renderPayments() {
   const el = $('#paymentsTable');
   if (el) {
     el.innerHTML = state.payments.map(p =>
-      `<tr><td>${escapeHtml(memberName(p.memberId))}</td><td>${p.year}</td><td>${p.amount}</td><td>${escapeHtml(p.status)}</td><td>${escapeHtml(p.paymentDate || '—')}</td></tr>`
+      `<tr><td>${escapeHtml(memberName(p.memberId))}</td><td>${escapeHtml(p.year)}</td><td>${escapeHtml(p.amount)}</td><td>${escapeHtml(p.status)}</td><td>${escapeHtml(p.paymentDate || '—')}</td></tr>`
     ).join('') || '<tr><td colspan="5">No payments recorded.</td></tr>';
   }
 }
