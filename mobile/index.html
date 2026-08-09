@@ -1569,6 +1569,7 @@
 <script>if(typeof html2canvas==='undefined'){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>');}</script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>if(!(window.jspdf&&window.jspdf.jsPDF)){document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script id="config-inline">
 window.SUPABASE_URL = 'https://mrszebhgnnskbjszwvlc.supabase.co';
 window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yc3plYmhnbm5za2Jqc3p3dmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0OTYyNDQsImV4cCI6MjA5ODA3MjI0NH0.oqZournAhYI18C2_0Cef_dZstd9z-M9qgJdsVqoWktE';
@@ -7225,16 +7226,9 @@ init();
     // ═══════════════════════════════════════════════════════════════════
     var filename=(person.fullName||'profile').replace(/[^\w\-]+/g,'_')+'_profile.pdf';
 
-    if (!_jsPDFCtor || typeof html2canvas === 'undefined'){
-      alert('PDF libraries still loading — please try again in a moment.');
-      if(btn) btn.disabled = false;
-      if(lbl) lbl.textContent = prevLabel || 'Download PDF';
-      return;
-    }
-
     // Off-screen wrapper at the natural content width (794 CSS px).
     var wrapper=document.createElement('div');
-    wrapper.style.cssText='position:fixed;left:-99999px;top:0;width:'+PDF_TOTAL_PX+'px;background:#fff;';
+    wrapper.style.cssText='position:fixed;left:-99999px;top:0;width:'+PDF_TOTAL_PX+'px;background:#fff;z-index:-9999;';
     wrapper.innerHTML=pdfHtml;
     document.body.appendChild(wrapper);
 
@@ -7244,100 +7238,77 @@ init();
       if(lbl) lbl.textContent = prevLabel || 'Download PDF';
     }
 
-    // Wait for Cairo font AND inline images (badges, fleur-de-lis) before
-    // rasterizing. If the font isn't ready when html2canvas runs, the
-    // canvas will use a fallback and Arabic renders poorly.
-    var fontReady = (document.fonts && document.fonts.load)
-      ? Promise.all([
-          document.fonts.load("700 15px Cairo"),
-          document.fonts.load("800 22px Cairo")
-        ]).catch(function(){}) // never block on font failure
-      : Promise.resolve();
+    var contentEl = wrapper.querySelector('#__pdfRoot') || wrapper.firstChild;
 
-    fontReady.then(function(){ setTimeout(function(){
-      var SCALES = [2, 1.5, 1];   // start crisp, drop only if Safari refuses
-      var log    = [];
+    // Preload images inside the PDF template
+    var imgs = Array.from(contentEl.querySelectorAll('img'));
+    var imgPromises = imgs.map(function(img) {
+      if (img.complete) return Promise.resolve();
+      return new Promise(function(res) {
+        img.onload = res;
+        img.onerror = res;
+      });
+    });
 
-      function attempt(i){
-        if (i >= SCALES.length){
-          alert('PDF generation failed at every scale.\n\n' +
-                log.map(function(l){return 'scale '+l.scale+': '+l.result;}).join('\n'));
-          cleanup();
-          return;
-        }
-        var scale = SCALES[i];
-
-        // Measure AFTER layout has settled. Use scrollHeight on the outer
-        // #__pdfRoot so we get the full content height, not the viewport.
-        var contentEl = wrapper.querySelector('#__pdfRoot') || wrapper.firstChild;
-        var contentWpx = PDF_TOTAL_PX;
-        var contentHpx = Math.max(contentEl.scrollHeight, contentEl.offsetHeight);
-
-        html2canvas(contentEl, {
-          scale: scale,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff',
-          logging: false,
-          windowWidth: contentWpx,
-          width: contentWpx,
-          height: contentHpx,
-          imageTimeout: 3000
-        }).then(function(canvas){
-          var srcW = canvas.width, srcH = canvas.height;
-          var dataUrl = '';
-          try {
-            // PNG for crisp text — falls back to JPEG if PNG is too big
-            dataUrl = canvas.toDataURL('image/png');
-            if (!dataUrl || dataUrl.length < 5000 || dataUrl.indexOf('data:image/png') !== 0){
-              dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-            }
-          } catch(encErr){
-            log.push({scale: scale, result: 'toDataURL threw: '+(encErr && encErr.message||encErr)});
-            try{ canvas.width=0; canvas.height=0; }catch(_){}
-            return attempt(i+1);
-          }
-          if (!dataUrl || dataUrl.length < 5000){
-            log.push({scale: scale, result: (dataUrl?dataUrl.length:0)+' bytes ('+srcW+'x'+srcH+' canvas)'});
-            try{ canvas.width=0; canvas.height=0; }catch(_){}
-            return attempt(i+1);
-          }
-
-          // Convert pixel dimensions → millimeters (96 CSS px = 25.4 mm)
-          var PX_TO_MM = 25.4 / 96;
-          var pageWmm = contentWpx * PX_TO_MM;
-          var pageHmm = contentHpx * PX_TO_MM;
-
-          // jsPDF page size = exact content size, no A4 constraint.
-          var pdf = new _jsPDFCtor({
-            unit: 'mm',
-            format: [pageWmm, pageHmm],
-            orientation: pageWmm > pageHmm ? 'landscape' : 'portrait',
-            compress: true
-          });
-          var imgType = dataUrl.indexOf('data:image/png') === 0 ? 'PNG' : 'JPEG';
-          pdf.addImage(dataUrl, imgType, 0, 0, pageWmm, pageHmm, undefined, 'FAST');
-          pdf.save(filename);
-
-          window.__lastPdfDiag = {
-            scale: scale,
-            imgType: imgType,
-            canvasPx: srcW+'x'+srcH,
-            pageMm: pageWmm.toFixed(1)+'x'+pageHmm.toFixed(1),
-            dataUrlKB: Math.round(dataUrl.length/1024),
-            attempts: i+1
+    Promise.all(imgPromises).then(function() {
+      setTimeout(function() {
+        if (window.html2pdf) {
+          var opt = {
+            margin: [8, 8, 8, 8],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false, width: 794 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
           };
-          console.log('[pdf] saved', window.__lastPdfDiag);
-          cleanup();
-        }).catch(function(err){
-          log.push({scale: scale, result: 'html2canvas threw: '+(err && err.message||err)});
-          console.error('[pdf] html2canvas error at scale', scale, err);
-          attempt(i+1);
-        });
-      }
+          window.html2pdf().from(contentEl).set(opt).save()
+            .then(cleanup)
+            .catch(function(err) {
+              console.error('[pdf] html2pdf error:', err);
+              fallbackRender();
+            });
+        } else {
+          fallbackRender();
+        }
+      }, 300);
+    });
 
-      attempt(0);
-    }, 250); });
+    function fallbackRender() {
+      if (typeof html2canvas === 'undefined' || !_jsPDFCtor) {
+        alert('PDF libraries failed to load. Please refresh and try again.');
+        cleanup();
+        return;
+      }
+      var contentWpx = PDF_TOTAL_PX;
+      var contentHpx = Math.max(contentEl.scrollHeight, contentEl.offsetHeight);
+
+      html2canvas(contentEl, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: contentWpx,
+        height: contentHpx
+      }).then(function(canvas) {
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        var PX_TO_MM = 25.4 / 96;
+        var pageWmm = contentWpx * PX_TO_MM;
+        var pageHmm = contentHpx * PX_TO_MM;
+
+        var pdf = new _jsPDFCtor({
+          unit: 'mm',
+          format: [pageWmm, pageHmm],
+          orientation: pageWmm > pageHmm ? 'landscape' : 'portrait'
+        });
+        pdf.addImage(dataUrl, 'JPEG', 0, 0, pageWmm, pageHmm);
+        pdf.save(filename);
+        cleanup();
+      }).catch(function(err) {
+        console.error('[pdf] fallback error:', err);
+        alert('Could not generate PDF: ' + (err && err.message || err));
+        cleanup();
+      });
+    }
 
     return;
 
