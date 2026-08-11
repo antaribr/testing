@@ -365,6 +365,9 @@ async function resolveCurrentUser() {
     if (!unit)            unit = unitFromEmail(email);
 
     currentUser.unit = unit || null;
+    if (!unit && !rawRole) {
+      currentUser.isAdmin = true;
+    }
   }
 
   // Optionally attach the matching leader row (for profile display only,
@@ -388,9 +391,9 @@ function scopedMembers() {
 }
 
 /** Views a non-admin unit leader is allowed to see. */
-const UNIT_LEADER_VIEWS = new Set(['dashboard', 'units', 'configuration', 'memberProfile', 'leaderProfile']);
+const UNIT_LEADER_VIEWS = new Set(['dashboard', 'units', 'configuration', 'meetings', 'payments', 'memberProfile', 'leaderProfile']);
 /** Config tabs a non-admin unit leader is allowed to see. */
-const UNIT_LEADER_CONFIG_TABS = new Set(['assign-badges-tab']);
+const UNIT_LEADER_CONFIG_TABS = new Set(['members-tab', 'leaders-tab', 'assign-badges-tab', 'badges-def-tab', 'unit-flow-tab', 'general-settings-tab']);
 
 function applyRoleUI() {
   const isAdmin = currentUser.isAdmin;
@@ -533,15 +536,15 @@ function init() {
 }
 
 function bindMenu() {
-  document.querySelectorAll('.menu-item').forEach(btn => {
+  document.querySelectorAll('.menu-item[data-view]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.view).classList.add('active');
-      if (btn.dataset.view === 'meetings') renderMeetings();
-      if (btn.dataset.view === 'dashboard') renderStatisticsPage();
-      if (btn.dataset.view === 'units') renderUnitsPage();
+      const viewId = btn.dataset.view;
+      if (!viewId) return;
+      switchView(viewId);
+      if (viewId === 'meetings') renderMeetings();
+      if (viewId === 'dashboard') renderStatisticsPage();
+      if (viewId === 'units') renderUnitsPage();
+      if (viewId === 'payments') renderPayments();
     });
   });
 }
