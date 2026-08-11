@@ -1525,6 +1525,76 @@
       <span>Settings</span>
     </button>
   </nav>
+
+<script>
+/* === BOTTOM NAV DEBUG === */
+(function(){
+  console.log('[NAV-DEBUG] Bottom nav debug script loaded');
+  
+  // Direct binding to each tab-btn
+  var nav = document.getElementById('bottomNav');
+  if (!nav) { console.error('[NAV-DEBUG] bottomNav NOT FOUND!'); return; }
+  
+  console.log('[NAV-DEBUG] bottomNav found. Children:', nav.children.length);
+  
+  var btns = nav.querySelectorAll('.tab-btn');
+  console.log('[NAV-DEBUG] tab-btn count:', btns.length);
+  
+  for (var i = 0; i < btns.length; i++) {
+    (function(btn, idx) {
+      var view = btn.getAttribute('data-view');
+      console.log('[NAV-DEBUG] Button', idx, ':', view);
+      
+      btn.addEventListener('click', function(e) {
+        console.log('[NAV-DEBUG] CLICK on button', idx, view);
+        console.log('[NAV-DEBUG] window.__go =', typeof window.__go);
+        console.log('[NAV-DEBUG] window.switchView =', typeof window.switchView);
+        console.log('[NAV-DEBUG] e.target =', e.target.tagName, e.target.className);
+        console.log('[NAV-DEBUG] e.defaultPrevented =', e.defaultPrevented);
+        
+        // Check if anything is covering the button
+        var rect = btn.getBoundingClientRect();
+        var topEl = document.elementFromPoint(rect.left + rect.width/2, rect.top + rect.height/2);
+        console.log('[NAV-DEBUG] Element at button center:', topEl ? topEl.tagName + '.' + topEl.className + '#' + topEl.id : 'null');
+        
+        if (typeof window.__go === 'function') {
+          console.log('[NAV-DEBUG] Calling __go(' + view + ')');
+          window.__go(view);
+        } else {
+          console.error('[NAV-DEBUG] window.__go is NOT defined! Cannot navigate.');
+          // Try fallback
+          var views = document.querySelectorAll('.view');
+          for (var v = 0; v < views.length; v++) views[v].classList.toggle('active', views[v].id === view);
+          var tabs = document.querySelectorAll('.tab-btn');
+          for (var t = 0; t < tabs.length; t++) tabs[t].classList.toggle('active', tabs[t].getAttribute('data-view') === view);
+        }
+      });
+      
+      // Also add touchstart for debugging touch events
+      btn.addEventListener('touchstart', function(e) {
+        console.log('[NAV-DEBUG] TOUCHSTART on button', idx, view);
+      }, {passive: true});
+      
+    })(btns[i], i);
+  }
+  
+  // Also log when window.__go becomes available
+  var checkInterval = setInterval(function() {
+    if (typeof window.__go === 'function') {
+      console.log('[NAV-DEBUG] window.__go is now AVAILABLE');
+      clearInterval(checkInterval);
+    }
+  }, 100);
+  
+  // Timeout after 10 seconds
+  setTimeout(function() {
+    clearInterval(checkInterval);
+    if (typeof window.__go !== 'function') {
+      console.error('[NAV-DEBUG] window.__go STILL NOT AVAILABLE after 10 seconds!');
+    }
+  }, 10000);
+})();
+</script>
 </div>
 
 <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
@@ -4218,7 +4288,11 @@ init();
       cards[m].addEventListener('click',function(){
         var id=this.getAttribute('data-id');
         var type=this.getAttribute('data-type');
-        renderProfile(id,type);
+        if (type === 'leader') {
+          if (typeof window.openLeaderProfile === 'function') window.openLeaderProfile(id);
+        } else {
+          if (typeof window.openMemberProfile === 'function') window.openMemberProfile(id);
+        }
         go('profile');
       });
     }
@@ -4514,78 +4588,21 @@ init();
               var startD = item.startDate || item.start_date || '';
               var endD = item.endDate || item.end_date || '';
               var dateStr = [startD, endD].filter(Boolean).join(' - ');
-var nameIsAr = isArabicStr(person.fullName);
-    var nameAlign = nameIsAr ? 'text-align:right;direction:rtl;' : 'text-align:left;';
-
-    var pdfHtml = ''+
-      '<style>'+
-        '@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap");'+
-        '* { box-sizing: border-box; }'+
-        '.__pdfArabic, [dir="rtl"] {'+
-          'direction: rtl !important;'+
-          'unicode-bidi: isolate !important;'+
-          'text-align: right !important;'+
-          'font-family: "Cairo", "Segoe UI", Tahoma, "Arial Unicode MS", Arial, sans-serif !important;'+
-          'letter-spacing: normal !important;'+
-          'word-spacing: normal !important;'+
-          'font-variant-ligatures: normal !important;'+
-        '}'+
-      '</style>'+
-      '<div id="__pdfRoot" style="font-family:'+PDF_FONT+';color:#0f172a;padding:'+PDF_PAD_PX+'px '+PDF_PAD_PX+'px 20px;background:#fff;width:'+PDF_TOTAL_PX+'px;box-sizing:border-box;direction:ltr;text-align:left;">'+
-
-      /* Page header with brand */
-      '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:2px solid #6366f1;margin-bottom:20px;">'+
-        '<div style="display:flex;align-items:center;gap:12px;min-width:0;">'+
-          '<img src="'+(window.DEFAULT_BADGE_ICON||'')+'" style="width:40px;height:40px;object-fit:contain;flex-shrink:0;" />'+
-          '<div style="min-width:0;">'+
-            '<div style="font-size:10px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#6366f1;">Lebanese Scout Association</div>'+
-            '<div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;">Saida One — '+esc(type==='leader'?'Leader Profile':'Member Profile')+'</div>'+
-          '</div>'+
-        '</div>'+
-        '<div style="text-align:right;font-size:10px;color:#94a3b8;flex-shrink:0;">'+
-          '<div>Generated</div>'+
-          '<div style="font-weight:700;color:#475569;">'+esc(dateStr)+'</div>'+
-        '</div>'+
-      '</div>'+
-
-      /* Hero card */
-      '<div style="display:flex;align-items:center;gap:18px;padding:20px;background:linear-gradient(135deg,#eef2ff,#f5f6fa);border:1px solid #e2e8f0;border-radius:14px;margin-bottom:16px;box-sizing:border-box;width:100%;">'+
-        '<div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:30px;flex-shrink:0;">'+
-          esc(initials(person.fullName))+
-        '</div>'+
-        '<div style="flex:1;min-width:0;overflow:hidden;">'+
-          '<div class="'+(nameIsAr?'__pdfArabic':'')+'" style="font-size:22px;font-weight:800;margin:0;overflow-wrap:break-word;'+nameAlign+'letter-spacing:normal;">'+esc(person.fullName||'Unnamed')+'</div>'+
-          '<div style="margin-top:8px;">'+
-            '<span style="display:inline-block;font-size:10px;font-weight:800;padding:5px 11px;border-radius:999px;background:#6366f1;color:#fff;text-transform:uppercase;letter-spacing:0.06em;">'+esc(chipLabel)+'</span>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-
-      /* Details grid */
-      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:16px;box-sizing:border-box;width:100%;">'+
-        '<div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">Details</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
-          detailRows.map(function(r){
-            var span=r[2]?'grid-column:1 / -1;':'';
-            var val=r[1]||'—';
-            var isAr=isArabicStr(val);
-            var styleExt=isAr?'direction:rtl;text-align:right;font-family:\'Cairo\',sans-serif;letter-spacing:normal;':'letter-spacing:normal;';
-            return '<div style="'+span+'background:#fbfbfd;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;box-sizing:border-box;overflow:hidden;min-width:0;">'+
-              '<div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">'+esc(r[0])+'</div>'+
-              '<div class="'+(isAr?'__pdfArabic':'')+'" style="font-size:12.5px;font-weight:700;color:#0f172a;margin-top:3px;overflow-wrap:break-word;word-break:break-word;'+styleExt+'">'+esc(val)+'</div>'+
+              return '<div style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;"><div style="font-weight:700;color:var(--text);">' + esc(roleName) + '</div>' +
+                (dateStr ? '<div style="font-size:10.5px;color:#94a3b8;margin-top:2px;">' + esc(dateStr) + '</div>' : '') +
+                (item.notes ? '<div style="font-size:10.5px;color:#475569;margin-top:4px;">' + esc(item.notes) + '</div>' : '') +
               '</div>';
-          }).join('')+
-        '</div>'+
-      '</div>';olor:#475569;margin-top:4px;">'+esc(r.notes)+'</div>':'')+
-            '</div>';
-        }).join('');
-      }
-      return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:14px;box-sizing:border-box;width:100%;">'+
-               '<div class="__pdfArabic" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:10px;text-align:right;">المسيرة</div>'+
-               body +
-             '</div>';
-    }
+            }).join('') +
+          '</div>';
+        }
 
+        return '<div style="background:'+color+';border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:8px;">' +
+          '<div style="font-size:13px;font-weight:800;color:#0f172a;">' + esc(title) + (isPassed ? ' <span style="color:#22c55e;">✓</span>' : '') + '</div>' +
+          chips + years + leadHtml +
+        '</div>';
+      }
+
+    }
     var milestonesHtml = type === 'leader' ? buildLeaderPdfMilestonesHtml(id) : buildMemberPdfMilestonesHtml();
 
     var pdfHtml = ''+
