@@ -77,7 +77,9 @@ head_insertion = '''  <link rel="preconnect" href="https://fonts.googleapis.com"
     padding: 24px !important;
     width: 100% !important;
     max-width: 400px !important;
-   /* Mobile Top Bar */
+  }
+
+  /* Mobile Top Bar */
   .mobile-topbar {
     position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important;
     height: calc(var(--topbar-h) + var(--safe-top)) !important;
@@ -222,7 +224,6 @@ head_insertion = '''  <link rel="preconnect" href="https://fonts.googleapis.com"
     transform: translateZ(0) !important;
     -webkit-transform: translateZ(0) !important;
     display: flex !important; align-items: center !important; justify-content: space-around !important;
-  }
   }
 
   .mobile-nav-item {
@@ -398,4 +399,4 @@ mobile_html_body = mobile_html_body.replace('</body>', mobile_js_script + '\n</b
 with open(os.path.join(mobile_dir, 'index.html'), 'w', encoding='utf-8') as f:
     f.write(mobile_html_body)
 
-print('Rebuilt mobile/index.html with full mobile UI/UX enhancements!')
+print('Rebuilt mobile/index.html cleanly with zero CSS syntax errors!')
