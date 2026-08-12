@@ -128,10 +128,17 @@ if (typeof Chart !== 'undefined') {
    Authentication
    ====================================================================== */
 
+let isSignUpMode = false;
+
 function bindAuth() {
   const loginForm = $('#loginForm');
-  const signupForm = $('#signupForm');
   const logoutBtn = $('#logoutBtn');
+  const signInTabBtn = $('#authModeSignInBtn');
+  const signUpTabBtn = $('#authModeSignUpBtn');
+  const headingEl = $('#authScreenHeading');
+  const subHeadingEl = $('#authScreenSubheading');
+  const submitBtn = $('#loginSubmitBtn');
+  const btnText = submitBtn?.querySelector('.btn-text');
 
   if (!loginForm) {
     console.error('Missing #loginForm in index.html');
@@ -139,12 +146,36 @@ function bindAuth() {
     return;
   }
 
-  // LOGIN FORM HANDLER
+  function setAuthMode(isSignUp) {
+    isSignUpMode = isSignUp;
+    setAuthMessage('');
+    if (signInTabBtn && signUpTabBtn) {
+      if (isSignUp) {
+        signInTabBtn.style.background = 'transparent';
+        signInTabBtn.style.color = 'var(--text-secondary, #64748b)';
+        signUpTabBtn.style.background = 'var(--primary, #6366f1)';
+        signUpTabBtn.style.color = '#ffffff';
+      } else {
+        signInTabBtn.style.background = 'var(--primary, #6366f1)';
+        signInTabBtn.style.color = '#ffffff';
+        signUpTabBtn.style.background = 'transparent';
+        signUpTabBtn.style.color = 'var(--text-secondary, #64748b)';
+      }
+    }
+    if (headingEl) headingEl.textContent = isSignUp ? 'Create Your Account' : 'Welcome Back';
+    if (subHeadingEl) subHeadingEl.textContent = isSignUp ? 'Enter your email and password to create a new user in Supabase Auth.' : 'Sign in with your credentials to access the Scout Dashboard.';
+    if (btnText) btnText.textContent = isSignUp ? 'Create Account' : 'Sign In';
+  }
+
+  if (signInTabBtn) signInTabBtn.addEventListener('click', () => setAuthMode(false));
+  if (signUpTabBtn) signUpTabBtn.addEventListener('click', () => setAuthMode(true));
+
+  // AUTH FORM HANDLER (Strict Supabase Auth: signInWithPassword & signUp)
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     if (!supabaseClient) {
-      setAuthMessage('Supabase is not loaded. Check the CDN script, config.js, and your internet connection.');
+      setAuthMessage('Supabase is not loaded. Check config.js and your internet connection.', true);
       return;
     }
 
@@ -154,64 +185,77 @@ function bindAuth() {
     const password = passwordInput?.value.trim() || '';
 
     if (!email) {
-      setAuthMessage('Please enter your email address');
+      setAuthMessage('Please enter your email address', true);
       emailInput?.focus();
       return;
     }
     if (!password) {
-      setAuthMessage('Please enter your password');
+      setAuthMessage('Please enter your password', true);
       passwordInput?.focus();
       return;
     }
 
-    const submitBtn = $('#loginSubmitBtn');
-    const btnText = submitBtn?.querySelector('.btn-text');
     const btnSpinner = submitBtn?.querySelector('.btn-spinner');
 
     if (submitBtn) submitBtn.disabled = true;
-    if (btnText) btnText.textContent = 'Signing in...';
+    if (btnText) btnText.textContent = isSignUpMode ? 'Creating Account...' : 'Signing in...';
     if (btnSpinner) btnSpinner.style.display = 'inline-block';
     setAuthMessage('');
 
     try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
+      if (isSignUpMode) {
+        // Standard Supabase Auth SignUp
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password
+        });
 
-      if (error) {
-        console.error('[Login Error]', error);
-        setAuthMessage('Login failed: ' + error.message);
-        return;
+        if (error) {
+          console.error('[SignUp Error]', error);
+          setAuthMessage('Account creation failed: ' + error.message, true);
+          return;
+        }
+
+        if (data?.session) {
+          setAuthMessage('');
+          await afterLogin();
+        } else if (data?.user) {
+          setAuthMessage('Account created for ' + email + '! Switch to Sign In to enter your password.', false);
+          setAuthMode(false);
+        }
+      } else {
+        // Standard Supabase Auth SignInWithPassword
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          console.error('[Login Error]', error);
+          let msg = error.message;
+          if (msg.includes('Invalid login credentials')) {
+            msg = 'Invalid email or password for ' + email + '. Make sure you type the exact password set for this user in Supabase Auth (or switch to "Create Account" to set up your password).';
+          } else if (msg.includes('Email not confirmed')) {
+            msg = 'Email ' + email + ' is not confirmed in Supabase Auth. Enable "Auto Confirm" in Supabase Auth Dashboard or click your confirmation link.';
+          }
+          setAuthMessage(msg, true);
+          return;
+        }
+
+        setAuthMessage('');
+        await afterLogin();
       }
-
-      setAuthMessage('');
-      await afterLogin();
     } catch (err) {
-      console.error('[Unexpected Login Error]', err);
-      setAuthMessage('Unexpected error: ' + (err.message || err));
+      console.error('[Unexpected Auth Error]', err);
+      setAuthMessage('Unexpected error: ' + (err.message || err), true);
     } finally {
       if (submitBtn) submitBtn.disabled = false;
-      if (btnText) btnText.textContent = 'Sign In';
+      if (btnText) btnText.textContent = isSignUpMode ? 'Create Account' : 'Sign In';
       if (btnSpinner) btnSpinner.style.display = 'none';
     }
   });
 
-  // SIGNUP FORM HANDLER
-  if (signupForm) {
-    signupForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!supabaseClient) {
-        setAuthMessage('Supabase is not loaded. Check the CDN script, config.js, and your internet connection.');
-        return;
-      }
-      const data = Object.fromEntries(new FormData(e.target).entries());
-      const { error } = await supabaseClient.auth.signUp({
-        email: data.email, password: data.password
-      });
-      setAuthMessage(error ? error.message : 'Account created. Check email confirmation if enabled.');
-    });
-  }
+
 
   // LOGOUT HANDLER
   if (logoutBtn) {
@@ -248,23 +292,51 @@ function bindAuth() {
   });
 }
 
-function setAuthMessage(msg) {
+function setAuthMessage(msg, isError = true) {
   const el = $('#authMessage');
-  if (el) el.textContent = msg || '';
+  if (el) {
+    el.textContent = msg || '';
+    if (msg) {
+      el.style.display = 'block';
+      el.style.padding = '10px 14px';
+      el.style.borderRadius = '8px';
+      el.style.fontSize = '13px';
+      el.style.fontWeight = '700';
+      el.style.marginTop = '12px';
+      el.style.textAlign = 'center';
+      if (isError) {
+        el.style.background = '#fef2f2';
+        el.style.color = '#991b1b';
+        el.style.border = '1px solid #fca5a5';
+      } else {
+        el.style.background = '#f0fdf4';
+        el.style.color = '#166534';
+        el.style.border = '1px solid #86efac';
+      }
+    } else {
+      el.style.display = 'none';
+    }
+  }
 }
 
 function showAuth() {
   const authScreen = $('#authScreen');
   const appRoot = $('#appRoot');
-  if (authScreen) authScreen.style.display = 'flex';
-  if (appRoot) appRoot.style.display = 'none';
+  if (authScreen) authScreen.style.setProperty('display', 'flex', 'important');
+  if (appRoot) appRoot.style.setProperty('display', 'none', 'important');
 }
 
 function showApp() {
   const authScreen = $('#authScreen');
   const appRoot = $('#appRoot');
-  if (authScreen) authScreen.style.display = 'none';
-  if (appRoot) appRoot.style.display = 'grid';
+  if (authScreen) authScreen.style.setProperty('display', 'none', 'important');
+  if (appRoot) {
+    if (window.innerWidth <= 900) {
+      appRoot.style.setProperty('display', 'flex', 'important');
+    } else {
+      appRoot.style.setProperty('display', 'grid', 'important');
+    }
+  }
 }
 
 async function afterLogin() {
@@ -902,9 +974,13 @@ function bindForms() {
 
 async function loadAllData() {
   const fetchTable = (table, orderCol, asc = false) => {
+    // Skip fetching optional/uncreated meeting tables to avoid browser 404 console logs
+    if (['meetings', 'meeting_leaders', 'meeting_leader_attendance'].includes(table)) {
+      return Promise.resolve({ data: [], error: null });
+    }
     let q = supabaseClient.from(table).select('*');
     if (orderCol) q = q.order(orderCol, { ascending: asc });
-    return q.then(r => r, e => ({ data: [], error: e }));
+    return q.then(r => (r.error ? { data: [], error: r.error } : r), e => ({ data: [], error: e }));
   };
 
   try {
@@ -2167,34 +2243,121 @@ function buildMemberMilestonesHtml(memberId, customRow) {
 function buildLeaderMilestonesHtml(leaderId) {
   const leaderMss = (state.leaderMilestones || []).filter(r => r.leaderId === leaderId || r.leader_id === leaderId);
   const memberMs = (state.memberMilestones || []).find(r => r.member_id === leaderId || r.memberId === leaderId);
+  const lRanks = (state.leaderRanks || []).filter(r => r.leaderId === leaderId || r.leader_id === leaderId);
 
+  // 1. Current Rank
+  const curRankRow = leaderMss.find(r => r.title === 'leader_current_rank');
+  const curRankName = curRankRow ? curRankRow.notes : null;
+  const curRankDate = curRankRow ? (curRankRow.effectiveDate || curRankRow.effective_date) : null;
+
+  // 2. Scout Title
+  const titleRow = leaderMss.find(r => r.title === 'leader_scout_title');
+  let scoutTitle = null;
+  if (titleRow && titleRow.notes) {
+    try { scoutTitle = typeof titleRow.notes === 'string' ? JSON.parse(titleRow.notes) : titleRow.notes; } catch (_) {}
+  }
+
+  // 3. Custom Ranks History
+  const customRanksRow = leaderMss.find(r => r.title === 'leader_custom_ranks_list');
+  let customRanks = [];
+  if (customRanksRow && customRanksRow.notes) {
+    try { customRanks = typeof customRanksRow.notes === 'string' ? JSON.parse(customRanksRow.notes) : customRanksRow.notes; } catch (_) {}
+  }
+
+  // 4. Consecration Date
+  const consecrationRow = leaderMss.find(r => r.title === 'leader_consecration');
+  const consecrationDate = consecrationRow ? (consecrationRow.effectiveDate || consecrationRow.effective_date) : null;
+
+  // 5. Youth Journey
   const yjRow = leaderMss.find(r => r.title === 'leader_youth_journey');
   let yjMs = null;
   if (yjRow && yjRow.notes) {
-    try { yjMs = JSON.parse(yjRow.notes); } catch (_) {}
+    try { yjMs = typeof yjRow.notes === 'string' ? JSON.parse(yjRow.notes) : yjRow.notes; } catch (_) {}
   }
 
   const row = memberMs || yjMs;
-  if (row) {
-    return buildMemberMilestonesHtml(leaderId, row);
+
+  let html = '<div style="display:flex;flex-direction:column;gap:12px;" dir="rtl" style="text-align:right;">';
+  let hasAnyData = false;
+
+  // Leader Ranks & Title Card
+  if (curRankName || (scoutTitle && (scoutTitle.title || scoutTitle.godfather || scoutTitle.location)) || consecrationDate || (customRanks && customRanks.length) || (lRanks && lRanks.length)) {
+    hasAnyData = true;
+    html += '<div style="padding:14px 16px;background:rgba(0,0,0,0.02);border:1px solid var(--line);border-inline-start:4px solid var(--primary);border-radius:var(--radius-sm);">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">';
+    html += '<span style="width:10px;height:10px;border-radius:50%;background:var(--primary);display:inline-block"></span>';
+    html += '<h4 style="margin:0;font-size:14px;font-weight:800;color:var(--text);font-family:\'Cairo\',sans-serif;">الرتب والصفات الكشفية للقائد</h4>';
+    html += '</div>';
+
+    if (curRankName) {
+      html += `<div style="margin-bottom:8px;padding:8px 10px;background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;font-family:'Cairo',sans-serif;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">الرتبة الكشفية الحالية</div>
+        <div style="font-size:14px;font-weight:800;color:var(--primary-dark);">${escapeHtml(curRankName)}${curRankDate ? ` <span style="font-size:12px;font-weight:500;color:var(--muted);">(${escapeHtml(curRankDate)})</span>` : ''}</div>
+      </div>`;
+    }
+
+    if (scoutTitle && (scoutTitle.title || scoutTitle.location || scoutTitle.godfather || scoutTitle.date)) {
+      html += `<div style="margin-bottom:8px;padding:8px 10px;background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;font-family:'Cairo',sans-serif;">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">التلقيب الكشفي</div>
+        ${scoutTitle.title ? `<div style="font-size:13px;font-weight:800;color:var(--text);">اللقب: ${escapeHtml(scoutTitle.title)}</div>` : ''}
+        ${scoutTitle.location ? `<div style="font-size:12px;color:var(--text-secondary);">مكان التلقيب: ${escapeHtml(scoutTitle.location)}</div>` : ''}
+        ${scoutTitle.godfather ? `<div style="font-size:12px;color:var(--text-secondary);">العراب (Godfather): ${escapeHtml(scoutTitle.godfather)}</div>` : ''}
+        ${scoutTitle.date ? `<div style="font-size:12px;color:var(--muted);">تاريخ التلقيب: ${escapeHtml(scoutTitle.date)}</div>` : ''}
+      </div>`;
+    }
+
+    if (consecrationDate) {
+      html += `<div style="margin-bottom:8px;padding:8px 10px;background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--text-secondary);font-family:'Cairo',sans-serif;"><strong style="color:var(--text);">تاريخ التكريس الكشفي:</strong> ${escapeHtml(consecrationDate)}</div>`;
+    }
+
+    // Previous Custom Ranks History
+    if (customRanks && customRanks.length) {
+      html += '<div style="margin-top:8px;font-family:\'Cairo\',sans-serif;"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">الرتب والمهام السابقة</div>';
+      customRanks.forEach(r => {
+        if (!r || !r.name) return;
+        const dates = [r.start_date || r.startDate, r.end_date || r.endDate].filter(Boolean).map(formatAnyDateValue).join(' → ');
+        html += `<div style="padding:8px 10px;background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;margin-bottom:4px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;">
+          <span>${escapeHtml(r.name)}</span>
+          ${dates ? `<span style="font-size:11.5px;font-weight:600;color:var(--muted);">${escapeHtml(dates)}</span>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    }
+
+    if (lRanks && lRanks.length) {
+      html += '<div style="margin-top:8px;font-family:\'Cairo\',sans-serif;"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">سجل الرتب المسجلة</div>';
+      lRanks.forEach(r => {
+        if (!r || !r.rankName) return;
+        const dates = [r.dateFrom, r.dateTo].filter(Boolean).map(formatAnyDateValue).join(' → ');
+        html += `<div style="padding:8px 10px;background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;margin-bottom:4px;font-size:13px;font-weight:700;display:flex;justify-space-between;align-items:center;">
+          <span>${escapeHtml(r.rankName)}</span>
+          ${dates ? `<span style="font-size:11.5px;font-weight:600;color:var(--muted);">${escapeHtml(dates)}</span>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
   }
 
-  // Otherwise fall back to the simpler leader milestones
-  if (!leaderMss.length) {
+  // Youth Milestones Journey
+  if (row) {
+    hasAnyData = true;
+    html += buildMemberMilestonesHtml(leaderId, row);
+  }
+
+  html += '</div>';
+
+  if (!hasAnyData) {
     return `
       <div class="empty-placeholder" style="padding: 24px 16px;">
         <div class="placeholder-icon">🧭</div>
-        <h4>No milestones recorded yet</h4>
-        <p class="muted">No milestones or updates are recorded for this leader yet.</p>
+        <h4>لا يوجد سجّل رتب مسجّل</h4>
+        <p class="muted">لم يتم تسجيل رتب أو مسيرة كشفية لهذا القائد بعد.</p>
       </div>`;
   }
-  return leaderMss.map(m => `
-    <div class="profile-milestone-item">
-      <div class="profile-milestone-title">${escapeHtml(m.title)}</div>
-      <div class="profile-milestone-date">Date: ${escapeHtml(m.effectiveDate || m.effective_date || '—')}</div>
-      ${m.notes ? `<div class="profile-milestone-notes">Notes: ${escapeHtml(m.notes)}</div>` : ''}
-    </div>
-  `).join('');
+
+  return html;
 }
 
 function cleanHtmlForPdf(html) {
@@ -4558,6 +4721,25 @@ function openLeaderProfile(leaderId) {
 
   switchView('leaderProfile');
 }
+
+function openCurrentLeaderProfile() {
+  const userEmail = (currentUser.email || '').trim().toLowerCase();
+  let leader = currentUser.leader;
+  if (!leader && userEmail && state.leaders && state.leaders.length) {
+    leader = state.leaders.find(l => (l.email || '').trim().toLowerCase() === userEmail);
+  }
+  if (!leader && state.leaders && state.leaders.length) {
+    // If no direct email match found, try matching by first name or fallback to first leader
+    const firstWord = userEmail.split('@')[0].split('.')[0];
+    leader = state.leaders.find(l => (l.email || '').toLowerCase().includes(firstWord) || (l.firstName || '').toLowerCase().includes(firstWord)) || state.leaders[0];
+  }
+  if (leader && leader.id) {
+    openLeaderProfile(leader.id);
+  } else {
+    showToast('No matching leader profile found for your account email (' + (userEmail || 'unknown') + ')', 'warning');
+  }
+}
+window.openCurrentLeaderProfile = openCurrentLeaderProfile;
 
 /* ======================================================================
    Helpers
