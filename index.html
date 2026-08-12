@@ -7,7 +7,7 @@
   <title>Scout Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="styles.css?v=30" />
+  <link rel="stylesheet" href="styles.css?v=31" />
 </head>
 <body>
   <a href="#main-content" class="skip-to-content">Skip to main content</a>
@@ -212,12 +212,14 @@
                 <button type="button" class="ghost-btn"   id="exportMembersBtn">Export CSV</button>
                 <button type="button" class="ghost-btn"   id="downloadTemplateBtn">CSV Template</button>
                 <button type="button" class="primary-btn" id="importMembersBtn">Import CSV</button>
+                <button type="button" class="primary-btn" id="importExcelRecordBtn" style="background: #059669; display: inline-flex; align-items: center; gap: 6px;">📥 Import Excel (سجل فرد)</button>
                 <input  type="file"   id="importMembersInput" accept=".csv,text/csv" hidden />
+                <input  type="file"   id="importExcelRecordInput" accept=".xlsx,.xls" hidden />
               </div>
             </div>
             <div id="importMembersStatus" class="muted" style="margin-bottom:10px; white-space:pre-line;"></div>
             <div class="table-wrap">
-              <table>
+              <table class="members-table">
                 <thead>
                   <tr>
                     <th>First Name</th>
@@ -384,10 +386,21 @@
             <h1 id="profileMemberName">Member Profile</h1>
             <div class="eyebrow" id="profileMemberUnit" style="margin-top: 8px;">—</div>
           </div>
-          <div>
-            <button type="button" class="primary-btn" id="downloadProfilePdfBtn" style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download PDF
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="ghost-btn" id="editProfilePdfBtn" style="display: inline-flex; align-items: center; gap: 6px;">
+              ✏️ Edit PDF
+            </button>
+            <button type="button" class="primary-btn" id="downloadProfilePdfBtn" style="display: inline-flex; align-items: center; gap: 6px; background: #6366f1;">
+              📄 A4 Paper
+            </button>
+            <button type="button" class="primary-btn" id="downloadProfileSinglePdfBtn" style="display: inline-flex; align-items: center; gap: 6px; background: #10b981;">
+              📜 Single Page
+            </button>
+            <button type="button" class="primary-btn" id="downloadProfileXlsxBtn" style="display: inline-flex; align-items: center; gap: 6px; background: #059669;">
+              📊 Download XLSX
+            </button>
+            <button type="button" class="primary-btn" id="importProfileExcelBtn" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7;">
+              📥 Import Excel
             </button>
           </div>
         </div>
@@ -453,9 +466,9 @@
           </div>
 
           <!-- Timeline Milestone History -->
-          <div class="panel span-2">
+          <div class="panel span-2" dir="rtl" style="text-align:right;">
             <div class="panel-header">
-              <h3>Milestone History</h3>
+              <h3>المسيرة</h3>
             </div>
             <div id="profileMilestonesContainer" class="profile-milestones-list">
               <!-- Dynamically populated timeline -->
@@ -475,10 +488,18 @@
             <h1 id="profileLeaderName">Leader Profile</h1>
             <div class="eyebrow" id="profileLeaderRole" style="margin-top: 8px;">—</div>
           </div>
-          <div>
-            <button type="button" class="primary-btn" id="downloadLeaderPdfBtn" style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download PDF
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="ghost-btn" id="editLeaderPdfBtn" style="display: inline-flex; align-items: center; gap: 6px;">
+              ✏️ Edit PDF
+            </button>
+            <button type="button" class="primary-btn" id="downloadLeaderPdfBtn" style="display: inline-flex; align-items: center; gap: 6px; background: #6366f1;">
+              📄 A4 Paper
+            </button>
+            <button type="button" class="primary-btn" id="downloadLeaderSinglePdfBtn" style="display: inline-flex; align-items: center; gap: 6px; background: #10b981;">
+              📜 Single Page
+            </button>
+            <button type="button" class="primary-btn" id="downloadLeaderXlsxBtn" style="display: inline-flex; align-items: center; gap: 6px; background: #059669;">
+              📊 Download XLSX
             </button>
           </div>
         </div>
@@ -566,9 +587,9 @@
           </div>
 
           <!-- Timeline Milestone History -->
-          <div class="panel span-2">
+          <div class="panel span-2" dir="rtl" style="text-align:right;">
             <div class="panel-header">
-              <h3>Milestone History</h3>
+              <h3>المسيرة</h3>
             </div>
             <div id="leaderProfileMilestonesContainer" class="profile-milestones-list">
               <!-- Dynamically populated timeline -->
@@ -577,9 +598,212 @@
         </div>
       </section>
 
-
-
     </main>
+  </div>
+
+  <!-- PDF EDITOR MODAL -->
+  <div class="modal-overlay" id="pdfEditorModal" style="display:none; z-index:100000;">
+    <div class="modal-card pdf-editor-modal" style="width: 95vw; max-width: 1400px; height: 92vh; max-height: 900px; display: flex; flex-direction: column; padding: 0; overflow: hidden; background: var(--bg-surface);">
+      
+      <!-- Modal Header -->
+      <div class="modal-header" style="padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; background: var(--panel-solid);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 16px;">✏️</div>
+          <div>
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700;">PDF Profile Editor & Customizer</h3>
+            <div style="font-size: 11px; color: var(--muted);">Click text directly in preview to type or use controls to customize</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="ghost-btn" id="resetPdfEditorBtn" style="gap: 6px;">🔄 Reset</button>
+          <button type="button" class="primary-btn" id="exportPdfA4Btn" style="gap: 6px; background: #6366f1;">
+            📄 Export A4 Paper
+          </button>
+          <button type="button" class="primary-btn" id="exportPdfSingleBtn" style="gap: 6px; background: #10b981;">
+            📜 Single Page (100% Exact)
+          </button>
+          <button type="button" class="modal-close" id="closePdfEditorBtn" style="font-size: 22px; border: none; background: none; cursor: pointer; padding: 4px 8px; color: var(--muted);">&times;</button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Sidebar + Live Preview) -->
+      <div style="display: flex; flex: 1; overflow: hidden;">
+        
+        <!-- Editor Controls Sidebar -->
+        <div class="pdf-editor-sidebar" style="width: 380px; border-inline-end: 1px solid var(--line); overflow-y: auto; padding: 20px; background: var(--panel-solid); display: flex; flex-direction: column; gap: 16px;">
+          
+          <!-- Theme & Layout -->
+          <div class="editor-section">
+            <h4 style="margin: 0 0 10px 0; font-size: 11.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em;">Theme & Grid Customization</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px;">Primary Color</label>
+                <select id="pdfEditorColor" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;">
+                  <option value="#6366f1">Indigo (Default)</option>
+                  <option value="#10b981">Emerald Green</option>
+                  <option value="#ef4444">Crimson Red</option>
+                  <option value="#f59e0b">Amber Gold</option>
+                  <option value="#0f172a">Slate Black</option>
+                  <option value="#ec4899">Pink Rose</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px;">Badge Columns</label>
+                <select id="pdfEditorCols" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;">
+                  <option value="4">4 Columns</option>
+                  <option value="3">3 Columns</option>
+                  <option value="5">5 Columns</option>
+                  <option value="6">6 Columns</option>
+                  <option value="7">7 Columns</option>
+                  <option value="8">8 Columns</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px;">Badge Box Size</label>
+                <select id="pdfEditorBadgeSize" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;">
+                  <option value="auto">Auto (Adaptive)</option>
+                  <option value="compact">Compact (Small)</option>
+                  <option value="medium">Medium (Standard)</option>
+                  <option value="large">Large (Big)</option>
+                  <option value="xlarge">Extra Large (Huge)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px;">Badge Spacing (Gap)</label>
+                <select id="pdfEditorBadgeGap" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;">
+                  <option value="auto">Auto (Adaptive)</option>
+                  <option value="tight">Tight (4px)</option>
+                  <option value="normal">Normal (8px)</option>
+                  <option value="relaxed">Relaxed (12px)</option>
+                  <option value="spacious">Spacious (16px)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visibility Toggles -->
+          <div class="editor-section">
+            <h4 style="margin: 0 0 10px 0; font-size: 11.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em;">Visible Sections</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="pdfToggleHeader" checked /> Header</label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="pdfToggleBanner" checked /> Profile Banner</label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="pdfToggleDetails" checked /> Details Card</label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="pdfToggleBadges" checked /> Badges Card</label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="pdfToggleMilestones" checked /> المسيرة Card</label>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="pdfToggleFooter" checked /> Footer</label>
+            </div>
+          </div>
+
+          <!-- Header & Title Inputs -->
+          <div class="editor-section">
+            <h4 style="margin: 0 0 10px 0; font-size: 11.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em;">Header & Titles</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Organization Name</label>
+                <input type="text" id="pdfEditOrgName" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Document Subtitle</label>
+                <input type="text" id="pdfEditSubTitle" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Fields Inputs -->
+          <div class="editor-section">
+            <h4 style="margin: 0 0 10px 0; font-size: 11.5px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em;">Member Details</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div style="grid-column: 1/-1;">
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Full Name</label>
+                <input type="text" id="pdfEditFullName" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Unit</label>
+                <input type="text" id="pdfEditUnit" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Gender</label>
+                <input type="text" id="pdfEditGender" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Birth Date</label>
+                <input type="text" id="pdfEditDob" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Blood Type</label>
+                <input type="text" id="pdfEditBlood" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Phone</label>
+                <input type="text" id="pdfEditPhone" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Nationality</label>
+                <input type="text" id="pdfEditNat" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Parent Type</label>
+                <input type="text" id="pdfEditParentType" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Parent Phone</label>
+                <input type="text" id="pdfEditParentPhone" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+              <div style="grid-column: 1/-1;">
+                <label style="font-size: 11px; font-weight: 600; color: var(--muted);">Email</label>
+                <input type="text" id="pdfEditEmail" class="form-input" style="width:100%; padding:6px 10px; font-size:12px;" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Live Preview Stage -->
+        <div class="pdf-editor-stage" style="flex: 1; overflow: auto; padding: 28px; background: #cbd5e1; display: flex; justify-content: center; align-items: flex-start;">
+          <div id="pdfLivePreviewContainer" style="width: 794px; background: #ffffff; box-shadow: 0 12px 36px rgba(0,0,0,0.22); border-radius: 4px; padding: 28px 32px; box-sizing: border-box; font-family: Inter, Cairo, sans-serif; color: #0f172a;">
+            <!-- Live PDF Template renders here dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =============== EXCEL IMPORT CONFIRMATION MODAL =============== -->
+  <div id="excelImportModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.65); z-index: 100000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: #ffffff; width: 90%; max-width: 650px; border-radius: 12px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); font-family: Inter, Cairo, sans-serif;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <span>📥</span> Update Database from Excel (سجل فرد)
+        </h3>
+        <button type="button" class="close-btn" id="closeExcelImportModalBtn" style="background: transparent; border: none; font-size: 22px; cursor: pointer; color: #64748b;">&times;</button>
+      </div>
+      
+      <p style="margin: 0 0 12px 0; font-size: 13px; color: #475569; line-height: 1.5;">
+        Select the target member below to apply the extracted milestones, dates, and badges. The name inside the Excel file will be ignored to preserve the system's real member name:
+      </p>
+
+      <div style="margin-bottom: 14px; background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 8px; padding: 12px 14px;">
+        <label style="font-weight: 800; font-size: 13px; color: #0369a1; display: block; margin-bottom: 6px;">
+          🎯 Target Member in System (Excel Name Ignored):
+        </label>
+        <select id="excelTargetMemberSelect" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #38bdf8; font-size: 13.5px; font-weight: 700; background: #ffffff; color: #0c4a6e;">
+          <!-- Member options injected dynamically -->
+        </select>
+      </div>
+
+      <div id="excelImportPreviewContent" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; max-height: 320px; overflow-y: auto; font-family: 'Cairo', Inter, sans-serif;">
+        <!-- Extracted preview injected here -->
+      </div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="ghost-btn" id="cancelExcelImportBtn" style="padding: 9px 18px;">Cancel</button>
+        <button type="button" class="primary-btn" id="confirmExcelImportBtn" style="background: #059669; color: #ffffff; font-weight: 800; padding: 9px 20px; display: inline-flex; align-items: center; gap: 6px;">
+          💾 Confirm & Save to Database
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Toast notification container -->
@@ -588,12 +812,16 @@
   <!-- =============== SCRIPTS =============== -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <script src="config.js"></script>
   <script src="logo-base64.js"></script>
-  <script src="badge-icon.js"></script>
-  <script src="app.js?v=35"></script>
+  <script src="wassim-template-base64.js"></script>
+  <script src="app.js?v=999"></script>
   <noscript>
     <div style="padding:40px;text-align:center;font-family:sans-serif;">
       <h2>JavaScript Required</h2>

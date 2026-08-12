@@ -846,9 +846,10 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
           supabase.from('badge_definitions').select('id, name, logo_url, category'),
           supabase.from(badgeTable).select('id, badge_name, awarded_date').eq(idField, chosenMember.id),
           supabase.from('leader_ranks').select('rank_name, effective_date').eq('leader_id', chosenMember.id),
-          supabase.from('leader_milestones').select('title, effective_date, notes').eq('leader_id', chosenMember.id)
+          supabase.from('leader_milestones').select('title, effective_date, notes').eq('leader_id', chosenMember.id),
+          supabase.from('member_milestones').select('*').eq('member_id', chosenMember.id).maybeSingle()
         ]).then(function(results){
-          var defsRes = results[0], badgesRes = results[1], ranksRes = results[2], msRes = results[3];
+          var defsRes = results[0], badgesRes = results[1], ranksRes = results[2], msRes = results[3], memberMsRes = results[4];
           badgeDefs = (defsRes.data || []).slice().sort(function(a,b){
             return String(a.category||'zz').localeCompare(String(b.category||'zz'))
                 || String(a.name||'').localeCompare(String(b.name||''));
@@ -859,8 +860,23 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
           });
           leaderRanksData = ranksRes.data || [];
           leaderTrainingsData = msRes.data || [];
+
+          if (memberMsRes && memberMsRes.data) {
+            milestones = memberMsRes.data;
+          } else {
+            var yj = leaderTrainingsData.find(function(r) { return r.title === 'leader_youth_journey'; });
+            if (yj && yj.notes) {
+              try { milestones = JSON.parse(yj.notes) || {}; } catch (_) {}
+            }
+          }
+
+          milestones.green_consecrated = milestones.green_consecration_year != null;
+          milestones.red_consecrated   = milestones.red_consecration_year   != null;
+          milestones.red_departed      = milestones.red_departure_year      != null;
+
           renderBadges();
           hydrateLeaderMilestones();
+          hydrateMilestones();
         });
       } else {
         return Promise.all([
@@ -1455,49 +1471,72 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       document.getElementById('milestonesSub').textContent = "Record your leader ranks, training courses, and previous assignments.";
 
       // Display BOTH the leader-specific journey AND the youth milestones!
-      document.getElementById('youthMilestonesWrap').style.display = 'block';
-      document.getElementById('leaderMilestonesWrap').style.display = 'block';
+      var youthWrap = document.getElementById('youthMilestonesWrap');
+      var leaderWrap = document.getElementById('leaderMilestonesWrap');
+      if (youthWrap) youthWrap.style.display = 'block';
+      if (leaderWrap) leaderWrap.style.display = 'block';
 
       // Read leader's scout title details, current rank, and custom ranks list
       var curRankRow = leaderTrainingsData.find(function(r) { return r.title === 'leader_current_rank'; });
-      document.getElementById('leaderCurrentRank').value = curRankRow ? curRankRow.notes : '';
-      document.getElementById('leaderCurrentRankDate').value = curRankRow ? (curRankRow.effective_date || '') : '';
+      var curRankInp = document.getElementById('leaderCurrentRank');
+      var curRankDateInp = document.getElementById('leaderCurrentRankDate');
+      if (curRankInp) curRankInp.value = curRankRow ? (curRankRow.notes || '') : '';
+      if (curRankDateInp) curRankDateInp.value = curRankRow ? (curRankRow.effective_date || '') : '';
 
       var scoutTitleRow = leaderTrainingsData.find(function(r) { return r.title === 'leader_scout_title'; });
-      var scoutTitle = (scoutTitleRow && scoutTitleRow.notes) ? JSON.parse(scoutTitleRow.notes) : null;
+      var scoutTitle = null;
+      if (scoutTitleRow && scoutTitleRow.notes) {
+        try { scoutTitle = JSON.parse(scoutTitleRow.notes); } catch (_) {}
+      }
       scoutTitle = scoutTitle || { title: '', location: '', godfather: '', date: '' };
-      document.getElementById('leaderTitle').value = scoutTitle.title || '';
-      document.getElementById('leaderTitlePlace').value = scoutTitle.location || '';
-      document.getElementById('leaderTitleGodfather').value = scoutTitle.godfather || '';
-      document.getElementById('leaderTitleDate').value = scoutTitle.date || '';
+      
+      var tInp = document.getElementById('leaderTitle');
+      var pInp = document.getElementById('leaderTitlePlace');
+      var gInp = document.getElementById('leaderTitleGodfather');
+      var dInp = document.getElementById('leaderTitleDate');
+      if (tInp) tInp.value = scoutTitle.title || '';
+      if (pInp) pInp.value = scoutTitle.location || '';
+      if (gInp) gInp.value = scoutTitle.godfather || '';
+      if (dInp) dInp.value = scoutTitle.date || '';
 
       var consecrationRow = leaderTrainingsData.find(function(r) { return r.title === 'leader_consecration'; });
-      document.getElementById('leaderConsecrationDate').value = consecrationRow ? (consecrationRow.effective_date || '') : '';
+      var cDateInp = document.getElementById('leaderConsecrationDate');
+      if (cDateInp) cDateInp.value = consecrationRow ? (consecrationRow.effective_date || '') : '';
 
       // Clear and populate previous custom ranks list
       var customRanksRow = leaderTrainingsData.find(function(r) { return r.title === 'leader_custom_ranks_list'; });
-      var customRanksList = (customRanksRow && customRanksRow.notes) ? JSON.parse(customRanksRow.notes) : null;
+      var customRanksList = null;
+      if (customRanksRow && customRanksRow.notes) {
+        try { customRanksList = JSON.parse(customRanksRow.notes); } catch (_) {}
+      }
       customRanksList = customRanksList || [];
-      document.getElementById('leaderCustomRanksContainer').innerHTML = '';
-      customRanksList.forEach(function(rank) {
-        if (rank) {
-          addCustomRankRow(rank.name, rank.start_date, rank.end_date);
-        }
-      });
+      var customContainer = document.getElementById('leaderCustomRanksContainer');
+      if (customContainer) {
+        customContainer.innerHTML = '';
+        customRanksList.forEach(function(rank) {
+          if (rank) {
+            addCustomRankRow(rank.name, rank.start_date, rank.end_date);
+          }
+        });
+      }
 
-      // Bind leader journey form inputs to save
-      document.getElementById('leaderCurrentRank').addEventListener('input', scheduleLeaderMilestonesSave);
-      document.getElementById('leaderCurrentRankDate').addEventListener('change', scheduleLeaderMilestonesSave);
-      document.getElementById('leaderTitle').addEventListener('input', scheduleLeaderMilestonesSave);
-      document.getElementById('leaderTitlePlace').addEventListener('input', scheduleLeaderMilestonesSave);
-      document.getElementById('leaderTitleGodfather').addEventListener('input', scheduleLeaderMilestonesSave);
-      document.getElementById('leaderTitleDate').addEventListener('change', scheduleLeaderMilestonesSave);
-      document.getElementById('leaderConsecrationDate').addEventListener('change', scheduleLeaderMilestonesSave);
+      // Bind leader journey form inputs to save once
+      if (!window.__leaderInputsBound) {
+        window.__leaderInputsBound = true;
+        if (curRankInp) curRankInp.addEventListener('input', scheduleLeaderMilestonesSave);
+        if (curRankDateInp) curRankDateInp.addEventListener('change', scheduleLeaderMilestonesSave);
+        if (tInp) tInp.addEventListener('input', scheduleLeaderMilestonesSave);
+        if (pInp) pInp.addEventListener('input', scheduleLeaderMilestonesSave);
+        if (gInp) gInp.addEventListener('input', scheduleLeaderMilestonesSave);
+        if (dInp) dInp.addEventListener('change', scheduleLeaderMilestonesSave);
+        if (cDateInp) cDateInp.addEventListener('change', scheduleLeaderMilestonesSave);
+      }
     }
 
     // Function to add a previous custom rank row
     function addCustomRankRow(rankName, startDate, endDate) {
       var container = document.getElementById('leaderCustomRanksContainer');
+      if (!container) return;
       var row = document.createElement('div');
       row.className = 'custom-rank-entry-row';
       row.style.display = 'grid';
@@ -1537,10 +1576,13 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       });
     }
 
-    document.getElementById('addLeaderRankBtn').addEventListener('click', function() {
-      addCustomRankRow('', '', '');
-      scheduleLeaderMilestonesSave();
-    });
+    var addBtn = document.getElementById('addLeaderRankBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function() {
+        addCustomRankRow('', '', '');
+        scheduleLeaderMilestonesSave();
+      });
+    }
 
     var leaderSaveTimer = null;
     function scheduleLeaderMilestonesSave() {
@@ -1556,32 +1598,42 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
       markHint('msSaveHint', 'saving');
 
       // 1. Get current rank
-      var curRankName = document.getElementById('leaderCurrentRank').value.trim();
-      var curRankDate = document.getElementById('leaderCurrentRankDate').value || null;
+      var curRankEl = document.getElementById('leaderCurrentRank');
+      var curRankDateEl = document.getElementById('leaderCurrentRankDate');
+      var curRankName = curRankEl ? curRankEl.value.trim() : '';
+      var curRankDate = curRankDateEl ? (curRankDateEl.value || null) : null;
 
       // 2. Get custom ranks list
       var customRanks = [];
       document.querySelectorAll('.custom-rank-entry-row').forEach(function(row) {
-        var name = row.querySelector('.rank-name-input').value.trim();
-        var start = row.querySelector('.rank-start-input').value || null;
-        var end = row.querySelector('.rank-end-input').value || null;
+        var nameEl = row.querySelector('.rank-name-input');
+        var startEl = row.querySelector('.rank-start-input');
+        var endEl = row.querySelector('.rank-end-input');
+        var name = nameEl ? nameEl.value.trim() : '';
+        var start = startEl ? (startEl.value || null) : null;
+        var end = endEl ? (endEl.value || null) : null;
         if (name) {
           customRanks.push({ name: name, start_date: start, end_date: end });
         }
       });
 
       // 3. Get scout title
+      var tEl = document.getElementById('leaderTitle');
+      var pEl = document.getElementById('leaderTitlePlace');
+      var gEl = document.getElementById('leaderTitleGodfather');
+      var dEl = document.getElementById('leaderTitleDate');
+
       var scoutTitle = {
-        title: document.getElementById('leaderTitle').value.trim(),
-        location: document.getElementById('leaderTitlePlace').value.trim(),
-        godfather: document.getElementById('leaderTitleGodfather').value.trim(),
-        date: document.getElementById('leaderTitleDate').value || null
+        title: tEl ? tEl.value.trim() : '',
+        location: pEl ? pEl.value.trim() : '',
+        godfather: gEl ? gEl.value.trim() : '',
+        date: dEl ? (dEl.value || null) : null
       };
 
       // 4. Get consecration date
-      var consecrationDate = document.getElementById('leaderConsecrationDate').value || null;
+      var consecrationDateEl = document.getElementById('leaderConsecrationDate');
+      var consecrationDate = consecrationDateEl ? (consecrationDateEl.value || null) : null;
 
-      // Compile rows to upsert into leader_milestones (Fully uniform keys to ensure PostgREST compliance)
       var payload = [
         { leader_id: chosenMember.id, title: 'leader_current_rank', notes: curRankName || null, effective_date: curRankDate || null },
         { leader_id: chosenMember.id, title: 'leader_custom_ranks_list', notes: JSON.stringify(customRanks) || null, effective_date: null },
@@ -1590,8 +1642,6 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
         { leader_id: chosenMember.id, title: 'leader_youth_journey', notes: JSON.stringify(milestones) || null, effective_date: null }
       ];
 
-
-      // First delete any previous entries for this leader in leader_milestones, then insert the new ones
       return supabase
         .from('leader_milestones')
         .delete()
@@ -1601,6 +1651,7 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
         })
         .then(function(res) {
           if (res.error) {
+            console.error('[Leader Milestones Save Error]', res.error);
             markHint('msSaveHint', 'error');
             toast('Error saving leader journey: ' + res.error.message, 'error');
             return false;

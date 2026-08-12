@@ -17,6 +17,7 @@ const state = {
   badgeDefs: [],
   leaderBadges: [],
   leaderMilestones: [],
+  memberMilestones: [],
   leaderRanks: []
 };
 
@@ -508,7 +509,37 @@ function init() {
   if (dlProfileBtn) {
     dlProfileBtn.addEventListener('click', () => {
       const mid = dlProfileBtn.dataset.memberId;
-      if (mid) downloadMemberProfilePdf(mid);
+      if (mid) downloadMemberProfilePdf(mid, false);
+    });
+  }
+
+  const dlProfileSingleBtn = $('#downloadProfileSinglePdfBtn');
+  if (dlProfileSingleBtn) {
+    dlProfileSingleBtn.addEventListener('click', () => {
+      const mid = dlProfileSingleBtn.dataset.memberId || $('#downloadProfilePdfBtn')?.dataset?.memberId;
+      if (mid) downloadMemberProfilePdf(mid, true);
+    });
+  }
+
+  const dlProfileXlsxBtn = $('#downloadProfileXlsxBtn');
+  if (dlProfileXlsxBtn) {
+    dlProfileXlsxBtn.addEventListener('click', () => {
+      const mid = dlProfileXlsxBtn.dataset.memberId || $('#downloadProfilePdfBtn')?.dataset?.memberId;
+      if (mid) downloadMemberProfileXlsx(mid);
+    });
+  }
+
+  const editProfileBtn = $('#editProfilePdfBtn');
+  if (editProfileBtn) {
+    editProfileBtn.addEventListener('click', () => {
+      const mid = editProfileBtn.dataset.memberId || $('#downloadProfilePdfBtn')?.dataset?.memberId;
+      if (mid) {
+        openPdfEditor(mid, 'member');
+      } else if (state.members && state.members.length) {
+        openPdfEditor(state.members[0].id, 'member');
+      } else {
+        showToast('No member available for editing', 'warning');
+      }
     });
   }
 
@@ -530,7 +561,89 @@ function init() {
   if (dlLeaderPdfBtn) {
     dlLeaderPdfBtn.addEventListener('click', () => {
       const lid = dlLeaderPdfBtn.dataset.leaderId;
-      if (lid) downloadLeaderProfilePdf(lid);
+      if (lid) downloadLeaderProfilePdf(lid, false);
+    });
+  }
+
+  const dlLeaderSingleBtn = $('#downloadLeaderSinglePdfBtn');
+  if (dlLeaderSingleBtn) {
+    dlLeaderSingleBtn.addEventListener('click', () => {
+      const lid = dlLeaderSingleBtn.dataset.leaderId || $('#downloadLeaderPdfBtn')?.dataset?.leaderId;
+      if (lid) downloadLeaderProfilePdf(lid, true);
+    });
+  }
+
+  const dlLeaderXlsxBtn = $('#downloadLeaderXlsxBtn');
+  if (dlLeaderXlsxBtn) {
+    dlLeaderXlsxBtn.addEventListener('click', () => {
+      const lid = dlLeaderXlsxBtn.dataset.leaderId || $('#downloadLeaderPdfBtn')?.dataset?.leaderId;
+      if (lid) downloadLeaderProfileXlsx(lid);
+    });
+  }
+
+  const importExcelBtn = $('#importExcelRecordBtn');
+  const importExcelInput = $('#importExcelRecordInput');
+  if (importExcelBtn && importExcelInput) {
+    importExcelBtn.addEventListener('click', () => {
+      importExcelInput.onchange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleExcelRecordUpload(e.target.files[0]);
+          e.target.value = '';
+        }
+      };
+      importExcelInput.click();
+    });
+  }
+
+  const importProfileExcelBtn = $('#importProfileExcelBtn');
+  if (importProfileExcelBtn) {
+    importProfileExcelBtn.addEventListener('click', () => {
+      const mid = importProfileExcelBtn.dataset.memberId || $('#downloadProfilePdfBtn')?.dataset?.memberId;
+      if (importExcelInput) {
+        importExcelInput.onchange = (e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleExcelRecordUpload(e.target.files[0], mid);
+            e.target.value = '';
+          }
+        };
+        importExcelInput.click();
+      }
+    });
+  }
+
+  const closeExcelModalBtn = $('#closeExcelImportModalBtn');
+  const cancelExcelModalBtn = $('#cancelExcelImportBtn');
+  const confirmExcelModalBtn = $('#confirmExcelImportBtn');
+
+  if (closeExcelModalBtn) {
+    closeExcelModalBtn.addEventListener('click', () => {
+      const modal = $('#excelImportModal');
+      if (modal) modal.style.display = 'none';
+    });
+  }
+  if (cancelExcelModalBtn) {
+    cancelExcelModalBtn.addEventListener('click', () => {
+      const modal = $('#excelImportModal');
+      if (modal) modal.style.display = 'none';
+    });
+  }
+  if (confirmExcelModalBtn) {
+    confirmExcelModalBtn.addEventListener('click', () => {
+      executeExcelImport();
+    });
+  }
+
+  const editLeaderBtn = $('#editLeaderPdfBtn');
+  if (editLeaderBtn) {
+    editLeaderBtn.addEventListener('click', () => {
+      const lid = editLeaderBtn.dataset.leaderId || $('#downloadLeaderPdfBtn')?.dataset?.leaderId;
+      if (lid) {
+        openPdfEditor(lid, 'leader');
+      } else if (state.leaders && state.leaders.length) {
+        openPdfEditor(state.leaders[0].id, 'leader');
+      } else {
+        showToast('No leader available for editing', 'warning');
+      }
     });
   }
 }
@@ -799,7 +912,7 @@ async function loadAllData() {
       membersRes, leadersRes, paymentsRes, badgesRes, ranksRes,
       memberAttendanceRes, leaderAttendanceRes,
       meetingsRes, meetingLeadersRes, meetingLeaderAttendanceRes,
-      badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes
+      badgeDefsRes, leaderBadgesRes, leaderMilestonesRes, leaderRanksRes, memberMilestonesRes
     ] = await Promise.all([
       fetchTable('members', 'created_at'),
       fetchTable('leaders', 'created_at'),
@@ -814,7 +927,8 @@ async function loadAllData() {
       fetchTable('badge_definitions', 'created_at'),
       fetchTable('leader_badges'),
       fetchTable('leader_milestones'),
-      fetchTable('leader_ranks')
+      fetchTable('leader_ranks'),
+      fetchTable('member_milestones')
     ]);
 
     state.members = (membersRes.data || []).map(mapMember);
@@ -828,6 +942,7 @@ async function loadAllData() {
     state.leaderBadges = (leaderBadgesRes.data || []).map(mapLeaderBadge);
     state.leaderMilestones = (leaderMilestonesRes.data || []).map(mapLeaderMilestone);
     state.leaderRanks = (leaderRanksRes.data || []).map(mapLeaderRank);
+    state.memberMilestones = (memberMilestonesRes.data || []);
 
     const leadersByMeeting = groupBy((meetingLeadersRes.data || []).map(mapMeetingLeader), 'meetingId');
     const leaderAttendanceByMeeting = groupBy((meetingLeaderAttendanceRes.data || []).map(mapMeetingLeaderAttendance), 'meetingId');
@@ -1818,7 +1933,7 @@ function unitMemberRow(m) {
 
   return `
     <tr class="member-row" data-id="${m.id}" style="cursor: pointer;">
-      <td><strong>${escapeHtml(m.fullName || '—')}</strong></td>
+      <td>${escapeHtml(m.fullName || '—')}</td>
       <td>${escapeHtml(m.gender || '—')}</td>
       <td>${escapeHtml(m.dob || '—')}</td>
       <td>${age !== null ? age.toFixed(2) : '—'}</td>
@@ -1873,6 +1988,11 @@ function openMemberProfile(memberId) {
 
   const dlBtn = $('#downloadProfilePdfBtn');
   if (dlBtn) dlBtn.dataset.memberId = memberId;
+  const editBtn = $('#editProfilePdfBtn');
+  if (editBtn) {
+    editBtn.dataset.memberId = memberId;
+    editBtn.onclick = () => openPdfEditor(memberId, 'member');
+  }
 
   const badgesContainer = $('#profileBadgesContainer');
   if (badgesContainer) {
@@ -1904,295 +2024,1814 @@ function openMemberProfile(memberId) {
 
   const milestonesContainer = $('#profileMilestonesContainer');
   if (milestonesContainer) {
-    const ranks = state.ranks.filter(r => r.memberId === memberId);
-    if (!ranks.length) {
-      milestonesContainer.innerHTML = `
-        <div class="empty-placeholder" style="padding: 24px 16px;">
-          <div class="placeholder-icon">🧭</div>
-          <h4>No milestones recorded yet</h4>
-          <p class="muted">No rank milestones or updates are recorded for this scout yet.</p>
-        </div>
-      `;
-    } else {
-      milestonesContainer.innerHTML = ranks.map(r => `
-        <div class="profile-milestone-item">
-          <div class="profile-milestone-title">${escapeHtml(r.rankName)}</div>
-          <div class="profile-milestone-date">Effective: ${escapeHtml(r.effectiveDate)}</div>
-          ${r.notes ? `<div class="profile-milestone-notes">Notes: ${escapeHtml(r.notes)}</div>` : ''}
-        </div>
-      `).join('');
-    }
+    milestonesContainer.innerHTML = buildMemberMilestonesHtml(memberId);
   }
 
   switchView('memberProfile');
 }
 
-function downloadMemberProfilePdf(memberId) {
-  const m = state.members.find(x => x.id === memberId);
-  if (!m) {
-    showToast('Member not found', 'error');
-    return;
+/* ======================================================================
+   Member Milestones (rich rendering from member_milestones table)
+   ====================================================================== */
+function buildMemberMilestonesHtml(memberId, customRow) {
+  const member = state.members.find(m => m.id === memberId) || state.leaders.find(l => l.id === memberId);
+  const canonicalUnit = typeof window.canonicalUnit === 'function' ? window.canonicalUnit : (u => u || '');
+  const unit = member ? canonicalUnit(member.unit) : null;
+  const showRed = !(unit === 'Boyscouts' || unit === 'Girlscouts');
+
+  const row = customRow || (state.memberMilestones || []).find(r => r.member_id === memberId);
+  const legacyRanks = state.ranks.filter(r => r.memberId === memberId);
+
+  if (!row && !legacyRanks.length) {
+    return `
+      <div class="empty-placeholder" style="padding: 24px 16px;">
+        <div class="placeholder-icon">🧭</div>
+        <h4>No milestones data</h4>
+        <p class="muted">No milestone records found for this member. They may need to fill out the milestone form.</p>
+      </div>`;
   }
-  if (typeof html2pdf === 'undefined') {
-    showToast('PDF generator library not loaded', 'error');
-    return;
+
+  let html = '<div style="display:flex;flex-direction:column;gap:12px;" dir="rtl" style="text-align:right;">';
+
+  // Join year
+  if (row && row.join_year) {
+    html += `<div style="padding:14px 16px;background:rgba(0,0,0,0.02);border:1px solid var(--line);border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-weight:700;font-size:13px;color:var(--text-secondary);font-family:'Cairo',sans-serif;">سنة الانضمام إلى الجمعية</div>
+      <div style="font-weight:800;font-size:16px;color:var(--primary);">${escapeHtml(row.join_year)}</div>
+    </div>`;
   }
 
-  showToast('Generating PDF...', 'info');
+  function branchBlock(color, title, passedFlag, ranksArr, consecrationYear, departureYear, leadershipArr, rankDatesMap) {
+    const hasLead = !!(leadershipArr && leadershipArr.length);
+    const hasRanks = !!(ranksArr && ranksArr.length);
+    if (!passedFlag && !hasRanks && !consecrationYear && !departureYear && !hasLead) return '';
+    const dates = (rankDatesMap && typeof rankDatesMap === 'object') ? rankDatesMap : {};
 
-  const badges = state.badges.filter(b => b.memberId === memberId);
-  const ranks = state.ranks.filter(r => r.memberId === memberId);
+    const chips = hasRanks
+      ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + ranksArr.map(r => {
+          const rawD = dates[r];
+          const d = formatAnyDateValue(rawD);
+          const dHtml = d
+            ? `<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.4);">${escapeHtml(d)}</span>`
+            : '';
+          return `<span style="font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:999px;background:${color};color:#fff;display:inline-flex;align-items:center;">${escapeHtml(r)}${dHtml}</span>`;
+        }).join('') + '</div>'
+      : '<div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:\'Cairo\',sans-serif;">لم يتم تحديد رتب</div>';
 
-  const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
-  container.style.top = '0';
-  container.style.width = '794px';
-  container.style.padding = '32px';
-  container.style.fontFamily = 'Inter, sans-serif';
-  container.style.color = '#0f172a';
-  container.style.background = '#ffffff';
-  container.style.boxSizing = 'border-box';
+    let years = '';
+    if (consecrationYear) {
+      years += `<div style="font-size:12.5px;color:var(--text-secondary);margin-top:6px;font-family:'Cairo',sans-serif;">🎯 <strong>التكريس:</strong> ${escapeHtml(formatAnyDateValue(consecrationYear))}</div>`;
+    }
+    if (departureYear) {
+      years += `<div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;font-family:'Cairo',sans-serif;">🚶 <strong>الرحيل:</strong> ${escapeHtml(formatAnyDateValue(departureYear))}</div>`;
+    }
 
-  const logoHtml = window.LOGO_BASE64
-    ? `<img src="${window.LOGO_BASE64}" style="max-height: 50px; max-width: 180px; object-fit: contain;" />`
-    : '<h2 style="margin:0; font-size:18px;">Lebanese Scout Association</h2>';
-
-  const badgesHtml = badges.length
-    ? badges.map(b => `
-        <div style="display:inline-block; margin: 4px 6px; padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; background: #f8fafc;">
-          <div style="font-weight: 600; font-size: 12px; color: #0f172a;">${escapeHtml(b.badgeName)}</div>
-          <div style="font-size: 10px; color: #64748b;">${escapeHtml(b.awardedDate || '—')}</div>
+    let leadHtml = '';
+    if (hasLead) {
+      leadHtml = `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);" dir="rtl">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);margin-bottom:6px;text-align:right;font-family:'Cairo',sans-serif;">المراكز</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${leadershipArr.map(l => {
+            if (!l || !l.role) return '';
+            const meta = [];
+            if (l.name) meta.push(`<span style="color:var(--text-secondary);font-weight:700;">${escapeHtml(l.name)}</span>`);
+            if (l.year) meta.push(`<span style="color:var(--muted);font-weight:700;">${escapeHtml(l.year)}</span>`);
+            const metaHtml = meta.length
+              ? `<div style="font-size:11.5px;display:flex;gap:6px;align-items:center;font-family:'Cairo',sans-serif;">${meta.join('<span style="color:var(--line-strong);">·</span>')}</div>`
+              : '';
+            let campHtml = '';
+            if (l.camp && l.camp.organized) {
+              const lines = [];
+              if (l.camp.name) lines.push({label:'اسم المخيم', value:l.camp.name});
+              if (l.camp.place) lines.push({label:'مكان المخيم', value:l.camp.place});
+              if (l.camp.date) lines.push({label:'تاريخ المخيم', value:l.camp.date});
+              campHtml = `<div style="margin-top:6px;padding:8px 10px;background:rgba(0,0,0,0.02);border:1px dashed var(--line);border-radius:6px;font-family:'Cairo',sans-serif;">
+                <div style="font-size:12px;font-weight:900;color:var(--text);margin-bottom:4px;">نظّم مخيماً</div>
+                ${lines.length
+                  ? lines.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11.5px;margin-top:2px;"><span style="color:var(--muted);font-weight:700;">${escapeHtml(x.label)}</span><span style="color:var(--text);font-weight:700;text-align:left;">${escapeHtml(x.value)}</span></div>`).join('')
+                  : '<div style="font-size:11px;color:var(--muted);">نعم (بدون تفاصيل)</div>'}
+              </div>`;
+            }
+            return `<div style="padding:8px 10px;background:var(--panel-solid);border:1px solid var(--line);border-radius:8px;font-family:'Cairo',sans-serif;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <div style="font-size:12.5px;font-weight:800;color:var(--text);">${escapeHtml(l.role)}</div>
+                ${metaHtml}
+              </div>
+              ${campHtml}
+            </div>`;
+          }).join('')}
         </div>
-      `).join('')
-    : '<p style="color: #64748b; font-size: 13px; margin: 4px 0;">No badges earned yet.</p>';
+      </div>`;
+    }
 
-  const ranksHtml = ranks.length
-    ? ranks.map(r => `
-        <tr style="border-bottom: 1px solid #e2e8f0;">
-          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.rankName)}</td>
-          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.effectiveDate || '—')}</td>
-          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.notes || '—')}</td>
-        </tr>
-      `).join('')
-    : '<tr><td colspan="3" style="padding: 8px; font-size: 12px; color: #64748b;">No milestones recorded.</td></tr>';
-
-  container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 12px; margin-bottom: 16px;">
-      <div>${logoHtml}</div>
-      <div style="text-align:right;">
-        <h2 style="margin:0; font-size: 18px; color: #6366f1;">Scout Member Profile</h2>
-        <div style="font-size: 11px; color: #64748b;">Generated: ${new Date().toLocaleDateString()}</div>
+    return `<div class="pdf-section-card" style="padding:16px;background:rgba(0,0,0,0.02);border:1px solid var(--line);border-inline-start:4px solid ${color};border-radius:var(--radius-sm);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+        <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;"></span>
+        <h4 style="margin:0;font-size:14px;font-weight:800;color:var(--text);font-family:'Cairo',sans-serif;">${escapeHtml(title)}</h4>
       </div>
+      ${chips}${years}${leadHtml}
+    </div>`;
+  }
+
+  if (row) {
+    html += branchBlock('#eab308', 'الفرع الأصفر', row.yellow_passed, row.yellow_ranks || [], null, null, null, row.yellow_rank_dates || {});
+    html += branchBlock('#10b981', 'الفرع الأخضر', row.green_passed, row.green_ranks || [], row.green_consecration_year, null, row.green_leadership || [], row.green_rank_dates || {});
+    if (showRed) {
+      html += branchBlock('#ef4444', 'الفرع الأحمر', row.red_passed, row.red_ranks || [], row.red_consecration_year, row.red_departure_year, row.red_leadership || [], row.red_rank_dates || {});
+    }
+  }
+
+  // Legacy ranks
+  if (legacyRanks.length) {
+    html += '<div style="margin-top:8px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-family:\'Cairo\',sans-serif;">سجل قديم</div>';
+    html += legacyRanks.map(r => `
+      <div class="profile-milestone-item">
+        <div class="profile-milestone-title">${escapeHtml(r.rankName || '')}</div>
+        <div class="profile-milestone-date">Effective: ${escapeHtml(r.effectiveDate || '—')}</div>
+        ${r.notes ? `<div class="profile-milestone-notes">Notes: ${escapeHtml(r.notes)}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  html += '</div>';
+
+  // If row exists but everything is empty
+  if (row && !row.yellow_passed && !row.green_passed && !row.red_passed && !row.join_year && !legacyRanks.length &&
+      !((row.green_leadership && row.green_leadership.length) || (row.red_leadership && row.red_leadership.length))) {
+    return `<div class="empty-placeholder" style="padding: 24px 16px;"><div class="placeholder-icon">🧭</div><h4>No milestones data</h4><p class="muted">No branches or ranks have been recorded yet.</p></div>`;
+  }
+
+  return html;
+}
+
+function buildLeaderMilestonesHtml(leaderId) {
+  const leaderMss = (state.leaderMilestones || []).filter(r => r.leaderId === leaderId || r.leader_id === leaderId);
+  const memberMs = (state.memberMilestones || []).find(r => r.member_id === leaderId || r.memberId === leaderId);
+
+  const yjRow = leaderMss.find(r => r.title === 'leader_youth_journey');
+  let yjMs = null;
+  if (yjRow && yjRow.notes) {
+    try { yjMs = JSON.parse(yjRow.notes); } catch (_) {}
+  }
+
+  const row = memberMs || yjMs;
+  if (row) {
+    return buildMemberMilestonesHtml(leaderId, row);
+  }
+
+  // Otherwise fall back to the simpler leader milestones
+  if (!leaderMss.length) {
+    return `
+      <div class="empty-placeholder" style="padding: 24px 16px;">
+        <div class="placeholder-icon">🧭</div>
+        <h4>No milestones recorded yet</h4>
+        <p class="muted">No milestones or updates are recorded for this leader yet.</p>
+      </div>`;
+  }
+  return leaderMss.map(m => `
+    <div class="profile-milestone-item">
+      <div class="profile-milestone-title">${escapeHtml(m.title)}</div>
+      <div class="profile-milestone-date">Date: ${escapeHtml(m.effectiveDate || m.effective_date || '—')}</div>
+      ${m.notes ? `<div class="profile-milestone-notes">Notes: ${escapeHtml(m.notes)}</div>` : ''}
     </div>
+  `).join('');
+}
 
-    <h3 style="margin-top:0; margin-bottom: 12px; font-size: 16px; color: #0f172a;">${escapeHtml(m.fullName || 'Member Profile')} (${escapeHtml(m.unit || '—')})</h3>
+function cleanHtmlForPdf(html) {
+  return String(html || '')
+    .replace(/var\(--text\)/g, '#0f172a')
+    .replace(/var\(--text-secondary\)/g, '#475569')
+    .replace(/var\(--muted\)/g, '#64748b')
+    .replace(/var\(--primary\)/g, '#6366f1')
+    .replace(/var\(--primary-dark\)/g, '#4f46e5')
+    .replace(/var\(--line\)/g, '#e2e8f0')
+    .replace(/var\(--line-strong\)/g, '#cbd5e1')
+    .replace(/var\(--panel-solid\)/g, '#ffffff')
+    .replace(/var\(--radius-sm\)/g, '8px')
+    .replace(/var\(--radius\)/g, '12px');
+}
 
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
-      <tr>
-        <td style="padding: 6px; font-weight: 600; width: 28%; background: #f8fafc; border: 1px solid #e2e8f0;">Full Name</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.fullName || '—')}</td>
-        <td style="padding: 6px; font-weight: 600; width: 20%; background: #f8fafc; border: 1px solid #e2e8f0;">Gender</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.gender || '—')}</td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Birth Date</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.dob || '—')} (${ageDecimal(m.dob) !== null ? ageDecimal(m.dob).toFixed(1) + ' yrs' : '—'})</td>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Phone</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.phone || '—')}</td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Parent Contact</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.parentType || 'Parent')}: ${escapeHtml(m.parentPhone || '—')}</td>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Blood / Nat.</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.bloodType || '—')} / ${escapeHtml(m.nationality || '—')}</td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Email</td>
-        <td colspan="3" style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(m.email || '—')}</td>
-      </tr>
-    </table>
+function applySmartPageBreaks(container) {
+  const PAGE_HEIGHT = 1123;
+  const selectors = '.pdf-section-card, .pdf-block';
+  const blocks = Array.from(container.querySelectorAll(selectors));
 
-    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Badges Earned</h4>
-    <div style="margin-bottom: 20px;">${badgesHtml}</div>
+  if (!blocks.length) return;
 
-    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Milestone History</h4>
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead>
-        <tr style="background: #f1f5f9; text-align: left;">
-          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Rank / Milestone</th>
-          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Effective Date</th>
-          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Notes</th>
-        </tr>
-      </thead>
-      <tbody>${ranksHtml}</tbody>
-    </table>
-  `;
+  const containerRect = container.getBoundingClientRect();
+  const containerTop = containerRect.top;
 
-  document.body.appendChild(container);
+  let currentPage = 1;
 
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: `${m.fullName ? m.fullName.replace(/\s+/g, '_') : 'member'}_profile.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  const imgs = container.querySelectorAll('img');
-  const imgPromises = Array.from(imgs).map(img => {
-    if (img.complete) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = resolve;
-      img.onerror = resolve;
-    });
+  blocks.forEach(block => {
+    block.style.marginTop = '';
   });
 
-  Promise.all(imgPromises).then(() => {
-    return html2pdf().from(container).set(opt).save();
-  }).then(() => {
-    try { container.remove(); } catch (_) {}
-    showToast('PDF downloaded successfully!', 'success');
-  }).catch(err => {
-    try { container.remove(); } catch (_) {}
-    console.error('[PDF Generation Error]', err);
-    showToast('Failed to generate PDF', 'error');
+  blocks.forEach(block => {
+    const rect = block.getBoundingClientRect();
+    const relativeTop = rect.top - containerTop;
+    const relativeBottom = relativeTop + rect.height;
+
+    const pageBoundary = currentPage * PAGE_HEIGHT;
+
+    if (relativeTop < pageBoundary - 10 && relativeBottom > pageBoundary - 10) {
+      const gapNeeded = pageBoundary - relativeTop + 24;
+      block.style.marginTop = `${gapNeeded}px`;
+      currentPage++;
+    } else if (relativeTop >= pageBoundary) {
+      currentPage = Math.floor(relativeTop / PAGE_HEIGHT) + 1;
+    }
   });
 }
 
-function downloadLeaderProfilePdf(leaderId) {
-  const l = state.leaders.find(x => x.id === leaderId);
-  if (!l) {
-    showToast('Leader not found', 'error');
-    return;
+async function exportElementToPdf(container, filename, isSinglePage = false) {
+  document.body.appendChild(container);
+
+  const imgs = Array.from(container.querySelectorAll('img'));
+  await Promise.all(imgs.map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(res => {
+      img.onload = res;
+      img.onerror = res;
+    });
+  }));
+
+  await new Promise(res => setTimeout(res, 200));
+
+  if (!isSinglePage) {
+    try {
+      applySmartPageBreaks(container);
+    } catch (e) {
+      console.warn('[Smart Page Break Warning]', e);
+    }
   }
-  if (typeof html2pdf === 'undefined') {
-    showToast('PDF generator library not loaded', 'error');
+
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
+
+    try { container.remove(); } catch (_) {}
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    if (!imgData || imgData.length < 1000) {
+      throw new Error('Canvas capture produced empty output');
+    }
+
+    let _jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (!_jsPDF && typeof window.html2pdf !== 'undefined') {
+      try {
+        const worker = window.html2pdf();
+        if (worker && worker.jsPDF) _jsPDF = worker.jsPDF;
+      } catch (_) {}
+    }
+
+    if (typeof _jsPDF === 'function') {
+      if (isSinglePage) {
+        // SINGLE CONTINUOUS PAGE MODE (100% Exact to live editor preview)
+        const pageW = 210;
+        const pageH = (canvas.height * pageW) / canvas.width;
+
+        const pdf = new _jsPDF({
+          unit: 'mm',
+          format: [pageW, pageH],
+          orientation: 'portrait',
+          compress: true
+        });
+
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
+        pdf.save(filename);
+        showToast('Single-page PDF downloaded (100% exact preview)!', 'success');
+      } else {
+        // MULTI-PAGE STANDARD A4 PAPER MODE
+        const pdf = new _jsPDF({
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait',
+          compress: true
+        });
+
+        const pageW = 210;
+        const pageH = 297;
+        const imgW = pageW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+
+        let heightLeft = imgH;
+        let position = 0;
+
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        heightLeft -= pageH;
+
+        while (heightLeft > 0) {
+          position -= pageH;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+          heightLeft -= pageH;
+        }
+
+        pdf.save(filename);
+        showToast('A4 Multi-page PDF downloaded successfully!', 'success');
+      }
+    } else {
+      throw new Error('jsPDF library not available');
+    }
+  } catch (err) {
+    try { container.remove(); } catch (_) {}
+    console.error('[PDF Export Error]', err);
+    showToast('Failed to generate PDF: ' + (err.message || err), 'error');
+  }
+}
+
+function getInitials(name) {
+  if (!name) return 'SC';
+  const parts = String(name).trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getAdaptiveBadgeGridConfig(badgeCount) {
+  if (badgeCount <= 12) {
+    return { cols: 4, padding: '10px 8px', fontSize: '11.5px', iconSize: '26px', gap: '10px' };
+  } else if (badgeCount <= 24) {
+    return { cols: 5, padding: '8px 6px', fontSize: '10.5px', iconSize: '22px', gap: '8px' };
+  } else if (badgeCount <= 42) {
+    return { cols: 6, padding: '7px 5px', fontSize: '10px', iconSize: '20px', gap: '7px' };
+  } else {
+    return { cols: 7, padding: '6px 4px', fontSize: '9px', iconSize: '18px', gap: '6px' };
+  }
+}
+
+function getBadgeGridConfig(badgeCount, sizeMode = 'auto', gapMode = 'auto') {
+  let config = getAdaptiveBadgeGridConfig(badgeCount);
+
+  if (sizeMode === 'compact') {
+    config.padding = '4px 3px';
+    config.fontSize = '8.5px';
+    config.iconSize = '15px';
+  } else if (sizeMode === 'medium') {
+    config.padding = '8px 6px';
+    config.fontSize = '10.5px';
+    config.iconSize = '22px';
+  } else if (sizeMode === 'large') {
+    config.padding = '12px 8px';
+    config.fontSize = '12px';
+    config.iconSize = '28px';
+  } else if (sizeMode === 'xlarge') {
+    config.padding = '16px 10px';
+    config.fontSize = '14px';
+    config.iconSize = '34px';
+  }
+
+  if (gapMode === 'tight') config.gap = '4px';
+  else if (gapMode === 'normal') config.gap = '8px';
+  else if (gapMode === 'relaxed') config.gap = '12px';
+  else if (gapMode === 'spacious') config.gap = '16px';
+
+  return config;
+}
+
+function downloadMemberProfilePdf(memberId, isSinglePage = false) {
+  const m = state.members.find(x => String(x.id) === String(memberId));
+  if (!m) {
+    showToast('Member not found (ID: ' + memberId + ')', 'error');
     return;
   }
 
   showToast('Generating PDF...', 'info');
 
-  const badges = (state.leaderBadges || []).filter(b => b.leaderId === leaderId);
-  const ranks = (state.leaderRanks || []).filter(r => r.leaderId === leaderId);
+  const badges = state.badges.filter(b => String(b.memberId || b.member_id) === String(memberId));
+  const rawMilestonesHtml = buildMemberMilestonesHtml(m.id);
+  const milestonesHtml = cleanHtmlForPdf(rawMilestonesHtml);
+
+  const initials = getInitials(m.fullName);
+  const ageVal = ageDecimal(m.dob);
+  const ageStr = ageVal !== null ? ageVal.toFixed(1) : '—';
+
+  const badgeConfig = getAdaptiveBadgeGridConfig(badges.length);
+
+  const badgesGridHtml = badges.length
+    ? badges.map(b => {
+        const rawName = (typeof b === 'string') ? b : (b.badgeName || b.badge_name || b.name || b.title || (state.badgeDefs.find(d => String(d.id) === String(b.badgeId || b.badge_id || b.badge_definition_id || b.id))?.name));
+        const bName = String(rawName || 'شارة').trim();
+        const def = state.badgeDefs.find(d => (d.name || '').toLowerCase() === (bName || '').toLowerCase());
+        const logoUrl = (def && def.logoUrl) || (typeof badgeDefLogo === 'function' ? badgeDefLogo(bName) : null) || b.logoUrl || b.logo_url || window.DEFAULT_BADGE_ICON || 'badge-icon.png';
+        
+        const logoImg = `<img src="${escapeHtml(logoUrl)}" style="width:${badgeConfig.iconSize}; height:${badgeConfig.iconSize}; object-fit:contain; margin-bottom:2px; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" />`;
+
+        return `
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:${badgeConfig.padding}; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box;">
+            ${logoImg}
+            <div dir="rtl" style="font-weight:700; font-size:${badgeConfig.fontSize}; color:#1e293b; font-family:'Cairo', sans-serif; line-height:1.2; white-space:normal; word-break:break-word; max-width:100%; text-align:center;">${escapeHtml(bName)}</div>
+          </div>
+        `;
+      }).join('')
+    : '<div style="grid-column: 1 / -1; text-align:center; padding:12px; color:#64748b; font-size:12px;">No badges earned yet.</div>';
 
   const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
-  container.style.top = '0';
-  container.style.width = '794px';
-  container.style.padding = '32px';
-  container.style.fontFamily = 'Inter, sans-serif';
-  container.style.color = '#0f172a';
-  container.style.background = '#ffffff';
-  container.style.boxSizing = 'border-box';
-
-  const logoHtml = window.LOGO_BASE64
-    ? `<img src="${window.LOGO_BASE64}" style="max-height: 50px; max-width: 180px; object-fit: contain;" />`
-    : '<h2 style="margin:0; font-size:18px;">Lebanese Scout Association</h2>';
-
-  const badgesHtml = badges.length
-    ? badges.map(b => `
-        <div style="display:inline-block; margin: 4px 6px; padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; background: #f8fafc;">
-          <div style="font-weight: 600; font-size: 12px; color: #0f172a;">${escapeHtml(b.badgeName)}</div>
-          <div style="font-size: 10px; color: #64748b;">${escapeHtml(b.awardedDate || '—')}</div>
-        </div>
-      `).join('')
-    : '<p style="color: #64748b; font-size: 13px; margin: 4px 0;">No badges earned yet.</p>';
-
-  const ranksHtml = ranks.length
-    ? ranks.map(r => `
-        <tr style="border-bottom: 1px solid #e2e8f0;">
-          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.rankName)}</td>
-          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.dateFrom || '—')}</td>
-          <td style="padding: 8px; font-size: 12px;">${escapeHtml(r.dateTo || 'Present')}</td>
-        </tr>
-      `).join('')
-    : '<tr><td colspan="3" style="padding: 8px; font-size: 12px; color: #64748b;">No rank history recorded.</td></tr>';
+  container.style.cssText = 'position:fixed; left:0; top:0; width:794px; padding:24px 28px; font-family:Inter, Cairo, sans-serif; color:#0f172a; background:#ffffff; box-sizing:border-box; z-index:99999; visibility:visible;';
 
   container.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 12px; margin-bottom: 16px;">
-      <div>${logoHtml}</div>
-      <div style="text-align:right;">
-        <h2 style="margin:0; font-size: 18px; color: #6366f1;">Scout Leader Profile</h2>
-        <div style="font-size: 11px; color: #64748b;">Generated: ${new Date().toLocaleDateString()}</div>
+    <div>
+      <!-- PAGE 1 CONTAINER: EXTENDS TO FULL PAGE 1 HEIGHT (1010px) -->
+      <div style="min-height: 1010px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 24px; box-sizing: border-box;">
+        <div>
+          <!-- TOP HEADER BRANDING -->
+          <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img src="logo.png" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:9px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Generated</div>
+              <div style="font-size:11px; font-weight:700; color:#475569;">${new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}</div>
+            </div>
+          </div>
+
+          <!-- BANNER PROFILE CARD -->
+          <div class="pdf-section-card" style="background:#eef2ff; border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:14px; margin-bottom: 12px;">
+            <div style="width:44px; height:44px; border-radius:50%; background:#6366f1; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; flex-shrink:0;">
+              ${escapeHtml(initials)}
+            </div>
+            <div>
+              <h2 style="margin:0; font-size:18px; font-weight:800; color:#0f172a; font-family:Outfit, sans-serif;">${escapeHtml(m.fullName || 'Member Profile')}</h2>
+              <div style="display:inline-block; margin-top:3px; padding:2px 8px; background:#6366f1; color:#ffffff; border-radius:5px; font-weight:800; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;">
+                ${escapeHtml(m.unit || 'Rovers')}
+              </div>
+            </div>
+          </div>
+
+          <!-- DETAILS CARD SECTION -->
+          <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom: 12px; background:#fafafa;">
+            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">DETAILS</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px 10px;">
+              
+              <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">FULL NAME</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.fullName || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">GENDER</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.gender || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">AGE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(ageStr)}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BIRTH DATE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.dob || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BLOOD TYPE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.bloodType || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PHONE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.phone || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">NATIONALITY</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.nationality || 'Lebanese')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PARENT TYPE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.parentType || 'Mother')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PARENT PHONE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.parentPhone || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">UNIT</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.unit || 'Rovers')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">EMAIL</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a; word-break:break-all;">${escapeHtml(m.email || '—')}</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- BADGES CARD SECTION (Extends to bottom of Page 1) -->
+        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; background:#fafafa; flex:1; display:flex; flex-direction:column; justify-content:flex-start;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">BADGES</div>
+            <div style="font-size:10.5px; font-weight:700; color:#6366f1;">${badges.length} earned</div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(${badgeConfig.cols}, 1fr); gap:${badgeConfig.gap}; align-content:start;">
+            ${badgesGridHtml}
+          </div>
+        </div>
+      </div>
+
+      <!-- ARABIC MILESTONE CARD SECTION (Page 2) -->
+      <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:14px; background:#fafafa;">
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:15px; font-weight:900; color:#0f172a; font-family:'Cairo', sans-serif;">المسيرة</h3>
+        </div>
+        <div>
+          ${milestonesHtml}
+        </div>
       </div>
     </div>
 
-    <h3 style="margin-top:0; margin-bottom: 12px; font-size: 16px; color: #0f172a;">${escapeHtml(l.fullName || 'Leader Profile')} (${escapeHtml(l.role || 'Leader')})</h3>
-
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
-      <tr>
-        <td style="padding: 6px; font-weight: 600; width: 28%; background: #f8fafc; border: 1px solid #e2e8f0;">Full Name</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.fullName || '—')}</td>
-        <td style="padding: 6px; font-weight: 600; width: 20%; background: #f8fafc; border: 1px solid #e2e8f0;">Gender</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.gender || '—')}</td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Birth Date</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.dob || '—')} (${ageDecimal(l.dob) !== null ? ageDecimal(l.dob).toFixed(1) + ' yrs' : '—'})</td>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Phone</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.phone || '—')}</td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Join Date</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.joinDate || '—')}</td>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Role / Rank</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.role || '—')}</td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Blood / Nat.</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.bloodType || '—')} / ${escapeHtml(l.nationality || '—')}</td>
-        <td style="padding: 6px; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0;">Email</td>
-        <td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(l.email || '—')}</td>
-      </tr>
-    </table>
-
-    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Badges Earned</h4>
-    <div style="margin-bottom: 20px;">${badgesHtml}</div>
-
-    <h4 style="font-size: 14px; color: #334155; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 8px;">Ranks History</h4>
-    <table style="width: 100%; border-collapse: collapse;">
-      <thead>
-        <tr style="background: #f1f5f9; text-align: left;">
-          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Rank</th>
-          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Date From</th>
-          <th style="padding: 6px 8px; font-size: 11px; border: 1px solid #e2e8f0;">Date To</th>
-        </tr>
-      </thead>
-      <tbody>${ranksHtml}</tbody>
-    </table>
+    <!-- FOOTER BRANDING -->
+    <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:16px; font-size:9.5px; color:#94a3b8;">
+      <div>Saida One · South District · Lebanese Scout Association</div>
+      <div>Confidential — internal use only</div>
+    </div>
   `;
 
-  document.body.appendChild(container);
+  const filename = `${m.fullName ? m.fullName.replace(/\s+/g, '_') : 'member'}_profile_${isSinglePage ? 'SinglePage' : 'A4'}.pdf`;
+  exportElementToPdf(container, filename, isSinglePage);
+}
 
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: `${l.fullName ? l.fullName.replace(/\s+/g, '_') : 'leader'}_profile.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
+function downloadLeaderProfilePdf(leaderId, isSinglePage = false) {
+  const l = state.leaders.find(x => String(x.id) === String(leaderId));
+  if (!l) {
+    showToast('Leader not found (ID: ' + leaderId + ')', 'error');
+    return;
+  }
 
-  const imgs = container.querySelectorAll('img');
-  const imgPromises = Array.from(imgs).map(img => {
-    if (img.complete) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = resolve;
-      img.onerror = resolve;
+  showToast('Generating PDF...', 'info');
+
+  const badges = (state.leaderBadges || []).filter(b => String(b.leaderId || b.leader_id) === String(leaderId));
+  const rawMilestonesHtml = buildLeaderMilestonesHtml(l.id);
+  const milestonesHtml = cleanHtmlForPdf(rawMilestonesHtml);
+
+  const initials = getInitials(l.fullName);
+  const ageVal = ageDecimal(l.dob);
+  const ageStr = ageVal !== null ? ageVal.toFixed(1) : '—';
+
+  const badgeConfig = getAdaptiveBadgeGridConfig(badges.length);
+
+  const badgesGridHtml = badges.length
+    ? badges.map(b => {
+        const rawName = (typeof b === 'string') ? b : (b.badgeName || b.badge_name || b.name || b.title || (state.badgeDefs.find(d => String(d.id) === String(b.badgeId || b.badge_id || b.badge_definition_id || b.id))?.name));
+        const bName = String(rawName || 'شارة').trim();
+        const def = state.badgeDefs.find(d => (d.name || '').toLowerCase() === (bName || '').toLowerCase());
+        const logoUrl = (def && def.logoUrl) || (typeof badgeDefLogo === 'function' ? badgeDefLogo(bName) : null) || b.logoUrl || b.logo_url || window.DEFAULT_BADGE_ICON || 'badge-icon.png';
+        
+        const logoImg = `<img src="${escapeHtml(logoUrl)}" style="width:${badgeConfig.iconSize}; height:${badgeConfig.iconSize}; object-fit:contain; margin-bottom:2px; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" />`;
+
+        return `
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:${badgeConfig.padding}; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box;">
+            ${logoImg}
+            <div dir="rtl" style="font-weight:700; font-size:${badgeConfig.fontSize}; color:#1e293b; font-family:'Cairo', sans-serif; line-height:1.2; white-space:normal; word-break:break-word; max-width:100%; text-align:center;">${escapeHtml(bName)}</div>
+          </div>
+        `;
+      }).join('')
+    : '<div style="grid-column: 1 / -1; text-align:center; padding:12px; color:#64748b; font-size:12px;">No badges earned yet.</div>';
+
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed; left:0; top:0; width:794px; min-height:1123px; padding:28px 32px; font-family:Inter, Cairo, sans-serif; color:#0f172a; background:#ffffff; box-sizing:border-box; z-index:99999; visibility:visible; display:flex; flex-direction:column; justify-content:space-between;';
+
+  container.innerHTML = `
+    <div>
+      <!-- PAGE 1 CONTAINER: EXTENDS TO FULL PAGE 1 HEIGHT (1010px) -->
+      <div style="min-height: 1010px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 24px; box-sizing: border-box;">
+        <div>
+          <!-- TOP HEADER BRANDING -->
+          <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img src="logo.png" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:9px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Generated</div>
+              <div style="font-size:11px; font-weight:700; color:#475569;">${new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}</div>
+            </div>
+          </div>
+
+          <!-- BANNER PROFILE CARD -->
+          <div class="pdf-section-card" style="background:#eef2ff; border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:14px; margin-bottom: 12px;">
+            <div style="width:44px; height:44px; border-radius:50%; background:#6366f1; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; flex-shrink:0;">
+              ${escapeHtml(initials)}
+            </div>
+            <div>
+              <h2 style="margin:0; font-size:18px; font-weight:800; color:#0f172a; font-family:Outfit, sans-serif;">${escapeHtml(l.fullName || 'Leader Profile')}</h2>
+              <div style="display:inline-block; margin-top:3px; padding:2px 8px; background:#6366f1; color:#ffffff; border-radius:5px; font-weight:800; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;">
+                ${escapeHtml(l.role || 'Leader')}
+              </div>
+            </div>
+          </div>
+
+          <!-- DETAILS CARD SECTION -->
+          <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom: 12px; background:#fafafa;">
+            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">DETAILS</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px 10px;">
+              
+              <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">FULL NAME</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.fullName || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">GENDER</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.gender || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">AGE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(ageStr)}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BIRTH DATE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.dob || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BLOOD TYPE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.bloodType || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PHONE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.phone || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">NATIONALITY</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.nationality || 'Lebanese')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">JOIN DATE</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.joinDate || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">ROLE / RANK</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(l.role || '—')}</div>
+              </div>
+
+              <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">EMAIL</div>
+                <div style="font-size:11.5px; font-weight:800; color:#0f172a; word-break:break-all;">${escapeHtml(l.email || '—')}</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- BADGES CARD SECTION (Extends to bottom of Page 1) -->
+        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; background:#fafafa; flex:1; display:flex; flex-direction:column; justify-content:flex-start;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">BADGES</div>
+            <div style="font-size:10.5px; font-weight:700; color:#6366f1;">${badges.length} earned</div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(${badgeConfig.cols}, 1fr); gap:${badgeConfig.gap}; align-content:start;">
+            ${badgesGridHtml}
+          </div>
+        </div>
+      </div>
+
+      <!-- ARABIC MILESTONE CARD SECTION (Page 2) -->
+      <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:14px; background:#fafafa;">
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:15px; font-weight:900; color:#0f172a; font-family:'Cairo', sans-serif;">المسيرة</h3>
+        </div>
+        <div>
+          ${milestonesHtml}
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER BRANDING -->
+    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:16px; font-size:9.5px; color:#94a3b8;">
+      <div>Saida One · South District · Lebanese Scout Association</div>
+      <div>Confidential — internal use only</div>
+    </div>
+  `;
+
+  const filename = `${l.fullName ? l.fullName.replace(/\s+/g, '_') : 'leader'}_profile_${isSinglePage ? 'SinglePage' : 'A4'}.pdf`;
+  exportElementToPdf(container, filename, isSinglePage);
+}
+
+function escapeXml(unsafe) {
+  return String(unsafe || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function replaceBadgeCellsInSheetXml(sheetXml, badgeNames) {
+  const badgeCellRefs = [];
+  for (let r = 49; r <= 66; r++) {
+    badgeCellRefs.push('D' + r);
+    badgeCellRefs.push('G' + r);
+    badgeCellRefs.push('J' + r);
+  }
+
+  // Handle overflow if badges exceed the 54 pre-styled template cells (D, G, J x 18 rows)
+  const formattedBadgeList = [];
+  if (badgeNames.length <= 54) {
+    for (let i = 0; i < 54; i++) {
+      formattedBadgeList.push(badgeNames[i] || '');
+    }
+  } else {
+    for (let i = 0; i < 53; i++) {
+      formattedBadgeList.push(badgeNames[i] || '');
+    }
+    const overflowBadges = badgeNames.slice(53).join('، ');
+    formattedBadgeList.push(overflowBadges);
+  }
+
+  badgeCellRefs.forEach((cellRef, idx) => {
+    const badgeName = formattedBadgeList[idx] || '';
+    const escapedVal = escapeXml(badgeName);
+
+    const cellRegex = new RegExp(`(<c[^>]*r="${cellRef}"[^>]*>)([\\s\\S]*?)(<\\/c>)`, 'g');
+
+    sheetXml = sheetXml.replace(cellRegex, (match, openTag, content, closeTag) => {
+      let newOpenTag = openTag;
+      if (newOpenTag.includes('t="')) {
+        newOpenTag = newOpenTag.replace(/t="[^"]*"/, 't="inlineStr"');
+      } else {
+        newOpenTag = newOpenTag.replace('<c ', '<c t="inlineStr" ');
+      }
+
+      let newContent = content.replace(/<v>[\s\S]*?<\/v>/g, '');
+
+      if (escapedVal) {
+        newContent += `<is><t>${escapedVal}</t></is>`;
+      } else {
+        newContent += `<is><t></t></is>`;
+      }
+
+      return newOpenTag + newContent + closeTag;
     });
   });
 
-  Promise.all(imgPromises).then(() => {
-    return html2pdf().from(container).set(opt).save();
-  }).then(() => {
-    try { container.remove(); } catch (_) {}
-    showToast('PDF downloaded successfully!', 'success');
-  }).catch(err => {
-    try { container.remove(); } catch (_) {}
-    console.error('[PDF Generation Error]', err);
-    showToast('Failed to generate PDF', 'error');
+  return sheetXml;
+}
+
+function formatAnyDateValue(val) {
+  if (!val) return '';
+  const str = String(val).trim();
+  if (!str) return '';
+
+  // If it's already a formatted date string with letters/slashes/dashes and not pure digits
+  if (/[a-zA-Z\/-]/.test(str) && !/^\d+$/.test(str)) {
+    return str;
+  }
+
+  // If it's a numeric Excel serial number (e.g. "44229", "44927", 45051)
+  const num = Number(str);
+  if (!isNaN(num) && num > 20000 && num < 60000) {
+    if (typeof XLSX !== 'undefined' && XLSX.SSF && typeof XLSX.SSF.parse_date_code === 'function') {
+      try {
+        const p = XLSX.SSF.parse_date_code(num);
+        if (p && p.y) {
+          const yyyy = p.y;
+          const mm = String(p.m).padStart(2, '0');
+          const dd = String(p.d).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+      } catch (_) {}
+    }
+    const dateObj = new Date(Math.round((num - 25569) * 86400 * 1000));
+    if (!isNaN(dateObj)) {
+      const yyyy = dateObj.getUTCFullYear();
+      const mm = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getUTCDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  }
+
+  return str;
+}
+
+function normalizeRank(name) {
+  if (!name) return '';
+  return String(name)
+    .trim()
+    .toLowerCase()
+    .replace(/^ال/, '')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[\.\s_-]+/g, '');
+}
+
+function getRankDateFromMap(targetRankAliases, ranksArr, rankDatesMap) {
+  if (!ranksArr) ranksArr = [];
+  if (!rankDatesMap) rankDatesMap = {};
+
+  const normalizedAliases = targetRankAliases.map(a => normalizeRank(a));
+
+  // 1. Check rankDatesMap keys first
+  for (let key in rankDatesMap) {
+    const normKey = normalizeRank(key);
+    if (normalizedAliases.includes(normKey)) {
+      return formatAnyDateValue(rankDatesMap[key]);
+    }
+  }
+
+  // 2. Check ranksArr list
+  for (let r of ranksArr) {
+    const normR = normalizeRank(r);
+    if (normalizedAliases.includes(normR)) {
+      return formatAnyDateValue(rankDatesMap[r] || '✓');
+    }
+  }
+
+  return '';
+}
+
+function replaceRankDateCellsInSheetXml(sheetXml, mssRow) {
+  if (!mssRow) return sheetXml;
+
+  const yellowRanks = mssRow.yellow_ranks || [];
+  const yellowDates = mssRow.yellow_rank_dates || {};
+
+  const greenRanks = mssRow.green_ranks || [];
+  const greenDates = mssRow.green_rank_dates || {};
+
+  const redRanks = mssRow.red_ranks || [];
+  const redDates = mssRow.red_rank_dates || {};
+
+  const rankCellDefinitions = [
+    // Yellow (Cubs) - Col C labels, Col E dates (E32..E42)
+    { cell: 'E32', aliases: ['المرشح', 'مرشح'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E33', aliases: ['القدم اللينة', 'قدم لينة'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E34', aliases: ['الوعد', 'وعد'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E35', aliases: ['المبتدىء', 'مبتدئ', 'المبتدئ', 'مبتدىء'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E36', aliases: ['النجم الأول', 'نجم اول', 'النجم الاول'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E37', aliases: ['النجم الثاني', 'نجم ثاني'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E38', aliases: ['م. رئيس سداسي', 'مساعد رئيس سداسي', 'م رئيس سداسي'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E39', aliases: ['رئيس سداسي'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E40', aliases: ['سداسي أول', 'سداسي اول'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E41', aliases: ['جرموز فضي'], ranks: yellowRanks, dates: yellowDates },
+    { cell: 'E42', aliases: ['جرموز ذهبي'], ranks: yellowRanks, dates: yellowDates },
+
+    // Green (Scouts) - Col F labels, Col G dates (G32..G42)
+    { cell: 'G32', aliases: ['المرشح', 'مرشح'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G33', aliases: ['المبتدىء', 'مبتدئ', 'المبتدئ', 'مبتدىء'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G34', aliases: ['الوعد', 'وعد'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G35', aliases: ['كشاف ثاني'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G36', aliases: ['كشاف أول', 'كشاف اول'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G37', aliases: ['كشاف رائد'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G38', aliases: ['كشاف نسر'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G39', aliases: ['م.عريف', 'مساعد عريف', 'م عريف'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G40', aliases: ['عريف', 'عريف طليعة'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G41', aliases: ['عريف أول', 'عريف اول'], ranks: greenRanks, dates: greenDates },
+    { cell: 'G42', aliases: ['كُرس عريف', 'كرس عريف', 'التكريس', 'تكريس'], ranks: greenRanks, dates: greenDates, override: mssRow.green_consecration_year },
+
+    // Red (Rovers) - Col H labels, Col I dates (I32..I42)
+    { cell: 'I32', aliases: ['المرشح', 'مرشح'], ranks: redRanks, dates: redDates },
+    { cell: 'I33', aliases: ['الوعد', 'وعد'], ranks: redRanks, dates: redDates },
+    { cell: 'I34', aliases: ['جوال'], ranks: redRanks, dates: redDates },
+    { cell: 'I35', aliases: ['جوال ناضج'], ranks: redRanks, dates: redDates },
+    { cell: 'I36', aliases: ['جوال قائد'], ranks: redRanks, dates: redDates },
+    { cell: 'I37', aliases: ['سهرة الرحيل'], ranks: redRanks, dates: redDates },
+    { cell: 'I38', aliases: ['الرحيل'], ranks: redRanks, dates: redDates, override: mssRow.red_departure_year },
+    { cell: 'I39', aliases: ['م. رائد رهط', 'مساعد رائد رهط', 'م رائد رهط'], ranks: redRanks, dates: redDates },
+    { cell: 'I40', aliases: ['رائد رهط'], ranks: redRanks, dates: redDates },
+    { cell: 'I41', aliases: ['رائد أكبر', 'رائد اكبر'], ranks: redRanks, dates: redDates },
+    { cell: 'I42', aliases: ['كرس رائد', 'التكريس', 'تكريس'], ranks: redRanks, dates: redDates, override: mssRow.red_consecration_year }
+  ];
+
+  rankCellDefinitions.forEach(def => {
+    const dateVal = def.override || getRankDateFromMap(def.aliases, def.ranks, def.dates);
+    const escapedVal = escapeXml(dateVal);
+    const cellRegex = new RegExp(`(<c[^>]*r="${def.cell}"[^>]*>)([\\s\\S]*?)(<\\/c>)`, 'g');
+
+    sheetXml = sheetXml.replace(cellRegex, (match, openTag, content, closeTag) => {
+      let newOpenTag = openTag;
+      if (newOpenTag.includes('t="')) {
+        newOpenTag = newOpenTag.replace(/t="[^"]*"/, 't="inlineStr"');
+      } else {
+        newOpenTag = newOpenTag.replace('<c ', '<c t="inlineStr" ');
+      }
+
+      let newContent = content.replace(/<v>[\s\S]*?<\/v>/g, '');
+      newContent += `<is><t>${escapedVal}</t></is>`;
+      return newOpenTag + newContent + closeTag;
+    });
   });
+
+  return sheetXml;
+}
+
+/* ======================================================================
+   XLSX Export Engine (JSZip 100% Original Design Preservation)
+   ====================================================================== */
+async function downloadMemberProfileXlsx(memberId) {
+  const m = state.members.find(x => String(x.id) === String(memberId));
+  if (!m) {
+    showToast('Member not found for XLSX export', 'error');
+    return;
+  }
+
+  if (typeof JSZip === 'undefined') {
+    showToast('JSZip library loading... please try again', 'warning');
+    return;
+  }
+
+  showToast('Generating official Excel record (Design 100% Preserved)...', 'info');
+
+  const templateB64 = window.WASSIM_EXCEL_TEMPLATE_BASE64;
+  if (!templateB64) {
+    showToast('Excel template not loaded', 'error');
+    return;
+  }
+
+  try {
+    const zip = await JSZip.loadAsync(templateB64, { base64: true });
+    let sharedXml = await zip.file('xl/sharedStrings.xml').async('string');
+    let sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('string');
+
+    const mssRow = (state.memberMilestones || []).find(r => String(r.member_id || r.memberId) === String(memberId));
+    const badges = state.badges.filter(b => String(b.memberId || b.member_id) === String(memberId));
+
+    const replacements = [
+      ['{members.first_name} {members.middle_name} {members.last_name}', m.fullName || ''],
+      ['{members.blood_type}', m.bloodType || ''],
+      ['{members.nationality}', m.nationality || 'Lebanese'],
+      ['{members.dob}', m.dob || ''],
+      ['{members.parent_phone}', m.parentPhone || ''],
+      ['{members.phone}', m.phone || ''],
+      ['{members.email}', m.email || ''],
+      ['{members_milestones.join_year}', (mssRow && mssRow.join_year) ? String(mssRow.join_year) : ''],
+      ['{members.unit}', m.unit || '']
+    ];
+
+    replacements.forEach(([key, val]) => {
+      sharedXml = sharedXml.replaceAll(key, escapeXml(val));
+    });
+
+    const branchHeaderCleanups = [
+      ['قنادس {do not add anything here}', 'قنادس'],
+      ['قطيع {if yellow unit}', 'قطيع'],
+      ['فرقة {if green uint}', 'فرقة'],
+      ['عشيرة {if red unit}', 'عشيرة'],
+      ['{date}', '']
+    ];
+
+    branchHeaderCleanups.forEach(([k, v]) => {
+      sharedXml = sharedXml.replaceAll(k, escapeXml(v));
+    });
+
+    sharedXml = sharedXml.replaceAll('{badges.badge_name}', '');
+
+    const badgeNameList = badges.map(b => {
+      const rawName = (typeof b === 'string') ? b : (b.badgeName || b.badge_name || b.name || (state.badgeDefs.find(d => String(d.id) === String(b.badgeId || b.badge_id || b.id))?.name));
+      return String(rawName || '').trim();
+    }).filter(Boolean);
+
+    sheetXml = replaceRankDateCellsInSheetXml(sheetXml, mssRow);
+    sheetXml = replaceBadgeCellsInSheetXml(sheetXml, badgeNameList);
+
+    zip.file('xl/sharedStrings.xml', sharedXml);
+    zip.file('xl/worksheets/sheet1.xml', sheetXml);
+
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const filename = `${m.fullName ? m.fullName.replace(/\s+/g, '_') : 'member'}_Sajel_Fard.xlsx`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast('Official Excel record downloaded (Design 100% Preserved)!', 'success');
+  } catch (err) {
+    console.error('[XLSX Export Error]', err);
+    showToast('Failed to export Excel record: ' + err.message, 'error');
+  }
+}
+
+async function downloadLeaderProfileXlsx(leaderId) {
+  const l = state.leaders.find(x => String(x.id) === String(leaderId));
+  if (!l) {
+    showToast('Leader not found for XLSX export', 'error');
+    return;
+  }
+
+  if (typeof JSZip === 'undefined') {
+    showToast('JSZip library loading... please try again', 'warning');
+    return;
+  }
+
+  showToast('Generating official Excel record (Design 100% Preserved)...', 'info');
+
+  const templateB64 = window.WASSIM_EXCEL_TEMPLATE_BASE64;
+  if (!templateB64) {
+    showToast('Excel template not loaded', 'error');
+    return;
+  }
+
+  try {
+    const zip = await JSZip.loadAsync(templateB64, { base64: true });
+    let sharedXml = await zip.file('xl/sharedStrings.xml').async('string');
+    let sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('string');
+
+    const mssRow = (state.memberMilestones || []).find(r => String(r.member_id || r.memberId) === String(leaderId));
+    const badges = (state.leaderBadges || []).filter(b => String(b.leaderId || b.leader_id) === String(leaderId));
+
+    const replacements = [
+      ['{members.first_name} {members.middle_name} {members.last_name}', l.fullName || ''],
+      ['{members.blood_type}', l.bloodType || ''],
+      ['{members.nationality}', l.nationality || 'Lebanese'],
+      ['{members.dob}', l.dob || ''],
+      ['{members.parent_phone}', l.parentPhone || ''],
+      ['{members.phone}', l.phone || ''],
+      ['{members.email}', l.email || ''],
+      ['{members_milestones.join_year}', l.joinDate ? l.joinDate.substring(0, 4) : ''],
+      ['{members.unit}', l.role || 'Leader']
+    ];
+
+    replacements.forEach(([key, val]) => {
+      sharedXml = sharedXml.replaceAll(key, escapeXml(val));
+    });
+
+    const branchHeaderCleanups = [
+      ['قنادس {do not add anything here}', 'قنادس'],
+      ['قطيع {if yellow unit}', 'قطيع'],
+      ['فرقة {if green uint}', 'فرقة'],
+      ['عشيرة {if red unit}', 'عشيرة'],
+      ['{date}', '']
+    ];
+
+    branchHeaderCleanups.forEach(([k, v]) => {
+      sharedXml = sharedXml.replaceAll(k, escapeXml(v));
+    });
+
+    sharedXml = sharedXml.replaceAll('{badges.badge_name}', '');
+
+    const badgeNameList = badges.map(b => {
+      const rawName = (typeof b === 'string') ? b : (b.badgeName || b.badge_name || b.name || (state.badgeDefs.find(d => String(d.id) === String(b.badgeId || b.badge_id || b.id))?.name));
+      return String(rawName || '').trim();
+    }).filter(Boolean);
+
+    sheetXml = replaceRankDateCellsInSheetXml(sheetXml, mssRow);
+    sheetXml = replaceBadgeCellsInSheetXml(sheetXml, badgeNameList);
+
+    zip.file('xl/sharedStrings.xml', sharedXml);
+    zip.file('xl/worksheets/sheet1.xml', sheetXml);
+
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const filename = `${l.fullName ? l.fullName.replace(/\s+/g, '_') : 'leader'}_Sajel_Fard.xlsx`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast('Official Excel record downloaded (Design 100% Preserved)!', 'success');
+  } catch (err) {
+    console.error('[XLSX Export Error]', err);
+    showToast('Failed to export Excel record: ' + err.message, 'error');
+  }
+}
+
+/* ======================================================================
+   Excel Record Parser & Supabase Database Importer
+   ====================================================================== */
+let pendingExcelImportData = null;
+
+async function handleExcelRecordUpload(file, preSelectedMemberId) {
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    showToast('XLSX library loading... please try again', 'warning');
+    return;
+  }
+
+  showToast('Parsing uploaded Excel record...', 'info');
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const wb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true, cellDates: true, dateNF: 'yyyy-mm-dd' });
+    const sheetName = wb.SheetNames[0];
+    const sheet = wb.Sheets[sheetName];
+
+    function getVal(cellRef) {
+      const cell = sheet[cellRef];
+      if (!cell) return '';
+
+      // Check formatted text first if available (and not a raw numeric string)
+      if (cell.w && typeof cell.w === 'string' && cell.w.trim() && !/^\d+(\.\d+)?$/.test(cell.w.trim()) && cell.w.trim() !== '✓') {
+        return cell.w.trim();
+      }
+
+      const val = cell.v;
+      if (val === undefined || val === null) return '';
+
+      // If Date object
+      if (val instanceof Date && !isNaN(val)) {
+        const yyyy = val.getFullYear();
+        const mm = String(val.getMonth() + 1).padStart(2, '0');
+        const dd = String(val.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
+      // If numeric Excel date serial number (e.g. 45350)
+      const num = Number(val);
+      if (!isNaN(num) && num > 20000 && num < 60000) {
+        if (typeof XLSX !== 'undefined' && XLSX.SSF && typeof XLSX.SSF.parse_date_code === 'function') {
+          try {
+            const p = XLSX.SSF.parse_date_code(num);
+            if (p && p.y) {
+              const yyyy = p.y;
+              const mm = String(p.m).padStart(2, '0');
+              const dd = String(p.d).padStart(2, '0');
+              return `${yyyy}-${mm}-${dd}`;
+            }
+          } catch (_) {}
+        }
+        // Fallback math calculation for Excel serial date
+        const dateObj = new Date(Math.round((num - 25569) * 86400 * 1000));
+        if (!isNaN(dateObj)) {
+          const yyyy = dateObj.getUTCFullYear();
+          const mm = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+          const dd = String(dateObj.getUTCDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+      }
+
+      return String(val).trim();
+    }
+
+    const fullName = getVal('B14');
+    const bloodType = getVal('H15');
+    const nationality = getVal('B16') || 'Lebanese';
+    const dob = getVal('C17');
+    const parentPhone = getVal('H20');
+    const phone = getVal('B21');
+    const email = getVal('C22');
+    const joinYear = getVal('D25') || getVal('D26');
+    const unit = getVal('B27') || 'Boyscouts';
+
+    // Parse Ranks
+    const yellowRanks = [];
+    const yellowDates = {};
+    const cubsRankMap = [
+      { label: 'المرشح', dateCell: 'E32' },
+      { label: 'القدم اللينة', dateCell: 'E33' },
+      { label: 'الوعد', dateCell: 'E34' },
+      { label: 'المبتدىء', dateCell: 'E35' },
+      { label: 'النجم الأول', dateCell: 'E36' },
+      { label: 'النجم الثاني', dateCell: 'E37' },
+      { label: 'م. رئيس سداسي', dateCell: 'E38' },
+      { label: 'رئيس سداسي', dateCell: 'E39' },
+      { label: 'سداسي أول', dateCell: 'E40' },
+      { label: 'جرموز فضي', dateCell: 'E41' },
+      { label: 'جرموز ذهبي', dateCell: 'E42' }
+    ];
+    cubsRankMap.forEach(r => {
+      const d = getVal(r.dateCell);
+      if (d) {
+        yellowRanks.push(r.label);
+        if (d !== '✓' && d !== 'نعم') yellowDates[r.label] = d;
+      }
+    });
+
+    const greenRanks = [];
+    const greenDates = {};
+    let greenConsecrationYear = null;
+    const scoutsRankMap = [
+      { label: 'المرشح', dateCell: 'G32' },
+      { label: 'المبتدىء', dateCell: 'G33' },
+      { label: 'الوعد', dateCell: 'G34' },
+      { label: 'كشاف ثاني', dateCell: 'G35' },
+      { label: 'كشاف أول', dateCell: 'G36' },
+      { label: 'كشاف رائد', dateCell: 'G37' },
+      { label: 'كشاف نسر', dateCell: 'G38' },
+      { label: 'م.عريف', dateCell: 'G39' },
+      { label: 'عريف', dateCell: 'G40' },
+      { label: 'عريف أول', dateCell: 'G41' },
+      { label: 'كُرس عريف', dateCell: 'G42' }
+    ];
+    scoutsRankMap.forEach(r => {
+      const d = getVal(r.dateCell);
+      if (d) {
+        greenRanks.push(r.label);
+        if (d !== '✓' && d !== 'نعم') greenDates[r.label] = d;
+        if (r.label === 'كُرس عريف' && d !== '✓') greenConsecrationYear = d;
+      }
+    });
+
+    const redRanks = [];
+    const redDates = {};
+    let redConsecrationYear = null;
+    let redDepartureYear = null;
+    const roversRankMap = [
+      { label: 'المرشح', dateCell: 'I32' },
+      { label: 'الوعد', dateCell: 'I33' },
+      { label: 'جوال', dateCell: 'I34' },
+      { label: 'جوال ناضج', dateCell: 'I35' },
+      { label: 'جوال قائد', dateCell: 'I36' },
+      { label: 'سهرة الرحيل', dateCell: 'I37' },
+      { label: 'الرحيل', dateCell: 'I38' },
+      { label: 'م. رائد رهط', dateCell: 'I39' },
+      { label: 'رائد رهط', dateCell: 'I40' },
+      { label: 'رائد أكبر', dateCell: 'I41' },
+      { label: 'كرس رائد', dateCell: 'I42' }
+    ];
+    roversRankMap.forEach(r => {
+      const d = getVal(r.dateCell);
+      if (d) {
+        redRanks.push(r.label);
+        if (d !== '✓' && d !== 'نعم') redDates[r.label] = d;
+        if (r.label === 'كرس رائد' && d !== '✓') redConsecrationYear = d;
+        if (r.label === 'الرحيل' && d !== '✓') redDepartureYear = d;
+      }
+    });
+
+    // Parse Badges (D49:D66, G49:G66, J49:J66)
+    const badgeNames = [];
+    for (let r = 49; r <= 66; r++) {
+      ['D', 'G', 'J'].forEach(col => {
+        const val = getVal(col + r);
+        if (val && !val.includes('{badges.')) {
+          const split = val.split(/[،,]/).map(s => s.trim()).filter(Boolean);
+          split.forEach(name => {
+            if (!badgeNames.includes(name)) badgeNames.push(name);
+          });
+        }
+      });
+    }
+
+    pendingExcelImportData = {
+      excelName: fullName,
+      bloodType,
+      nationality,
+      dob,
+      phone,
+      parentPhone,
+      email,
+      unit,
+      joinYear,
+      yellowRanks,
+      yellowDates,
+      greenRanks,
+      greenDates,
+      greenConsecrationYear,
+      redRanks,
+      redDates,
+      redConsecrationYear,
+      redDepartureYear,
+      badgeNames
+    };
+
+    renderExcelImportPreviewModal(pendingExcelImportData, preSelectedMemberId);
+  } catch (err) {
+    console.error('[Excel Parsing Error]', err);
+    showToast('Failed to parse Excel file: ' + err.message, 'error');
+  }
+}
+
+function renderExcelImportPreviewModal(data, preSelectedMemberId) {
+  const selectEl = $('#excelTargetMemberSelect');
+  if (selectEl) {
+    const sortedMembers = [...state.members].sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+    
+    let matchedMember = preSelectedMemberId 
+      ? sortedMembers.find(m => String(m.id) === String(preSelectedMemberId))
+      : sortedMembers.find(m => data.excelName && (m.fullName || '').trim().toLowerCase() === data.excelName.trim().toLowerCase());
+
+    selectEl.innerHTML = sortedMembers.map(m => `
+      <option value="${m.id}" ${matchedMember && String(m.id) === String(matchedMember.id) ? 'selected' : ''}>
+        ${escapeHtml(m.fullName)} (${escapeHtml(m.unit || 'No Unit')})
+      </option>
+    `).join('');
+  }
+
+  const previewEl = $('#excelImportPreviewContent');
+  if (previewEl) {
+    previewEl.innerHTML = `
+      <div style="margin-bottom: 12px; font-weight: 700; font-size: 12.5px; color: #475569; border-bottom: 1px solid var(--line); padding-bottom: 8px;">
+        📄 Excel Header Name: <span style="font-weight: 800; color: var(--text);">${escapeHtml(data.excelName || '—')}</span> <span style="font-size:11px; color:#10b981; font-weight:700;">(IGNORED - Personal Info in public.members will NOT be touched)</span>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <div style="font-weight: 800; font-size: 12.5px; color: var(--text); margin-bottom: 4px;">🧭 Milestones to Update (member_milestones):</div>
+        <div style="font-size: 11.5px; color: var(--text-secondary);">
+          ${data.joinYear ? `<div>📅 Join Year: <strong>${escapeHtml(data.joinYear)}</strong></div>` : ''}
+          ${data.yellowRanks.length ? `<div>🟡 Cubs (الفرع الأصفر): ${data.yellowRanks.join(', ')}</div>` : ''}
+          ${data.greenRanks.length ? `<div>🟢 Scouts (الفرع الأخضر): ${data.greenRanks.join(', ')}</div>` : ''}
+          ${data.redRanks.length ? `<div>🔴 Rovers (الفرع الأحمر): ${data.redRanks.join(', ')}</div>` : ''}
+          ${(!data.yellowRanks.length && !data.greenRanks.length && !data.redRanks.length) ? '<div style="color:var(--muted)">No milestone dates detected</div>' : ''}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-weight: 800; font-size: 12.5px; color: var(--text); margin-bottom: 4px;">🎖️ Earned Badges to Add (badges): (${data.badgeNames.length}):</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+          ${data.badgeNames.length ? data.badgeNames.map(b => `<span style="font-size: 11px; padding: 2px 8px; border-radius: 99px; background: #e0e7ff; color: #4338ca; font-weight: 600;">${escapeHtml(b)}</span>`).join('') : '<span style="font-size:11px; color:var(--muted)">No badges found</span>'}
+        </div>
+      </div>
+    `;
+  }
+
+  const modal = $('#excelImportModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+async function executeExcelImport() {
+  if (!pendingExcelImportData) return;
+  const data = pendingExcelImportData;
+
+  const selectEl = $('#excelTargetMemberSelect');
+  const selectedMemberId = selectEl ? selectEl.value : null;
+
+  const existingMember = state.members.find(m => String(m.id) === String(selectedMemberId));
+  if (!existingMember) {
+    showToast('Please select a target member from the dropdown', 'error');
+    return;
+  }
+
+  const modal = $('#excelImportModal');
+  if (modal) modal.style.display = 'none';
+
+  showToast(`Updating milestones & badges for ${existingMember.fullName}...`, 'info');
+
+  try {
+    const memberId = existingMember.id;
+
+    // DO NOT touch public.members table! Only update member_milestones & badges tables.
+
+    // 1. Upsert Milestones in member_milestones
+    const { error: msErr } = await supabaseClient
+      .from('member_milestones')
+      .upsert({
+        member_id: memberId,
+        join_year: data.joinYear || null,
+        yellow_passed: data.yellowRanks.length > 0,
+        yellow_ranks: data.yellowRanks,
+        yellow_rank_dates: data.yellowDates,
+        green_passed: data.greenRanks.length > 0,
+        green_ranks: data.greenRanks,
+        green_rank_dates: data.greenDates,
+        green_consecration_year: data.greenConsecrationYear || null,
+        red_passed: data.redRanks.length > 0,
+        red_ranks: data.redRanks,
+        red_rank_dates: data.redDates,
+        red_consecration_year: data.redConsecrationYear || null,
+        red_departure_year: data.redDepartureYear || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'member_id' });
+
+    if (msErr) throw msErr;
+
+    // 2. Upsert Badges in badges table
+    if (data.badgeNames && data.badgeNames.length) {
+      const todayDate = new Date().toISOString().split('T')[0];
+      for (let badgeName of data.badgeNames) {
+        const cleanName = String(badgeName || '').trim();
+        if (!cleanName) continue;
+
+        const alreadyHas = state.badges.some(b => 
+          String(b.memberId || b.member_id) === String(memberId) && 
+          (b.badgeName || '').trim().toLowerCase() === cleanName.toLowerCase()
+        );
+
+        if (!alreadyHas) {
+          const { error: bErr } = await supabaseClient.from('badges').insert([{
+            member_id: memberId,
+            badge_name: cleanName,
+            awarded_date: todayDate,
+            awarded_by: 'Excel Import'
+          }]);
+
+          if (bErr) {
+            console.error('[Badge Import Error]', bErr);
+          }
+        }
+      }
+    }
+
+    await loadAllData();
+    renderAll();
+    openMemberProfile(memberId);
+    showToast(`Successfully updated milestones & badges for ${existingMember.fullName}!`, 'success');
+  } catch (err) {
+    console.error('[Excel Database Import Error]', err);
+    showToast('Failed to update database: ' + err.message, 'error');
+  }
+}
+
+/* ======================================================================
+   Interactive PDF Profile Editor & WYSIWYG Customizer
+   ====================================================================== */
+
+let pdfEditorState = {
+  id: null,
+  type: 'member',
+  color: '#6366f1',
+  cols: 4,
+  showHeader: true,
+  showBanner: true,
+  showDetails: true,
+  showBadges: true,
+  showMilestones: true,
+  showFooter: true,
+  orgName: 'LEBANESE SCOUT ASSOCIATION',
+  subTitle: 'Saida One — Member Profile',
+  fullName: '',
+  unit: '',
+  gender: '',
+  dob: '',
+  bloodType: '',
+  phone: '',
+  nationality: '',
+  parentType: '',
+  parentPhone: '',
+  email: '',
+  badges: [],
+  milestonesHtml: ''
+};
+
+function openPdfEditor(id, type = 'member') {
+  const isMember = type === 'member';
+  const person = isMember
+    ? state.members.find(x => String(x.id) === String(id))
+    : state.leaders.find(x => String(x.id) === String(id));
+
+  if (!person) {
+    showToast((isMember ? 'Member' : 'Leader') + ' not found for editing', 'error');
+    return;
+  }
+
+  const ageVal = ageDecimal(person.dob);
+  const ageStr = ageVal !== null ? ageVal.toFixed(1) : '—';
+  const badgesList = isMember
+    ? state.badges.filter(b => String(b.memberId || b.member_id) === String(id))
+    : (state.leaderBadges || []).filter(b => String(b.leaderId || b.leader_id) === String(id));
+
+  const rawMilestones = isMember ? buildMemberMilestonesHtml(person.id) : buildLeaderMilestonesHtml(person.id);
+
+  pdfEditorState = {
+    id: id,
+    type: type,
+    color: '#6366f1',
+    cols: 4,
+    badgeSize: 'auto',
+    badgeGap: 'auto',
+    showHeader: true,
+    showBanner: true,
+    showDetails: true,
+    showBadges: true,
+    showMilestones: true,
+    showFooter: true,
+    orgName: 'LEBANESE SCOUT ASSOCIATION',
+    subTitle: 'Saida One — ' + (isMember ? 'Member' : 'Leader') + ' Profile',
+    fullName: person.fullName || '',
+    unit: person.unit || person.role || '',
+    gender: person.gender || '',
+    dob: person.dob || '',
+    bloodType: person.bloodType || '',
+    phone: person.phone || '',
+    nationality: person.nationality || 'Lebanese',
+    parentType: person.parentType || 'Mother',
+    parentPhone: person.parentPhone || '',
+    email: person.email || '',
+    badges: badgesList,
+    milestonesHtml: cleanHtmlForPdf(rawMilestones)
+  };
+
+  // Sync inputs
+  const colorEl = $('#pdfEditorColor'); if (colorEl) colorEl.value = pdfEditorState.color;
+  const colsEl = $('#pdfEditorCols'); if (colsEl) colsEl.value = pdfEditorState.cols;
+  const bsEl = $('#pdfEditorBadgeSize'); if (bsEl) bsEl.value = pdfEditorState.badgeSize;
+  const bgEl = $('#pdfEditorBadgeGap'); if (bgEl) bgEl.value = pdfEditorState.badgeGap;
+  const thEl = $('#pdfToggleHeader'); if (thEl) thEl.checked = pdfEditorState.showHeader;
+  const tbEl = $('#pdfToggleBanner'); if (tbEl) tbEl.checked = pdfEditorState.showBanner;
+  const tdEl = $('#pdfToggleDetails'); if (tdEl) tdEl.checked = pdfEditorState.showDetails;
+  const tbgEl = $('#pdfToggleBadges'); if (tbgEl) tbgEl.checked = pdfEditorState.showBadges;
+  const tmEl = $('#pdfToggleMilestones'); if (tmEl) tmEl.checked = pdfEditorState.showMilestones;
+  const tfEl = $('#pdfToggleFooter'); if (tfEl) tfEl.checked = pdfEditorState.showFooter;
+  const orgEl = $('#pdfEditOrgName'); if (orgEl) orgEl.value = pdfEditorState.orgName;
+  const subEl = $('#pdfEditSubTitle'); if (subEl) subEl.value = pdfEditorState.subTitle;
+  const fnEl = $('#pdfEditFullName'); if (fnEl) fnEl.value = pdfEditorState.fullName;
+  const uEl = $('#pdfEditUnit'); if (uEl) uEl.value = pdfEditorState.unit;
+  const gEl = $('#pdfEditGender'); if (gEl) gEl.value = pdfEditorState.gender;
+  const dobEl = $('#pdfEditDob'); if (dobEl) dobEl.value = pdfEditorState.dob;
+  const bEl = $('#pdfEditBlood'); if (bEl) bEl.value = pdfEditorState.bloodType;
+  const pEl = $('#pdfEditPhone'); if (pEl) pEl.value = pdfEditorState.phone;
+  const nEl = $('#pdfEditNat'); if (nEl) nEl.value = pdfEditorState.nationality;
+  const ptEl = $('#pdfEditParentType'); if (ptEl) ptEl.value = pdfEditorState.parentType;
+  const ppEl = $('#pdfEditParentPhone'); if (ppEl) ppEl.value = pdfEditorState.parentPhone;
+  const emEl = $('#pdfEditEmail'); if (emEl) emEl.value = pdfEditorState.email;
+
+  bindPdfEditorControls();
+  renderPdfEditorLivePreview();
+
+  const modal = $('#pdfEditorModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function bindPdfEditorControls() {
+  const inputs = [
+    '#pdfEditorColor', '#pdfEditorCols', '#pdfEditorBadgeSize', '#pdfEditorBadgeGap',
+    '#pdfToggleHeader', '#pdfToggleBanner', '#pdfToggleDetails', '#pdfToggleBadges',
+    '#pdfToggleMilestones', '#pdfToggleFooter', '#pdfEditOrgName', '#pdfEditSubTitle',
+    '#pdfEditFullName', '#pdfEditUnit', '#pdfEditGender', '#pdfEditDob',
+    '#pdfEditBlood', '#pdfEditPhone', '#pdfEditNat', '#pdfEditParentType',
+    '#pdfEditParentPhone', '#pdfEditEmail'
+  ];
+
+  inputs.forEach(sel => {
+    const el = $(sel);
+    if (!el || el.dataset.boundEditor) return;
+    el.dataset.boundEditor = 'true';
+    el.addEventListener('input', syncSidebarToPdfState);
+    el.addEventListener('change', syncSidebarToPdfState);
+  });
+
+  const closeBtn = $('#closePdfEditorBtn');
+  if (closeBtn && !closeBtn.dataset.bound) {
+    closeBtn.dataset.bound = 'true';
+    closeBtn.addEventListener('click', () => {
+      const modal = $('#pdfEditorModal');
+      if (modal) modal.style.display = 'none';
+    });
+  }
+
+  const exportA4Btn = $('#exportPdfA4Btn');
+  if (exportA4Btn && !exportA4Btn.dataset.bound) {
+    exportA4Btn.dataset.bound = 'true';
+    exportA4Btn.addEventListener('click', () => exportPdfFromEditor(false));
+  }
+
+  const exportSingleBtn = $('#exportPdfSingleBtn');
+  if (exportSingleBtn && !exportSingleBtn.dataset.bound) {
+    exportSingleBtn.dataset.bound = 'true';
+    exportSingleBtn.addEventListener('click', () => exportPdfFromEditor(true));
+  }
+
+  const resetBtn = $('#resetPdfEditorBtn');
+  if (resetBtn && !resetBtn.dataset.bound) {
+    resetBtn.dataset.bound = 'true';
+    resetBtn.addEventListener('click', () => {
+      openPdfEditor(pdfEditorState.id, pdfEditorState.type);
+      showToast('PDF Editor reset to default values', 'info');
+    });
+  }
+}
+
+function syncSidebarToPdfState() {
+  const colorEl = $('#pdfEditorColor'); if (colorEl) pdfEditorState.color = colorEl.value;
+  const colsEl = $('#pdfEditorCols'); if (colsEl) pdfEditorState.cols = parseInt(colsEl.value, 10) || 4;
+  const bsEl = $('#pdfEditorBadgeSize'); if (bsEl) pdfEditorState.badgeSize = bsEl.value;
+  const bgEl = $('#pdfEditorBadgeGap'); if (bgEl) pdfEditorState.badgeGap = bgEl.value;
+  const thEl = $('#pdfToggleHeader'); if (thEl) pdfEditorState.showHeader = thEl.checked;
+  const tbEl = $('#pdfToggleBanner'); if (tbEl) pdfEditorState.showBanner = tbEl.checked;
+  const tdEl = $('#pdfToggleDetails'); if (tdEl) pdfEditorState.showDetails = tdEl.checked;
+  const tbgEl = $('#pdfToggleBadges'); if (tbgEl) pdfEditorState.showBadges = tbgEl.checked;
+  const tmEl = $('#pdfToggleMilestones'); if (tmEl) pdfEditorState.showMilestones = tmEl.checked;
+  const tfEl = $('#pdfToggleFooter'); if (tfEl) pdfEditorState.showFooter = tfEl.checked;
+  const orgEl = $('#pdfEditOrgName'); if (orgEl) pdfEditorState.orgName = orgEl.value;
+  const subEl = $('#pdfEditSubTitle'); if (subEl) pdfEditorState.subTitle = subEl.value;
+  const fnEl = $('#pdfEditFullName'); if (fnEl) pdfEditorState.fullName = fnEl.value;
+  const uEl = $('#pdfEditUnit'); if (uEl) pdfEditorState.unit = uEl.value;
+  const gEl = $('#pdfEditGender'); if (gEl) pdfEditorState.gender = gEl.value;
+  const dobEl = $('#pdfEditDob'); if (dobEl) pdfEditorState.dob = dobEl.value;
+  const bEl = $('#pdfEditBlood'); if (bEl) pdfEditorState.bloodType = bEl.value;
+  const pEl = $('#pdfEditPhone'); if (pEl) pdfEditorState.phone = pEl.value;
+  const nEl = $('#pdfEditNat'); if (nEl) pdfEditorState.nationality = nEl.value;
+  const ptEl = $('#pdfEditParentType'); if (ptEl) pdfEditorState.parentType = ptEl.value;
+  const ppEl = $('#pdfEditParentPhone'); if (ppEl) pdfEditorState.parentPhone = ppEl.value;
+  const emEl = $('#pdfEditEmail'); if (emEl) pdfEditorState.email = emEl.value;
+
+  renderPdfEditorLivePreview();
+}
+
+function bindPdfEditorDragAndDrop(container) {
+  const boxes = container.querySelectorAll('.pdf-editor-badge-box');
+  let draggedIndex = null;
+
+  boxes.forEach(box => {
+    box.addEventListener('dragstart', (e) => {
+      draggedIndex = parseInt(box.dataset.badgeIndex, 10);
+      box.style.opacity = '0.4';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    box.addEventListener('dragend', () => {
+      box.style.opacity = '1';
+    });
+
+    box.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      box.style.borderColor = '#6366f1';
+      box.style.background = '#eef2ff';
+    });
+
+    box.addEventListener('dragleave', () => {
+      box.style.borderColor = '#e2e8f0';
+      box.style.background = '#f8fafc';
+    });
+
+    box.addEventListener('drop', (e) => {
+      e.preventDefault();
+      box.style.borderColor = '#e2e8f0';
+      box.style.background = '#f8fafc';
+
+      const targetIndex = parseInt(box.dataset.badgeIndex, 10);
+      if (draggedIndex !== null && targetIndex !== null && draggedIndex !== targetIndex) {
+        const item = pdfEditorState.badges.splice(draggedIndex, 1)[0];
+        pdfEditorState.badges.splice(targetIndex, 0, item);
+        renderPdfEditorLivePreview();
+        showToast('Badge reordered!', 'info');
+      }
+    });
+  });
+}
+
+function renderPdfEditorLivePreview() {
+  const container = $('#pdfLivePreviewContainer');
+  if (!container) return;
+
+  const color = pdfEditorState.color;
+  const cols = pdfEditorState.cols;
+  const initials = getInitials(pdfEditorState.fullName);
+  const ageVal = ageDecimal(pdfEditorState.dob);
+  const ageStr = ageVal !== null ? ageVal.toFixed(1) : '—';
+  const badgeConfig = getBadgeGridConfig(pdfEditorState.badges.length, pdfEditorState.badgeSize, pdfEditorState.badgeGap);
+
+  const badgesGridHtml = pdfEditorState.badges.length
+    ? pdfEditorState.badges.map((b, idx) => {
+        const rawName = (typeof b === 'string') ? b : (b.badgeName || b.badge_name || b.name || b.title || (state.badgeDefs.find(d => String(d.id) === String(b.badgeId || b.badge_id || b.badge_definition_id || b.id))?.name));
+        const bName = String(rawName || 'شارة').trim();
+        const def = state.badgeDefs.find(d => (d.name || '').toLowerCase() === (bName || '').toLowerCase());
+        const logoUrl = (def && def.logoUrl) || (typeof badgeDefLogo === 'function' ? badgeDefLogo(bName) : null) || b.logoUrl || b.logo_url || window.DEFAULT_BADGE_ICON || 'badge-icon.png';
+        
+        const logoImg = `<img src="${escapeHtml(logoUrl)}" style="width:${badgeConfig.iconSize}; height:${badgeConfig.iconSize}; object-fit:contain; margin-bottom:2px; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" />`;
+
+        return `
+          <div draggable="true" data-badge-index="${idx}" class="pdf-editor-badge-box" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:${badgeConfig.padding}; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box; cursor:grab; transition:all 0.15s ease; position:relative;" title="Drag to reorder position">
+            <span style="position:absolute; top:1px; right:4px; font-size:9px; color:#94a3b8; opacity:0.7; pointer-events:none;">⋮⋮</span>
+            ${logoImg}
+            <div contenteditable="true" dir="rtl" style="font-weight:700; font-size:${badgeConfig.fontSize}; color:#1e293b; font-family:'Cairo', sans-serif; line-height:1.2; white-space:normal; word-break:break-word; outline:none; max-width:100%; text-align:center;">${escapeHtml(bName)}</div>
+          </div>
+        `;
+      }).join('')
+    : '<div style="grid-column: 1 / -1; text-align:center; padding:12px; color:#64748b; font-size:12px;">No badges earned yet.</div>';
+
+  container.innerHTML = `
+    <div>
+      <!-- PAGE 1 CONTAINER: EXTENDS TO FULL PAGE 1 HEIGHT (1010px) -->
+      <div style="min-height: 1010px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 24px; box-sizing: border-box;">
+        <div>
+          <!-- TOP HEADER BRANDING -->
+          ${pdfEditorState.showHeader ? `
+          <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid ${color}; padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img src="logo.png" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:9px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Generated</div>
+              <div contenteditable="true" style="font-size:11px; font-weight:700; color:#475569; outline:none;">${new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}</div>
+            </div>
+          </div>` : ''}
+
+          <!-- BANNER PROFILE CARD -->
+          ${pdfEditorState.showBanner ? `
+          <div class="pdf-section-card" style="background:#eef2ff; border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:14px; margin-bottom: 12px;">
+            <div style="width:44px; height:44px; border-radius:50%; background:${color}; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; flex-shrink:0;">
+              ${escapeHtml(initials)}
+            </div>
+            <div>
+              <h2 contenteditable="true" style="margin:0; font-size:18px; font-weight:800; color:#0f172a; font-family:Outfit, sans-serif; outline:none;">${escapeHtml(pdfEditorState.fullName || 'Member Profile')}</h2>
+              <div contenteditable="true" style="display:inline-block; margin-top:3px; padding:2px 8px; background:${color}; color:#ffffff; border-radius:5px; font-weight:800; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; outline:none;">
+                ${escapeHtml(pdfEditorState.unit || 'Rovers')}
+              </div>
+            </div>
+          </div>` : ''}
+
+          <!-- DETAILS CARD SECTION -->
+          ${pdfEditorState.showDetails ? `
+          <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom: 12px; background:#fafafa;">
+            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">DETAILS</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px 10px;">
+              
+              <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">FULL NAME</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.fullName || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">GENDER</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.gender || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">AGE</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(ageStr)}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BIRTH DATE</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.dob || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BLOOD TYPE</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.bloodType || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PHONE</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.phone || '—')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">NATIONALITY</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.nationality || 'Lebanese')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PARENT TYPE</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.parentType || 'Mother')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PARENT PHONE</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.parentPhone || '—')}</div>
+              </div>
+
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">UNIT</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; outline:none;">${escapeHtml(pdfEditorState.unit || 'Rovers')}</div>
+              </div>
+              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
+                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">EMAIL</div>
+                <div contenteditable="true" style="font-size:11.5px; font-weight:800; color:#0f172a; word-break:break-all; outline:none;">${escapeHtml(pdfEditorState.email || '—')}</div>
+              </div>
+
+            </div>
+          </div>` : ''}
+        </div>
+
+        <!-- BADGES CARD SECTION (Extends to bottom of Page 1) -->
+        ${pdfEditorState.showBadges ? `
+        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; background:#fafafa; flex:1; display:flex; flex-direction:column; justify-content:flex-start;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">BADGES</div>
+            <div contenteditable="true" style="font-size:10.5px; font-weight:700; color:${color}; outline:none;">${pdfEditorState.badges.length} earned</div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(${cols}, 1fr); gap:${badgeConfig.gap}; align-content:start;">
+            ${badgesGridHtml}
+          </div>
+        </div>` : ''}
+      </div>
+
+      <!-- ARABIC MILESTONE CARD SECTION (Page 2) -->
+      ${pdfEditorState.showMilestones ? `
+      <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:14px; background:#fafafa;">
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
+          <h3 contenteditable="true" style="margin:0; font-size:15px; font-weight:900; color:#0f172a; font-family:'Cairo', sans-serif; outline:none;">المسيرة</h3>
+        </div>
+        <div contenteditable="true" style="outline:none;">
+          ${pdfEditorState.milestonesHtml}
+        </div>
+      </div>` : ''}
+    </div>
+
+    <!-- FOOTER BRANDING -->
+    ${pdfEditorState.showFooter ? `
+    <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:20px; font-size:9.5px; color:#94a3b8;">
+      <div contenteditable="true" style="outline:none;">Saida One · South District · Lebanese Scout Association</div>
+      <div contenteditable="true" style="outline:none;">Confidential — internal use only</div>
+    </div>` : ''}
+  `;
+
+  bindPdfEditorDragAndDrop(container);
+}
+
+function exportPdfFromEditor(isSinglePage = false) {
+  const container = $('#pdfLivePreviewContainer');
+  if (!container) {
+    showToast('Preview container not found', 'error');
+    return;
+  }
+
+  showToast('Generating customized PDF...', 'info');
+
+  const clone = container.cloneNode(true);
+  clone.style.cssText = 'position:fixed; left:0; top:0; width:794px; padding:28px 32px; font-family:Inter, Cairo, sans-serif; color:#0f172a; background:#ffffff; box-sizing:border-box; z-index:99999; visibility:visible;';
+
+  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+
+  const cleanName = (pdfEditorState.fullName || 'customized_profile').replace(/\s+/g, '_');
+  const filename = `${cleanName}_${isSinglePage ? 'SinglePage' : 'A4'}.pdf`;
+
+  exportElementToPdf(clone, filename, isSinglePage);
 }
 
 /* ======================================================================
@@ -2862,6 +4501,11 @@ function openLeaderProfile(leaderId) {
 
   const dlBtn = $('#downloadLeaderPdfBtn');
   if (dlBtn) dlBtn.dataset.leaderId = leaderId;
+  const editBtn = $('#editLeaderPdfBtn');
+  if (editBtn) {
+    editBtn.dataset.leaderId = leaderId;
+    editBtn.onclick = () => openPdfEditor(leaderId, 'leader');
+  }
 
   const badgesContainer = $('#leaderProfileBadgesContainer');
   if (badgesContainer) {
@@ -2909,24 +4553,7 @@ function openLeaderProfile(leaderId) {
 
   const milestonesContainer = $('#leaderProfileMilestonesContainer');
   if (milestonesContainer) {
-    const milestones = (state.leaderMilestones || []).filter(m => m.leaderId === leaderId);
-    if (!milestones.length) {
-      milestonesContainer.innerHTML = `
-        <div class="empty-placeholder" style="padding: 24px 16px;">
-          <div class="placeholder-icon">🧭</div>
-          <h4>No milestones recorded yet</h4>
-          <p class="muted">No milestones or updates are recorded for this leader yet.</p>
-        </div>
-      `;
-    } else {
-      milestonesContainer.innerHTML = milestones.map(m => `
-        <div class="profile-milestone-item">
-          <div class="profile-milestone-title">${escapeHtml(m.title)}</div>
-          <div class="profile-milestone-date">Date: ${escapeHtml(m.date)}</div>
-          ${m.notes ? `<div class="profile-milestone-notes">Notes: ${escapeHtml(m.notes)}</div>` : ''}
-        </div>
-      `).join('');
-    }
+    milestonesContainer.innerHTML = buildLeaderMilestonesHtml(leaderId);
   }
 
   switchView('leaderProfile');

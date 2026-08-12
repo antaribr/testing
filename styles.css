@@ -2,7 +2,7 @@
    Scout Dashboard — Premium Light UI/UX Overhaul
    =================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap');
 
 /* ===== Design Tokens ===== */
 :root {
@@ -670,6 +670,7 @@ th, td {
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 th {
@@ -687,6 +688,11 @@ th {
 
 td {
   font-size: 14px;
+  color: var(--text);
+}
+
+.members-table td:nth-child(-n+3) {
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -863,9 +869,11 @@ tbody tr:nth-child(even):hover {
 }
 
 .unit-summary-stats {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
 }
 
 .stat-pill {
@@ -1911,6 +1919,41 @@ input:disabled, select:disabled, textarea:disabled, button:disabled {
   background: var(--primary);
   border-color: var(--primary);
   color: white;
+}
+
+/* ===== Modal Overlay & PDF Editor Styles ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999 !important;
+}
+
+.pdf-editor-modal {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 

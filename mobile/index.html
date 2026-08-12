@@ -4288,15 +4288,82 @@ init();
       cards[m].addEventListener('click',function(){
         var id=this.getAttribute('data-id');
         var type=this.getAttribute('data-type');
-        if (type === 'leader') {
-          if (typeof window.openLeaderProfile === 'function') window.openLeaderProfile(id);
-        } else {
-          if (typeof window.openMemberProfile === 'function') window.openMemberProfile(id);
+        if (typeof window.mobileRenderProfile === 'function') {
+          window.mobileRenderProfile(id, type);
         }
         go('profile');
       });
     }
   }
+
+
+  window.mobileRenderProfile = function(id, type) {
+    var person = type === 'leader' 
+      ? ((window.state && window.state.leaders) || []).find(function(l){return l.id===id || l.id===Number(id);})
+      : ((window.state && window.state.members) || []).find(function(m){return m.id===id || m.id===Number(id);});
+    
+    if (!person) return;
+    
+    var unit = type === 'leader' ? (person.role || 'Leader') : (window.canonicalUnit ? window.canonicalUnit(person.unit) : person.unit || '—');
+    var meta = [person.gender, person.dob].filter(Boolean).join(' · ');
+    var avatarInner = (type === 'leader' && person.avatarUrl)
+      ? '<img src="'+esc(person.avatarUrl)+'" alt=""/>'
+      : esc(initials(person.fullName));
+      
+    var headerEl = document.getElementById('profileHeader');
+    if (headerEl) {
+      headerEl.innerHTML = '<div class="profile-avatar">' + avatarInner + '</div>' +
+                           '<div style="font-size:20px;font-weight:800;margin-top:10px;">' + esc(person.fullName || 'Unnamed') + '</div>' +
+                           '<div class="member-chip" style="margin-top:6px;">' + esc(unit) + '</div>' +
+                           (meta ? '<div style="font-size:13px;color:var(--muted);margin-top:4px;">' + esc(meta) + '</div>' : '') +
+                           '<button onclick="window.__downloadProfilePdf(\'' + esc(id) + '\', \'' + esc(type) + '\')" style="margin-top:16px;padding:8px 18px;background:var(--primary);color:#fff;border:none;border-radius:20px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;box-shadow:0 4px 12px rgba(99,102,241,0.3);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF</button>';
+    }
+    
+    var detailsEl = document.getElementById('profileDetails');
+    if (detailsEl) {
+      var dHtml = '';
+      var age = (window.ageDecimal && person.dob) ? window.ageDecimal(person.dob) : null;
+      if (age !== null) dHtml += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);"><span>Age</span><strong>' + esc(age.toFixed(1)) + '</strong></div>';
+      if (person.phone) dHtml += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);"><span>Phone</span><strong>' + esc(person.phone) + '</strong></div>';
+      if (person.bloodType) dHtml += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);"><span>Blood</span><strong>' + esc(person.bloodType) + '</strong></div>';
+      if (person.parentType || person.parentPhone) dHtml += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);"><span>Parent</span><strong>' + esc(person.parentType) + ' ' + esc(person.parentPhone) + '</strong></div>';
+      if (person.notes) dHtml += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);"><span>Notes</span><strong>' + esc(person.notes) + '</strong></div>';
+      detailsEl.innerHTML = dHtml || '<div class="empty" style="text-align:center;">No additional details.</div>';
+    }
+    
+    var mileEl = document.getElementById('profileMilestonesEl');
+    if (mileEl) {
+      mileEl.innerHTML = type === 'leader' 
+        ? (typeof buildLeaderMilestonesHtml === 'function' ? buildLeaderMilestonesHtml(id) : '') 
+        : (typeof buildMemberMilestonesHtml === 'function' ? buildMemberMilestonesHtml(id) : '');
+    }
+    
+    var badgeCountEl = document.getElementById('profileBadgeCount');
+    var badgeEl = document.getElementById('profileBadgesEl');
+    if (badgeEl) {
+       var badges = ((window.state && window.state.badges) || []).filter(function(b){return b.memberId===id || b.member_id===id;});
+       if (badgeCountEl) badgeCountEl.textContent = badges.length + '';
+       if (badges.length) {
+         badgeEl.innerHTML = '<div class="profile-badges-list">' + badges.map(function(b){
+           var bName = b.badgeName || b.badge_id || b.badgeId || b.id || 'Badge';
+           var logoUrl = typeof window.badgeDefLogo === 'function' ? window.badgeDefLogo(bName) : (window.DEFAULT_BADGE_ICON || '');
+           var date = b.awardedDate || b.awarded_date || '';
+           
+           var logoImg = logoUrl 
+             ? '<img src="'+esc(logoUrl)+'" alt="'+esc(bName)+'" onerror="this.onerror=null;this.src=window.DEFAULT_BADGE_ICON||\\'\\';" />'
+             : '<div class="fallback-icon">🏅</div>';
+             
+           return '<div class="profile-badge-item">' +
+                    logoImg +
+                    '<div class="badge-name">'+esc(bName)+'</div>' +
+                    (date ? '<div class="badge-date">'+esc(date)+'</div>' : '') +
+                  '</div>';
+         }).join('') + '</div>';
+       } else {
+         badgeEl.innerHTML = '<div class="empty" style="text-align:center;">No badges earned.</div>';
+       }
+    }
+  };
 
   /* ---------- Member / Leader profile ---------- */
   // Build the HTML for a member's milestones (from member_milestones table).
@@ -4346,10 +4413,27 @@ init();
         return '';
       }
       var dates = (rankDatesMap && typeof rankDatesMap === 'object') ? rankDatesMap : {};
+      function fmtD(val) {
+        if (!val) return '';
+        var str = String(val).trim();
+        if (!str) return '';
+        if (/[a-zA-Z\/-]/.test(str) && !/^\d+$/.test(str)) return str;
+        var num = Number(str);
+        if (!isNaN(num) && num > 20000 && num < 60000) {
+          var dateObj = new Date(Math.round((num - 25569) * 86400 * 1000));
+          if (!isNaN(dateObj)) {
+            var yyyy = dateObj.getUTCFullYear();
+            var mm = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+            var dd = String(dateObj.getUTCDate()).padStart(2, '0');
+            return yyyy + '-' + mm + '-' + dd;
+          }
+        }
+        return str;
+      }
       // Rank chips + optional date under each chip (e.g. "مبتدئ · 2018")
       var chips = hasRanks
         ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'+ranksArr.map(function(r){
-            var d = dates[r];
+            var d = fmtD(dates[r]);
             var dHtml = d
               ? '<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.4);">'+esc(d)+'</span>'
               : '';
@@ -4358,10 +4442,10 @@ init();
         : '<div style="font-size:12px;color:var(--muted);margin-top:6px;">لم يتم تحديد رتب</div>';
       var years = '';
       if(consecrationYear){
-        years += '<div style="font-size:12.5px;color:var(--text-secondary);margin-top:6px;">🎯 <strong>التكريس:</strong> '+esc(consecrationYear)+'</div>';
+        years += '<div style="font-size:12.5px;color:var(--text-secondary);margin-top:6px;">🎯 <strong>التكريس:</strong> '+esc(fmtD(consecrationYear))+'</div>';
       }
       if(departureYear){
-        years += '<div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;">🚶 <strong>الرحيل:</strong> '+esc(departureYear)+'</div>';
+        years += '<div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;">🚶 <strong>الرحيل:</strong> '+esc(fmtD(departureYear))+'</div>';
       }
       // Leadership roles (from green_leadership / red_leadership JSONB).
       // Each entry: {role, name?, year?, camp?: {organized, name?, place?, date?}}
@@ -4403,7 +4487,7 @@ init();
                     '</div>';
                 }
                 return '<div style="padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:8px;font-family:\'Cairo\',sans-serif;">'+
-                         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-direction:row-reverse;">'+
+                         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
                            '<div style="font-size:12.5px;font-weight:800;color:var(--text);">'+esc(l.role)+'</div>'+
                            metaHtml +
                          '</div>'+
@@ -4715,7 +4799,7 @@ init();
 
     // Off-screen wrapper at the natural content width (794 CSS px).
     var wrapper=document.createElement('div');
-    wrapper.style.cssText='position:fixed;left:-99999px;top:0;width:'+PDF_TOTAL_PX+'px;background:#fff;z-index:-9999;';
+    wrapper.style.cssText='position:fixed;left:0;top:0;width:'+PDF_TOTAL_PX+'px;background:#fff;z-index:-9999;opacity:1;pointer-events:none;';
     wrapper.innerHTML=pdfHtml;
     document.body.appendChild(wrapper);
 
