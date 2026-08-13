@@ -2151,9 +2151,9 @@ function buildMemberMilestonesHtml(memberId, customRow) {
           const rawD = dates[r];
           const d = formatAnyDateValue(rawD);
           const dHtml = d
-            ? `<span style="opacity:.85;font-weight:600;margin-inline-end:6px;padding-inline-end:6px;border-inline-end:1px solid rgba(255,255,255,.4);">${escapeHtml(d)}</span>`
+            ? `<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.4);">${escapeHtml(d)}</span>`
             : '';
-          return `<span style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;background:${color};color:#fff;display:inline-flex;align-items:center;font-family:'Cairo',sans-serif;">${dHtml}${escapeHtml(r)}</span>`;
+          return `<span style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;background:${color};color:#fff;display:inline-flex;align-items:center;font-family:'Cairo',sans-serif;">${escapeHtml(r)}${dHtml}</span>`;
         }).join('') + '</div>'
       : '<div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:\'Cairo\',sans-serif;">لم يتم تحديد رتب</div>';
 
