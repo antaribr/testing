@@ -1111,7 +1111,7 @@
           <div class="panel">
             <div class="ms-field">
               <label class="ms-field-label" for="msJoinYear">Year Joined the Lebanese Scout Association</label>
-              <input type="number" dir="ltr" id="msJoinYear" min="1950" max="2100" placeholder="Example: 2015" />
+              <input type="text" dir="ltr" id="msJoinYear" placeholder="Example: 2015 or DD/MM/YYYY" />
             </div>
           </div>
 
@@ -1161,8 +1161,8 @@
             </div>
             <div class="ms-field" data-shows-when="green_consecrated">
               <label class="ms-field-label">سنة التكريس</label>
-              <input type="number" dir="ltr" data-year="green_consecration_year" min="1950" max="2100"
-                placeholder="Example: 2020" />
+              <input type="text" dir="ltr" data-year="green_consecration_year"
+                placeholder="Example: 2020 or DD/MM/YYYY" />
             </div>
           </div>
 
@@ -1196,8 +1196,8 @@
             </div>
             <div class="ms-field" data-shows-when="red_consecrated">
               <label class="ms-field-label">سنة التكريس</label>
-              <input type="number" dir="ltr" data-year="red_consecration_year" min="1950" max="2100"
-                placeholder="Example: 2022" />
+              <input type="text" dir="ltr" data-year="red_consecration_year"
+                placeholder="Example: 2022 or DD/MM/YYYY" />
             </div>
             <div class="ms-field" data-shows-when="red_passed">
               <label class="ms-field-label">هل أتممت الرحيل الكشفي في الفرع الأحمر؟</label>
@@ -1206,8 +1206,8 @@
             </div>
             <div class="ms-field" data-shows-when="red_departed">
               <label class="ms-field-label">سنة الرحيل</label>
-              <input type="number" dir="ltr" data-year="red_departure_year" min="1950" max="2100"
-                placeholder="Example: 2024" />
+              <input type="text" dir="ltr" data-year="red_departure_year"
+                placeholder="Example: 2024 or DD/MM/YYYY" />
             </div>
           </div>
 
@@ -1953,7 +1953,7 @@
           var v = map[rank] != null ? map[rank] : '';
           return '<div class="rank-date-row">' +
             '<span class="rank-date-label">' + esc(rank) + '</span>' +
-            '<input type="text" inputmode="numeric" dir="ltr" data-rank="' + esc(rank) + '" ' +
+            '<input type="text" dir="ltr" data-rank="' + esc(rank) + '" ' +
             'placeholder="YYYY أو DD/MM/YYYY (اختياري)" value="' + esc(v) + '" />' +
             '</div>';
         }).join('');
@@ -2045,7 +2045,7 @@
                 '</div>' +
                 '<div class="lead-row-body-field">' +
                 '<span class="lead-row-body-label">' + esc(campDateLbl) + '</span>' +
-                '<input type="text" inputmode="numeric" dir="ltr" data-camp-date="1" placeholder="YYYY أو DD/MM/YYYY (اختياري)" />' +
+                '<input type="text" dir="ltr" data-camp-date="1" placeholder="YYYY أو DD/MM/YYYY (اختياري)" />' +
                 '</div>' +
                 '</div>' +
                 '</div>'
@@ -2059,7 +2059,7 @@
                 nameFieldHtml +
                 '<div class="lead-row-body-field">' +
                 '<span class="lead-row-body-label">Year (Optional) / التاريخ (اختياري)</span>' +
-                '<input type="text" inputmode="numeric" dir="ltr" data-lead-year="1" placeholder="YYYY أو DD/MM/YYYY" />' +
+                '<input type="text" dir="ltr" data-lead-year="1" placeholder="YYYY أو DD/MM/YYYY" />' +
                 '</div>' +
                 campHtml +
                 '</div>' +
