@@ -1003,6 +1003,10 @@
       background: currentColor
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="../../logo-base64.js"></script>
 </head>
 
 <body>
@@ -1305,13 +1309,18 @@
 
       <!-- ═════════ STEP 6: done ═════════ -->
       <section class="step" data-step="done">
-        <div style="text-align:center;padding:40px 20px">
+        <div style="text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;">
           <div style="font-size:72px;margin-bottom:12px">🎉</div>
           <h1 class="step-title" style="font-size:24px">Saved Successfully</h1>
-          <p class="step-sub" style="font-size:14px">Thank you for updating your scouting profile. You can return at any
-            time to edit your data — please keep your Security PIN safe.</p>
+          <p class="step-sub" style="font-size:14px">Thank you for updating your scouting profile. You can return at any time to edit your data — please keep your Security PIN safe.</p>
+
+          <button type="button" class="primary-btn" id="downloadPassPdfBtn"
+            style="margin-top:24px;padding:14px 24px;border-radius:12px;width:100%;max-width:320px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:700;">
+            📥 Download Your Profile (PDF)
+          </button>
+
           <button type="button" class="secondary-btn" id="editAgainBtn"
-            style="margin-top:20px;padding:12px 20px;border-radius:12px">Edit My Profile</button>
+            style="margin-top:12px;padding:12px 20px;border-radius:12px;width:100%;max-width:320px;">Edit My Profile</button>
         </div>
       </section>
 
@@ -2497,7 +2506,90 @@
           });
       }
 
-      // ─── Done ─────────────────────────────────────────────────────────
+      // ─── Age decimal helper ───────────────────────────────────────────
+    // ─── Redirect to main app.js Single Page PDF download (DRY, Zero Duplication) ───
+    function redirectAndDownloadProfilePdf() {
+      if (!chosenMember) {
+        toast("Please select a member first", "error");
+        return;
+      }
+
+      toast("Preparing Scout Record PDF...", "info");
+
+      window.state = window.state || { members: [], badges: [], memberMilestones: [], badgeDefs: [], ranks: [] };
+      if (!Array.isArray(window.state.members)) window.state.members = [];
+      if (!Array.isArray(window.state.badges)) window.state.badges = [];
+      if (!Array.isArray(window.state.memberMilestones)) window.state.memberMilestones = [];
+      if (!Array.isArray(window.state.badgeDefs)) window.state.badgeDefs = [];
+      if (!Array.isArray(window.state.ranks)) window.state.ranks = [];
+
+      var mId = String(chosenMember.id);
+      var formattedMember = {
+        id: mId,
+        fullName: chosenMember.full_name || chosenMember.fullName || [chosenMember.first_name, chosenMember.middle_name, chosenMember.last_name].filter(Boolean).join(" ") || "Member Profile",
+        unit: chosenMember.unit || chosenUnit || "Rovers",
+        gender: chosenMember.gender || "—",
+        dob: chosenMember.dob || "—",
+        bloodType: chosenMember.blood_type || chosenMember.bloodType || "—",
+        phone: chosenMember.phone || "—",
+        nationality: chosenMember.nationality || "Lebanese",
+        parentType: chosenMember.parent_type || chosenMember.parentType || "Mother",
+        parentPhone: chosenMember.parent_phone || chosenMember.parentPhone || "—",
+        email: chosenMember.email || "—"
+      };
+
+      var existingIdx = window.state.members.findIndex(function(x) { return String(x.id) === mId; });
+      if (existingIdx >= 0) {
+        window.state.members[existingIdx] = formattedMember;
+      } else {
+        window.state.members.push(formattedMember);
+      }
+
+      var msIdx = window.state.memberMilestones.findIndex(function(x) { return String(x.member_id || x.memberId) === mId; });
+      var msData = Object.assign({}, milestones, { member_id: mId });
+      if (msIdx >= 0) {
+        window.state.memberMilestones[msIdx] = msData;
+      } else {
+        window.state.memberMilestones.push(msData);
+      }
+
+      var badgesArr = Array.from(selectedBadges || []).map(function(bName) {
+        return { memberId: mId, member_id: mId, badgeName: bName, badge_name: bName };
+      });
+      window.state.badges = window.state.badges.filter(function(b) { return String(b.memberId || b.member_id) !== mId; }).concat(badgesArr);
+
+      if (!window.state.badgeDefs.length && typeof badgeDefs !== "undefined") {
+        window.state.badgeDefs = badgeDefs || [];
+      }
+
+      function triggerDownload() {
+        if (typeof window.downloadMemberProfilePdf === "function") {
+          window.downloadMemberProfilePdf(mId, true);
+        } else {
+          toast("PDF generator unavailable", "error");
+        }
+      }
+
+      if (typeof window.downloadMemberProfilePdf === "function") {
+        triggerDownload();
+      } else {
+        var script = document.createElement("script");
+        script.src = "../../app.js";
+        script.onload = function() {
+          triggerDownload();
+        };
+        script.onerror = function() {
+          toast("Failed to load PDF engine", "error");
+        };
+        document.head.appendChild(script);
+      }
+    }
+
+    var dlPdfBtn = document.getElementById("downloadPassPdfBtn");
+    if (dlPdfBtn) {
+      dlPdfBtn.addEventListener("click", redirectAndDownloadProfilePdf);
+    }
+
       document.getElementById('editAgainBtn').addEventListener('click', function () {
         refreshSteps();
         goto(firstContentStep());

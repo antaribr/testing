@@ -5,7 +5,7 @@ window.DEFAULT_BADGE_ICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAA
    Scout Dashboard — app.js (with login fix)
    ========================================================================= */
 
-const state = {
+const state = window.state = {
   members: [],
   leaders: [],
   payments: [],
@@ -57,7 +57,7 @@ const TOAST_ICONS = {
 };
 
 function showToast(message, type = 'info', duration = 4000) {
-  const container = document.getElementById('toastContainer');
+  const container = document.getElementById('toastContainer') || document.getElementById('toast');
   if (!container) { console.warn('Toast container not found'); return; }
 
   const toast = document.createElement('div');
@@ -559,6 +559,9 @@ function clearNoUnitDashboard() {
    ====================================================================== */
 
 function init() {
+  if (!document.getElementById('membersTableBody') && !document.getElementById('navMenu') && !document.getElementById('statsPageContainer')) {
+    return; // Skip dashboard DOM initialization on mobile/standalone pages
+  }
   bindAuth();
   bindMenu();
   bindForms();
@@ -2110,7 +2113,7 @@ function openMemberProfile(memberId) {
    Member Milestones (rich rendering from member_milestones table)
    ====================================================================== */
 function buildMemberMilestonesHtml(memberId, customRow) {
-  const member = state.members.find(m => m.id === memberId) || state.leaders.find(l => l.id === memberId);
+  const member = state.members.find(m => String(m.id) === String(memberId)) || state.leaders.find(l => String(l.id) === String(memberId));
   const canonicalUnit = typeof window.canonicalUnit === 'function' ? window.canonicalUnit : (u => u || '');
   const unit = member ? canonicalUnit(member.unit) : null;
   const showRed = !(unit === 'Boyscouts' || unit === 'Girlscouts');
@@ -2148,18 +2151,18 @@ function buildMemberMilestonesHtml(memberId, customRow) {
           const rawD = dates[r];
           const d = formatAnyDateValue(rawD);
           const dHtml = d
-            ? `<span style="opacity:.85;font-weight:600;margin-inline-start:6px;padding-inline-start:6px;border-inline-start:1px solid rgba(255,255,255,.4);">${escapeHtml(d)}</span>`
+            ? `<span style="opacity:.85;font-weight:600;margin-inline-end:6px;padding-inline-end:6px;border-inline-end:1px solid rgba(255,255,255,.4);">${escapeHtml(d)}</span>`
             : '';
-          return `<span style="font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:999px;background:${color};color:#fff;display:inline-flex;align-items:center;">${escapeHtml(r)}${dHtml}</span>`;
+          return `<span style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;background:${color};color:#fff;display:inline-flex;align-items:center;font-family:'Cairo',sans-serif;">${dHtml}${escapeHtml(r)}</span>`;
         }).join('') + '</div>'
       : '<div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:\'Cairo\',sans-serif;">لم يتم تحديد رتب</div>';
 
     let years = '';
     if (consecrationYear) {
-      years += `<div style="font-size:12.5px;color:var(--text-secondary);margin-top:6px;font-family:'Cairo',sans-serif;">🎯 <strong>التكريس:</strong> ${escapeHtml(formatAnyDateValue(consecrationYear))}</div>`;
+      years += `<div style="font-size:12.5px;color:var(--text-secondary);margin-top:6px;font-family:'Cairo',sans-serif;"><strong>التكريس:</strong> ${escapeHtml(formatAnyDateValue(consecrationYear))}</div>`;
     }
     if (departureYear) {
-      years += `<div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;font-family:'Cairo',sans-serif;">🚶 <strong>الرحيل:</strong> ${escapeHtml(formatAnyDateValue(departureYear))}</div>`;
+      years += `<div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;font-family:'Cairo',sans-serif;"><strong>الرحيل:</strong> ${escapeHtml(formatAnyDateValue(departureYear))}</div>`;
     }
 
     let leadHtml = '';
@@ -2558,7 +2561,8 @@ function getBadgeGridConfig(badgeCount, sizeMode = 'auto', gapMode = 'auto') {
 }
 
 function downloadMemberProfilePdf(memberId, isSinglePage = false) {
-  const m = state.members.find(x => String(x.id) === String(memberId));
+  const membersList = (window.state && window.state.members && window.state.members.length) ? window.state.members : state.members;
+  const m = membersList.find(x => String(x.id) === String(memberId));
   if (!m) {
     showToast('Member not found (ID: ' + memberId + ')', 'error');
     return;
@@ -2566,7 +2570,8 @@ function downloadMemberProfilePdf(memberId, isSinglePage = false) {
 
   showToast('Generating PDF...', 'info');
 
-  const badges = state.badges.filter(b => String(b.memberId || b.member_id) === String(memberId));
+  const badgesList = (window.state && window.state.badges) ? window.state.badges : state.badges;
+  const badges = badgesList.filter(b => String(b.memberId || b.member_id) === String(memberId));
   const rawMilestonesHtml = buildMemberMilestonesHtml(m.id);
   const milestonesHtml = cleanHtmlForPdf(rawMilestonesHtml);
 
@@ -2583,10 +2588,10 @@ function downloadMemberProfilePdf(memberId, isSinglePage = false) {
         const def = state.badgeDefs.find(d => (d.name || '').toLowerCase() === (bName || '').toLowerCase());
         const logoUrl = (def && def.logoUrl) || (typeof badgeDefLogo === 'function' ? badgeDefLogo(bName) : null) || b.logoUrl || b.logo_url || window.DEFAULT_BADGE_ICON || 'badge-icon.png';
         
-        const logoImg = `<img src="${escapeHtml(logoUrl)}" style="width:${badgeConfig.iconSize}; height:${badgeConfig.iconSize}; object-fit:contain; margin-bottom:2px; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" />`;
+        const logoImg = `<img src="${escapeHtml(logoUrl)}" style="width:${badgeConfig.iconSize}; height:${badgeConfig.iconSize}; object-fit:contain; margin-bottom:4px; display:block;" crossorigin="anonymous" onerror="this.onerror=null;this.src='badge-icon.png';" />`;
 
         return `
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:${badgeConfig.padding}; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box;">
+          <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:${badgeConfig.padding}; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
             ${logoImg}
             <div dir="rtl" style="font-weight:700; font-size:${badgeConfig.fontSize}; color:#1e293b; font-family:'Cairo', sans-serif; line-height:1.2; white-space:normal; word-break:break-word; max-width:100%; text-align:center;">${escapeHtml(bName)}</div>
           </div>
@@ -2595,128 +2600,131 @@ function downloadMemberProfilePdf(memberId, isSinglePage = false) {
     : '<div style="grid-column: 1 / -1; text-align:center; padding:12px; color:#64748b; font-size:12px;">No badges earned yet.</div>';
 
   const container = document.createElement('div');
-  container.style.cssText = 'position:fixed; left:0; top:0; width:794px; padding:24px 28px; font-family:Inter, Cairo, sans-serif; color:#0f172a; background:#ffffff; box-sizing:border-box; z-index:99999; visibility:visible;';
+  container.setAttribute('dir', 'ltr');
+  container.style.cssText = 'position:fixed; left:0; top:0; width:794px; padding:28px 32px; font-family:Inter, Cairo, sans-serif; color:#0f172a; background:#ffffff; box-sizing:border-box; z-index:99999; visibility:visible;';
 
   container.innerHTML = `
     <div>
-      <!-- PAGE 1 CONTAINER: EXTENDS TO FULL PAGE 1 HEIGHT (1010px) -->
-      <div style="min-height: 1010px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 24px; box-sizing: border-box;">
-        <div>
-          <!-- TOP HEADER BRANDING -->
-          <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 10px; margin-bottom: 14px;">
+      <!-- MAIN CONTAINER -->
+      <div style="margin-bottom: 20px; box-sizing: border-box;">
+        
+        <!-- TOP HEADER BRANDING (Logo LEFT, Date RIGHT, Full Width Purple Line) -->
+        <div class="pdf-section-card" style="margin-bottom: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom: 8px;">
             <div style="display:flex; align-items:center; gap:12px;">
-              <img src="logo.png" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
+              <img src="${typeof LOGO_BASE64 !== 'undefined' ? LOGO_BASE64 : 'logo.png'}" style="height:48px; max-width:240px; object-fit:contain; display:block;" crossorigin="anonymous" onerror="this.onerror=null;this.src='logo.png';" alt="Logo" />
             </div>
             <div style="text-align:right;">
-              <div style="font-size:9px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Generated</div>
-              <div style="font-size:11px; font-weight:700; color:#475569;">${new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}</div>
+              <div style="font-size:8.5px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:.08em;">GENERATED</div>
+              <div style="font-size:11px; font-weight:800; color:#334155; margin-top:2px;">${new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' })}</div>
             </div>
           </div>
+          <div style="height:2px; background:#6366f1; width:100%; margin-top:6px;"></div>
+        </div>
 
-          <!-- BANNER PROFILE CARD -->
-          <div class="pdf-section-card" style="background:#eef2ff; border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:14px; margin-bottom: 12px;">
-            <div style="width:44px; height:44px; border-radius:50%; background:#6366f1; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; flex-shrink:0;">
-              ${escapeHtml(initials)}
-            </div>
-            <div>
-              <h2 style="margin:0; font-size:18px; font-weight:800; color:#0f172a; font-family:Outfit, sans-serif;">${escapeHtml(m.fullName || 'Member Profile')}</h2>
-              <div style="display:inline-block; margin-top:3px; padding:2px 8px; background:#6366f1; color:#ffffff; border-radius:5px; font-weight:800; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;">
-                ${escapeHtml(m.unit || 'Rovers')}
-              </div>
-            </div>
+        <!-- BANNER PROFILE CARD (Avatar LEFT, Name & Unit Pill LEFT) -->
+        <div class="pdf-section-card" style="background:#eef2ff; border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:16px; margin-bottom: 16px;">
+          <div style="width:50px; height:50px; border-radius:50%; background:#6366f1; color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; flex-shrink:0;">
+            ${escapeHtml(initials)}
           </div>
-
-          <!-- DETAILS CARD SECTION -->
-          <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom: 12px; background:#fafafa;">
-            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">DETAILS</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px 10px;">
-              
-              <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">FULL NAME</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.fullName || '—')}</div>
-              </div>
-
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">GENDER</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.gender || '—')}</div>
-              </div>
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">AGE</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(ageStr)}</div>
-              </div>
-
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BIRTH DATE</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.dob || '—')}</div>
-              </div>
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">BLOOD TYPE</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.bloodType || '—')}</div>
-              </div>
-
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PHONE</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.phone || '—')}</div>
-              </div>
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">NATIONALITY</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.nationality || 'Lebanese')}</div>
-              </div>
-
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PARENT TYPE</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.parentType || 'Mother')}</div>
-              </div>
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">PARENT PHONE</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.parentPhone || '—')}</div>
-              </div>
-
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">UNIT</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a;">${escapeHtml(m.unit || 'Rovers')}</div>
-              </div>
-              <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:6px; padding:5px 10px;">
-                <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase;">EMAIL</div>
-                <div style="font-size:11.5px; font-weight:800; color:#0f172a; word-break:break-all;">${escapeHtml(m.email || '—')}</div>
-              </div>
-
+          <div style="text-align:left;">
+            <h2 style="margin:0; font-size:20px; font-weight:900; color:#0f172a; font-family:'Outfit', 'Inter', sans-serif; letter-spacing:-0.02em;">${escapeHtml(m.fullName || 'Member Profile')}</h2>
+            <div style="display:inline-block; margin-top:4px; padding:3px 10px; background:#6366f1; color:#ffffff; border-radius:6px; font-weight:800; font-size:10px; text-transform:uppercase; letter-spacing:.04em;">
+              ${escapeHtml(m.unit || 'Rovers')}
             </div>
           </div>
         </div>
 
-        <!-- BADGES CARD SECTION (Extends to bottom of Page 1) -->
-        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; background:#fafafa; flex:1; display:flex; flex-direction:column; justify-content:flex-start;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">BADGES</div>
-            <div style="font-size:10.5px; font-weight:700; color:#6366f1;">${badges.length} earned</div>
+        <!-- DETAILS CARD SECTION -->
+        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:12px; padding:16px 18px; margin-bottom: 16px; background:#ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+          <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px;">DETAILS</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px 12px;">
+            
+            <div style="grid-column: 1 / -1; background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">FULL NAME</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.fullName || '—')}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">GENDER</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.gender || '—')}</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">AGE</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(ageStr)}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">BIRTH DATE</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.dob || '—')}</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">BLOOD TYPE</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.bloodType || '—')}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">PHONE</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.phone || '—')}</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">NATIONALITY</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.nationality || 'Lebanese')}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">PARENT TYPE</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.parentType || 'Mother')}</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">PARENT PHONE</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.parentPhone || '—')}</div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">UNIT</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px;">${escapeHtml(m.unit || 'Rovers')}</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:8px; padding:8px 12px;">
+              <div style="font-size:8.5px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em;">EMAIL</div>
+              <div style="font-size:12px; font-weight:800; color:#0f172a; margin-top:2px; word-break:break-all;">${escapeHtml(m.email || '—')}</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- BADGES CARD SECTION (BADGES on LEFT, Count on RIGHT) -->
+        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:12px; padding:16px 18px; background:#ffffff; margin-bottom: 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em;">BADGES</div>
+            <div style="font-size:11px; font-weight:700; color:#6366f1;">${badges.length} earned</div>
           </div>
           <div style="display:grid; grid-template-columns: repeat(${badgeConfig.cols}, 1fr); gap:${badgeConfig.gap}; align-content:start;">
             ${badgesGridHtml}
           </div>
         </div>
+
+        <!-- ARABIC MILESTONE CARD SECTION (المسيرة Title RIGHT, Timeline RTL) -->
+        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:12px; padding:20px; background:#ffffff;" dir="rtl">
+          <div style="display:flex; justify-content:flex-start; align-items:center; margin-bottom:14px;">
+            <h3 style="margin:0; font-size:18px; font-weight:900; color:#0f172a; font-family:'Cairo', sans-serif;">المسيرة</h3>
+          </div>
+          <div style="text-align:right;">
+            ${milestonesHtml}
+          </div>
+        </div>
+
       </div>
 
-      <!-- ARABIC MILESTONE CARD SECTION (Page 2) -->
-      <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:14px; background:#fafafa;">
-        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
-          <h3 style="margin:0; font-size:15px; font-weight:900; color:#0f172a; font-family:'Cairo', sans-serif;">المسيرة</h3>
-        </div>
-        <div>
-          ${milestonesHtml}
-        </div>
+      <!-- FOOTER BRANDING -->
+      <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:12px; margin-top:24px; font-size:10px; color:#94a3b8; font-weight:600;">
+        <div>Saida One · South District · Lebanese Scout Association</div>
+        <div>Confidential — internal use only</div>
       </div>
-    </div>
-
-    <!-- FOOTER BRANDING -->
-    <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:16px; font-size:9.5px; color:#94a3b8;">
-      <div>Saida One · South District · Lebanese Scout Association</div>
-      <div>Confidential — internal use only</div>
     </div>
   `;
 
-  const filename = `${m.fullName ? m.fullName.replace(/\s+/g, '_') : 'member'}_profile_${isSinglePage ? 'SinglePage' : 'A4'}.pdf`;
-  exportElementToPdf(container, filename, isSinglePage);
+  exportElementToPdf(container, m.fullName.replace(/\s+/g, '_') + '_Scout_Record_SinglePage.pdf', isSinglePage);
 }
 
 function downloadLeaderProfilePdf(leaderId, isSinglePage = false) {
@@ -2757,6 +2765,7 @@ function downloadLeaderProfilePdf(leaderId, isSinglePage = false) {
     : '<div style="grid-column: 1 / -1; text-align:center; padding:12px; color:#64748b; font-size:12px;">No badges earned yet.</div>';
 
   const container = document.createElement('div');
+  container.setAttribute('dir', 'ltr');
   container.style.cssText = 'position:fixed; left:0; top:0; width:794px; min-height:1123px; padding:28px 32px; font-family:Inter, Cairo, sans-serif; color:#0f172a; background:#ffffff; box-sizing:border-box; z-index:99999; visibility:visible; display:flex; flex-direction:column; justify-content:space-between;';
 
   container.innerHTML = `
@@ -2767,7 +2776,7 @@ function downloadLeaderProfilePdf(leaderId, isSinglePage = false) {
           <!-- TOP HEADER BRANDING -->
           <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #6366f1; padding-bottom: 10px; margin-bottom: 14px;">
             <div style="display:flex; align-items:center; gap:12px;">
-              <img src="logo.png" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
+              <img src="${typeof LOGO_BASE64 !== 'undefined' ? LOGO_BASE64 : 'logo.png'}" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
             </div>
             <div style="text-align:right;">
               <div style="font-size:9px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Generated</div>
@@ -3114,7 +3123,8 @@ async function downloadMemberProfileXlsx(memberId) {
     let sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('string');
 
     const mssRow = (state.memberMilestones || []).find(r => String(r.member_id || r.memberId) === String(memberId));
-    const badges = state.badges.filter(b => String(b.memberId || b.member_id) === String(memberId));
+    const badgesList = (window.state && window.state.badges) ? window.state.badges : state.badges;
+  const badges = badgesList.filter(b => String(b.memberId || b.member_id) === String(memberId));
 
     const replacements = [
       ['{members.first_name} {members.middle_name} {members.last_name}', m.fullName || ''],
@@ -3850,16 +3860,21 @@ function renderPdfEditorLivePreview() {
       }).join('')
     : '<div style="grid-column: 1 / -1; text-align:center; padding:12px; color:#64748b; font-size:12px;">No badges earned yet.</div>';
 
+  const showBadgesCard = pdfEditorState.showBadges;
+  const p1Style = showBadgesCard
+    ? 'min-height: 1010px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 24px; box-sizing: border-box;'
+    : 'margin-bottom: 12px; box-sizing: border-box;';
+
   container.innerHTML = `
     <div>
-      <!-- PAGE 1 CONTAINER: EXTENDS TO FULL PAGE 1 HEIGHT (1010px) -->
-      <div style="min-height: 1010px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 24px; box-sizing: border-box;">
+      <!-- MAIN CONTAINER -->
+      <div style="${p1Style}">
         <div>
           <!-- TOP HEADER BRANDING -->
           ${pdfEditorState.showHeader ? `
           <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid ${color}; padding-bottom: 10px; margin-bottom: 14px;">
             <div style="display:flex; align-items:center; gap:12px;">
-              <img src="logo.png" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
+              <img src="${typeof LOGO_BASE64 !== 'undefined' ? LOGO_BASE64 : 'logo.png'}" style="height:52px; max-width:240px; object-fit:contain; display:block;" onerror="this.onerror=null;this.src='badge-icon.png';" alt="Logo" />
             </div>
             <div style="text-align:right;">
               <div style="font-size:9px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Generated</div>
@@ -3941,8 +3956,8 @@ function renderPdfEditorLivePreview() {
           </div>` : ''}
         </div>
 
-        <!-- BADGES CARD SECTION (Extends to bottom of Page 1) -->
-        ${pdfEditorState.showBadges ? `
+        <!-- BADGES CARD SECTION (When Badges card is enabled) -->
+        ${showBadgesCard ? `
         <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; background:#fafafa; flex:1; display:flex; flex-direction:column; justify-content:flex-start;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
             <div style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">BADGES</div>
@@ -3952,10 +3967,21 @@ function renderPdfEditorLivePreview() {
             ${badgesGridHtml}
           </div>
         </div>` : ''}
+
+        <!-- ARABIC MILESTONE CARD SECTION (Replaces Badges card when Badges is disabled) -->
+        ${(!showBadgesCard && pdfEditorState.showMilestones) ? `
+        <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:14px; background:#fafafa; margin-top:4px;">
+          <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
+            <h3 contenteditable="true" style="margin:0; font-size:15px; font-weight:900; color:#0f172a; font-family:'Cairo', sans-serif; outline:none;">المسيرة</h3>
+          </div>
+          <div contenteditable="true" style="outline:none;">
+            ${pdfEditorState.milestonesHtml}
+          </div>
+        </div>` : ''}
       </div>
 
-      <!-- ARABIC MILESTONE CARD SECTION (Page 2) -->
-      ${pdfEditorState.showMilestones ? `
+      <!-- ARABIC MILESTONE CARD SECTION (Page 2 when Badges card is enabled) -->
+      ${(showBadgesCard && pdfEditorState.showMilestones) ? `
       <div class="pdf-section-card" style="border:1px solid #e2e8f0; border-radius:10px; padding:14px; background:#fafafa;">
         <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:10px;">
           <h3 contenteditable="true" style="margin:0; font-size:15px; font-weight:900; color:#0f172a; font-family:'Cairo', sans-serif; outline:none;">المسيرة</h3>
@@ -3968,7 +3994,7 @@ function renderPdfEditorLivePreview() {
 
     <!-- FOOTER BRANDING -->
     ${pdfEditorState.showFooter ? `
-    <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:20px; font-size:9.5px; color:#94a3b8;">
+    <div class="pdf-section-card" style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #e2e8f0; padding-top:10px; margin-top:16px; font-size:9.5px; color:#94a3b8;">
       <div contenteditable="true" style="outline:none;">Saida One · South District · Lebanese Scout Association</div>
       <div contenteditable="true" style="outline:none;">Confidential — internal use only</div>
     </div>` : ''}
@@ -4777,3 +4803,9 @@ function formatTimeRange(start, end) {
 
 resetMeetingLeaderRows();
 init();
+
+
+window.downloadMemberProfilePdf = downloadMemberProfilePdf;
+window.buildMemberMilestonesHtml = buildMemberMilestonesHtml;
+window.cleanHtmlForPdf = cleanHtmlForPdf;
+window.exportElementToPdf = exportElementToPdf;
