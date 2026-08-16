@@ -559,7 +559,7 @@ function clearNoUnitDashboard() {
    ====================================================================== */
 
 function init() {
-  if (!document.getElementById('membersTableBody') && !document.getElementById('navMenu') && !document.getElementById('statsPageContainer')) {
+  if (!document.getElementById('loginForm') && !document.getElementById('authScreen') && !document.getElementById('appRoot')) {
     return; // Skip dashboard DOM initialization on mobile/standalone pages
   }
   bindAuth();
